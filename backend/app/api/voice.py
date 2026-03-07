@@ -91,7 +91,7 @@ async def transcribe_audio(
         raise HTTPException(status_code=413, detail=f"Audio exceeds {settings.MAX_AUDIO_SIZE_MB}MB limit")
 
     stt = get_stt()
-    result = stt.transcribe(audio_bytes, language=language)
+    result = await stt.transcribe(audio_bytes, language=language)
 
     await UsageService.record(
         db=db,
@@ -99,7 +99,7 @@ async def transcribe_audio(
         event_type="stt",
         quantity=result.duration_seconds / 60,
         unit="minutes",
-        model_used=f"whisper-{settings.WHISPER_MODEL_SIZE}",
+        model_used=result.provider,
     )
 
     return TranscribeResponse(
@@ -255,7 +255,7 @@ async def voice_stream(
                 audio_buffer.clear()
 
                 try:
-                    transcript = stt.transcribe(chunk, language=None if source_language == "auto" else source_language)
+                    transcript = await stt.transcribe(chunk, language=None if source_language == "auto" else source_language)
 
                     detected_lang = transcript.language
                     await websocket.send_json({

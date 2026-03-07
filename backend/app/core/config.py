@@ -39,9 +39,21 @@ class Settings(BaseSettings):
     AWS_REGION: str = "us-east-1"
     AWS_S3_BUCKET: str = "vaaniai-audio"
 
+    STT_PROVIDER: str = "sarvam"
+    STT_FALLBACK_PROVIDER: str = "whisper"
+
     WHISPER_MODEL_SIZE: str = "large-v3"
     WHISPER_DEVICE: str = "cpu"
     WHISPER_COMPUTE_TYPE: str = "int8"
+
+    SARVAM_STT_MODEL: str = "saaras:v2"
+    SARVAM_STT_WITH_DIARIZATION: bool = False
+    SARVAM_TTS_MODEL: str = "bulbul:v1"
+
+    TWILIO_ACCOUNT_SID: str = ""
+    TWILIO_AUTH_TOKEN: str = ""
+    TWILIO_PHONE_NUMBER: str = ""
+    TWILIO_WEBHOOK_SECRET: str = ""
 
     FASTTEXT_MODEL_PATH: str = "models/lid.176.bin"
 
