@@ -1,7 +1,8 @@
-# Auto
+# VaaniAI — Implementation Plan
 
 ## Configuration
-- **Artifacts Path**: {@artifacts_path} → `.zenflow/tasks/{task_id}`
+- **Artifacts Path**: `.zenflow/tasks/new-task-f6b9/`
+- **Spec**: `.zenflow/tasks/new-task-f6b9/spec.md`
 
 ---
 
@@ -18,22 +19,19 @@ Do not make assumptions on important decisions — get clarification first.
 
 ## Workflow Steps
 
-### [ ] Step: Implementation
+### [x] Step: Implementation
 <!-- chat-id: c660de76-e4b2-4a31-a57f-c75f3638de7a -->
 
-**Debug requests, questions, and investigations:** answer or investigate first. Do not create a plan upfront — the user needs an answer, not a plan. A plan may become relevant later once the investigation reveals what needs to change.
+Full platform implementation covering all deliverables described in `spec.md`.
 
-**For all other tasks**, before writing any code, assess the scope of the actual change (not the prompt length — a one-sentence prompt can describe a large feature). Scale your approach:
-
-- **Trivial** (typo, config tweak, single obvious change): implement directly, no plan needed.
-- **Small** (a few files, clear what to do): write 2–3 sentences in `plan.md` describing what and why, then implement. No substeps.
-- **Medium** (multiple components, design decisions, edge cases): write a plan in `plan.md` with requirements, affected files, key decisions, verification. Break into 3–5 steps.
-- **Large** (new feature, cross-cutting, unclear scope): gather requirements and write a technical spec first (`requirements.md`, `spec.md` in `{@artifacts_path}/`). Then write `plan.md` with concrete steps referencing the spec.
-
-**Skip planning and implement directly when** the task is trivial, or the user explicitly asks to "just do it" / gives a clear direct instruction.
-
-To reflect the actual purpose of the first step, you can rename it to something more relevant (e.g., Planning, Investigation). Do NOT remove meta information like comments for any step.
-
-Rule of thumb for step size: each step = a coherent unit of work (component, endpoint, test suite). Not too granular (single function), not too broad (entire feature). Unit tests are part of each step, not separate.
-
-Update `{@artifacts_path}/plan.md`.
+- [x] Write technical spec (`spec.md`)
+- [x] Scaffold monorepo structure + `.gitignore`
+- [x] Backend: FastAPI app, models, DB schema, migrations (Alembic)
+- [x] Backend: Voice pipeline (Whisper STT, FastText, IndicTrans2, Sarvam TTS)
+- [x] Backend: AI conversation agent with RAG (LangChain + Pinecone)
+- [x] Backend: Auth (JWT + API keys), multi-tenancy middleware, billing (Stripe), analytics
+- [x] Backend: WebSocket real-time voice streaming
+- [x] Frontend: Next.js 14 admin dashboard, analytics, knowledge base management, billing
+- [x] Widget: Embeddable JS voice widget (`vaani.min.js`)
+- [x] Infra: Docker Compose, Dockerfile(s), Nginx config
+- [x] Docs: OpenAPI auto-generated + `/docs/api.md` summary

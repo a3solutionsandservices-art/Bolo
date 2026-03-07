@@ -1,0 +1,196 @@
+from __future__ import annotations
+import uuid
+from typing import Optional, AsyncGenerator
+
+from app.core.config import settings
+
+
+SYSTEM_PROMPT_TEMPLATE = """You are a helpful AI assistant for {tenant_name}. 
+You answer questions based on the provided knowledge base context.
+Always respond in {response_language}.
+Be concise, accurate, and helpful.
+If you don't know the answer from the context, say so clearly.
+
+Context from knowledge base:
+{context}"""
+
+
+class RAGAgent:
+    """LangChain + Pinecone RAG agent for multilingual Q&A."""
+
+    _instance: Optional["RAGAgent"] = None
+    _pinecone_client = None
+    _embeddings = None
+
+    def __init__(self) -> None:
+        self._openai_client = None
+
+    @classmethod
+    def get_instance(cls) -> "RAGAgent":
+        if cls._instance is None:
+            cls._instance = cls()
+        return cls._instance
+
+    def _get_embeddings(self):
+        if self._embeddings is None:
+            from langchain_openai import OpenAIEmbeddings
+
+            self._embeddings = OpenAIEmbeddings(
+                api_key=settings.OPENAI_API_KEY,
+                model="text-embedding-3-small",
+            )
+        return self._embeddings
+
+    def _get_pinecone_index(self):
+        if self._pinecone_client is None:
+            from pinecone import Pinecone
+
+            pc = Pinecone(api_key=settings.PINECONE_API_KEY)
+            self._pinecone_client = pc.Index(settings.PINECONE_INDEX_NAME)
+        return self._pinecone_client
+
+    def _get_vectorstore(self, namespace: str):
+        from langchain_pinecone import PineconeVectorStore
+
+        return PineconeVectorStore(
+            index=self._get_pinecone_index(),
+            embedding=self._get_embeddings(),
+            namespace=namespace,
+        )
+
+    async def index_document(
+        self,
+        document_id: str,
+        text: str,
+        namespace: str,
+        metadata: Optional[dict] = None,
+    ) -> int:
+        from langchain.text_splitter import RecursiveCharacterTextSplitter
+        from langchain.docstore.document import Document
+
+        splitter = RecursiveCharacterTextSplitter(
+            chunk_size=500,
+            chunk_overlap=50,
+            separators=["\n\n", "\n", "।", ".", "!", "?", " ", ""],
+        )
+
+        chunks = splitter.split_text(text)
+        docs = [
+            Document(
+                page_content=chunk,
+                metadata={
+                    "document_id": document_id,
+                    "chunk_index": i,
+                    **(metadata or {}),
+                },
+            )
+            for i, chunk in enumerate(chunks)
+        ]
+
+        vectorstore = self._get_vectorstore(namespace)
+        await vectorstore.aadd_documents(docs)
+        return len(chunks)
+
+    async def delete_document(self, document_id: str, namespace: str) -> None:
+        index = self._get_pinecone_index()
+        index.delete(filter={"document_id": document_id}, namespace=namespace)
+
+    async def query(
+        self,
+        question: str,
+        namespace: str,
+        top_k: int = 5,
+    ) -> list[dict]:
+        vectorstore = self._get_vectorstore(namespace)
+        results = await vectorstore.asimilarity_search_with_score(question, k=top_k)
+        return [
+            {
+                "content": doc.page_content,
+                "metadata": doc.metadata,
+                "score": float(score),
+            }
+            for doc, score in results
+        ]
+
+    async def generate_response(
+        self,
+        question: str,
+        namespace: str,
+        conversation_history: list[dict],
+        tenant_name: str,
+        response_language: str = "en",
+    ) -> tuple[str, list[dict]]:
+        from openai import AsyncOpenAI
+
+        client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+
+        sources = await self.query(question, namespace)
+        context = "\n\n".join([s["content"] for s in sources[:3]])
+
+        lang_names = settings.LANGUAGE_NAMES
+        lang_display = lang_names.get(response_language, response_language)
+
+        system_msg = SYSTEM_PROMPT_TEMPLATE.format(
+            tenant_name=tenant_name,
+            response_language=lang_display,
+            context=context if context else "No relevant context found.",
+        )
+
+        messages = [{"role": "system", "content": system_msg}]
+        messages.extend(conversation_history[-10:])
+        messages.append({"role": "user", "content": question})
+
+        response = await client.chat.completions.create(
+            model=settings.OPENAI_MODEL,
+            messages=messages,
+            temperature=0.7,
+            max_tokens=1024,
+        )
+
+        answer = response.choices[0].message.content
+        return answer, sources
+
+    async def stream_response(
+        self,
+        question: str,
+        namespace: str,
+        conversation_history: list[dict],
+        tenant_name: str,
+        response_language: str = "en",
+    ) -> AsyncGenerator[str, None]:
+        from openai import AsyncOpenAI
+
+        client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+
+        sources = await self.query(question, namespace)
+        context = "\n\n".join([s["content"] for s in sources[:3]])
+
+        lang_names = settings.LANGUAGE_NAMES
+        lang_display = lang_names.get(response_language, response_language)
+
+        system_msg = SYSTEM_PROMPT_TEMPLATE.format(
+            tenant_name=tenant_name,
+            response_language=lang_display,
+            context=context if context else "No relevant context found.",
+        )
+
+        messages = [{"role": "system", "content": system_msg}]
+        messages.extend(conversation_history[-10:])
+        messages.append({"role": "user", "content": question})
+
+        stream = await client.chat.completions.create(
+            model=settings.OPENAI_MODEL,
+            messages=messages,
+            temperature=0.7,
+            max_tokens=1024,
+            stream=True,
+        )
+
+        async for chunk in stream:
+            delta = chunk.choices[0].delta.content
+            if delta:
+                yield delta
+
+
+def get_rag_agent() -> RAGAgent:
+    return RAGAgent.get_instance()

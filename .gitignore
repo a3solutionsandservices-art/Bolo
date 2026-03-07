@@ -1,0 +1,101 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+*.egg-info/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Python virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+.env.production
+.env.staging
+*.env
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Cache
+.cache/
+.parcel-cache/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.tsbuildinfo
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Coverage
+coverage/
+.coverage
+htmlcov/
+lcov.info
+
+# Uploads & audio
+uploads/
+audio_cache/
+*.wav
+*.mp3
+*.ogg
+
+# FastText models (large binary)
+*.bin
+*.ftz
+
+# Whisper models (large)
+models/
+*.pt
+
+# Alembic versions (keep structure, ignore local dev migrations)
+# alembic/versions/
+
+# AWS CDK
+cdk.out/
+cdk.context.json
+
+# Docker
+.dockerignore
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfvars
+
+# Widget build
+widget/dist/
+
+# Misc
+*.pid
+*.seed
+*.pid.lock
+.yarn-integrity
+.npm
