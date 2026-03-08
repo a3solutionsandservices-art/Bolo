@@ -16,6 +16,11 @@ from app.api import auth, voice, conversation, knowledge, analytics, billing, te
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    if not settings.DEBUG and settings.SECRET_KEY == "change-me-in-production":
+        raise RuntimeError(
+            "SECRET_KEY must be changed from the default value in production. "
+            "Set SECRET_KEY in your environment or .env file."
+        )
     print(f"Starting {settings.APP_NAME} v{settings.APP_VERSION}")
     yield
     print("Shutting down...")

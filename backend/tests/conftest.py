@@ -1,18 +1,23 @@
 from __future__ import annotations
 import asyncio
+import os
 from typing import AsyncGenerator
 
 import pytest
 import pytest_asyncio
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-from sqlalchemy.pool import StaticPool
+from sqlalchemy.pool import StaticPool, NullPool
 
 from app.db.base import Base, get_db
 from app.core.security import hash_password, create_access_token
 
+TEST_DATABASE_URL = os.getenv(
+    "TEST_DATABASE_URL",
+    "sqlite+aiosqlite:///:memory:",
+)
 
-DATABASE_URL = "sqlite+aiosqlite:///:memory:"
+_IS_SQLITE = TEST_DATABASE_URL.startswith("sqlite")
 
 
 @pytest.fixture(scope="session")
@@ -24,14 +29,26 @@ def event_loop():
 
 @pytest_asyncio.fixture(scope="session")
 async def engine():
-    _engine = create_async_engine(
-        DATABASE_URL,
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
-    )
-    async with _engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    kwargs: dict = {}
+    if _IS_SQLITE:
+        kwargs = {
+            "connect_args": {"check_same_thread": False},
+            "poolclass": StaticPool,
+        }
+    else:
+        kwargs = {"poolclass": NullPool}
+
+    _engine = create_async_engine(TEST_DATABASE_URL, **kwargs)
+
+    if _IS_SQLITE:
+        async with _engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+    else:
+        async with _engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+
     yield _engine
+
     async with _engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
     await _engine.dispose()
@@ -47,7 +64,6 @@ async def db_session(engine) -> AsyncGenerator[AsyncSession, None]:
 @pytest_asyncio.fixture(scope="session")
 async def app(engine):
     from app.main import app as fastapi_app
-    from app.db.base import AsyncSessionLocal
 
     session_factory = async_sessionmaker(engine, expire_on_commit=False)
 

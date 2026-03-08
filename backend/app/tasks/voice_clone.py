@@ -12,9 +12,16 @@ def train_voice_clone_task(self, clone_id: str, tenant_id: str, sample_urls: lis
     """
     Background task: submit voice clone samples to Sarvam AI and poll until ready.
     Falls back to marking the clone FAILED on error.
+    Uses a fresh event loop to avoid conflicts with any existing loop in the worker process.
     """
     try:
-        asyncio.run(_train_async(clone_id, tenant_id, sample_urls, language))
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            loop.run_until_complete(_train_async(clone_id, tenant_id, sample_urls, language))
+        finally:
+            loop.close()
+            asyncio.set_event_loop(None)
     except Exception as exc:
         logger.exception("train_voice_clone_task failed for %s", clone_id)
         raise self.retry(exc=exc)

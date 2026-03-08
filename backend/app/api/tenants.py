@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.db.base import get_db
 from app.middleware.auth import get_current_user, require_admin
 from app.models.tenant import Tenant
@@ -86,9 +87,10 @@ async def get_widget_config(
     if not tenant:
         raise HTTPException(status_code=404, detail="Tenant not found")
 
+    api_base = settings.API_BASE_URL
     return {
         "tenant_id": str(tenant.id),
-        "api_endpoint": "https://api.vaaniai.com",
+        "api_endpoint": api_base,
         "widget_name": tenant.widget_name,
         "primary_color": tenant.primary_color,
         "secondary_color": tenant.secondary_color,
@@ -101,7 +103,7 @@ async def get_widget_config(
   window.VaaniConfig = {{
     apiKey: "YOUR_API_KEY",
     tenantId: "{tenant.id}",
-    apiEndpoint: "https://api.vaaniai.com",
+    apiEndpoint: "{api_base}",
     language: "{tenant.default_source_language}",
     targetLanguage: "{tenant.default_target_language}",
     widgetName: "{tenant.widget_name}",

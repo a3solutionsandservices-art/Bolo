@@ -1,4 +1,5 @@
 from __future__ import annotations
+import base64
 import hashlib
 import hmac
 import time
@@ -26,7 +27,6 @@ def _verify_twilio_signature(request_url: str, params: dict, signature: str) -> 
         return True
     sorted_params = "".join(f"{k}{v}" for k, v in sorted(params.items()))
     message = request_url + sorted_params
-    import base64
     computed = hmac.new(
         settings.TWILIO_AUTH_TOKEN.encode(),
         message.encode(),

@@ -60,6 +60,8 @@ class Settings(BaseSettings):
 
     INDICTRANS_DEVICE: str = "cpu"
 
+    API_BASE_URL: str = "https://api.vaaniai.com"
+
     CORS_ORIGINS: List[str] = ["http://localhost:3000", "https://app.vaaniai.com"]
 
     RATE_LIMIT_DEFAULT: str = "100/minute"
