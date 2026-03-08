@@ -99,9 +99,14 @@ async def get_widget_config(
         "allowed_domains": tenant.widget_allowed_domains,
         "embed_snippet": f"""<script>
   window.VaaniConfig = {{
+    apiKey: "YOUR_API_KEY",
     tenantId: "{tenant.id}",
     apiEndpoint: "https://api.vaaniai.com",
-    language: "hi"
+    language: "{tenant.default_source_language}",
+    targetLanguage: "{tenant.default_target_language}",
+    widgetName: "{tenant.widget_name}",
+    primaryColor: "{tenant.primary_color}",
+    position: "bottom-right"
   }};
   (function(w,d,s,o,f,js,fjs){{
     w['VaaniWidget']=o;w[o]=w[o]||function(){{(w[o].q=w[o].q||[]).push(arguments)}};

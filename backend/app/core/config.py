@@ -54,6 +54,7 @@ class Settings(BaseSettings):
     TWILIO_AUTH_TOKEN: str = ""
     TWILIO_PHONE_NUMBER: str = ""
     TWILIO_WEBHOOK_SECRET: str = ""
+    TWILIO_DEFAULT_TENANT_ID: str = ""
 
     FASTTEXT_MODEL_PATH: str = "models/lid.176.bin"
 

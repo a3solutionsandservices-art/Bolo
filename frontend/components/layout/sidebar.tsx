@@ -22,10 +22,10 @@ const navItems = [
   { href: "/dashboard/conversations", icon: MessageSquare, label: "Conversations" },
   { href: "/dashboard/knowledge", icon: BookOpen, label: "Knowledge Bases" },
   { href: "/dashboard/voice-clones", icon: Mic, label: "Voice Clones" },
-  { href: "/analytics", icon: BarChart3, label: "Analytics" },
+  { href: "/dashboard/analytics", icon: BarChart3, label: "Analytics" },
   { href: "/dashboard/api-keys", icon: Key, label: "API Keys" },
-  { href: "/settings", icon: Settings, label: "Settings" },
-  { href: "/settings/billing", icon: CreditCard, label: "Billing" },
+  { href: "/dashboard/settings", icon: Settings, label: "Settings" },
+  { href: "/dashboard/settings/billing", icon: CreditCard, label: "Billing" },
 ];
 
 export function Sidebar() {

@@ -1,5 +1,6 @@
 from __future__ import annotations
 import base64
+import json
 import time
 import uuid
 from typing import Optional
@@ -339,7 +340,6 @@ async def voice_stream(
                     await websocket.send_json({"type": "error", "message": str(e)})
 
             elif "text" in data:
-                import json
                 try:
                     msg = json.loads(data["text"])
                     if msg.get("type") == "end":

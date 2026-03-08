@@ -94,8 +94,14 @@ async def twilio_inbound(
     ):
         raise HTTPException(status_code=403, detail="Invalid Twilio signature")
 
+    default_tenant_id = uuid.UUID(settings.TWILIO_DEFAULT_TENANT_ID) if settings.TWILIO_DEFAULT_TENANT_ID else None
+    if not default_tenant_id:
+        from fastapi.responses import Response as FastAPIResponse
+        twiml = _twiml_say_and_hangup("Service not configured.", language="en-IN")
+        return FastAPIResponse(content=twiml, media_type="application/xml")
+
     conv = Conversation(
-        tenant_id=None,
+        tenant_id=default_tenant_id,
         session_id=f"twilio-{CallSid}",
         mode=ConversationMode.AGENT,
         status=ConversationStatus.ACTIVE,
@@ -159,9 +165,14 @@ async def twilio_gather(
         question_en = trans_result.translated_text
 
     namespace = str(conv.tenant_id) if conv.tenant_id else "default"
-    rag_result = await rag.answer(question_en, namespace=namespace, conversation_history=[])
+    response_en, rag_sources = await rag.generate_response(
+        question=question_en,
+        namespace=namespace,
+        conversation_history=[],
+        tenant_name=namespace,
+        response_language="en",
+    )
 
-    response_en = rag_result.answer
     response_native = response_en
     if conv.target_language != "en":
         trans_back = await translator.translate(response_en, "en", conv.target_language)
@@ -174,7 +185,7 @@ async def twilio_gather(
         content_translated=response_native,
         source_language="en",
         target_language=conv.target_language,
-        rag_sources=rag_result.sources,
+        rag_sources=rag_sources,
     )
     db.add(assistant_msg)
     await db.commit()
@@ -198,7 +209,7 @@ async def twilio_status(
         update(Conversation)
         .where(Conversation.session_id == session_id)
         .values(
-            status=ConversationStatus.ENDED,
+            status=ConversationStatus.COMPLETED,
             ended_at=__import__("datetime").datetime.utcnow(),
         )
     )

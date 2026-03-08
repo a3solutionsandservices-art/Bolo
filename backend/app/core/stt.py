@@ -283,7 +283,8 @@ class STTPipeline:
 
         whisper = self._get_whisper()
         if whisper:
-            return whisper.transcribe(audio_bytes, language)
+            import asyncio
+            return await asyncio.to_thread(whisper.transcribe, audio_bytes, language)
 
         raise RuntimeError("No STT provider available. Set SARVAM_API_KEY or ensure Whisper model is loaded.")
 
