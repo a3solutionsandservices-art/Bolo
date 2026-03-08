@@ -125,4 +125,20 @@ export const api = {
     update: (data: Record<string, unknown>) => apiClient.patch("/api/v1/tenants/me", data),
     widgetConfig: () => apiClient.get("/api/v1/tenants/me/widget-config"),
   },
+
+  voiceClones: {
+    list: () => apiClient.get("/api/v1/voice-clones"),
+    create: (data: { name: string; description?: string; language: string }) =>
+      apiClient.post("/api/v1/voice-clones", data),
+    uploadSample: (id: string, audio: File) => {
+      const form = new FormData();
+      form.append("audio", audio);
+      return apiClient.post(`/api/v1/voice-clones/${id}/samples`, form, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+    },
+    train: (id: string) => apiClient.post(`/api/v1/voice-clones/${id}/train`),
+    setDefault: (id: string) => apiClient.patch(`/api/v1/voice-clones/${id}/default`),
+    delete: (id: string) => apiClient.delete(`/api/v1/voice-clones/${id}`),
+  },
 };
