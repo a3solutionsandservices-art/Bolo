@@ -169,7 +169,7 @@ class IndicTransTranslate:
                 outputs = self._model.generate(**inputs, num_beams=5, max_length=512)
             return self._tokenizer.batch_decode(outputs, skip_special_tokens=True)[0]
 
-        translated = await asyncio.get_event_loop().run_in_executor(None, _run)
+        translated = await asyncio.to_thread(_run)
         return TranslationResult(
             translated_text=translated,
             source_language=source_language,

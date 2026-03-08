@@ -6,15 +6,11 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile, WebSocket, WebSocketDisconnect, status
 from fastapi.responses import Response
-from slowapi import Limiter
-from slowapi.util import get_remote_address
-
-limiter = Limiter(key_func=get_remote_address)
-
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+from app.core.limiter import limiter
 from app.core.stt import get_stt
 from app.core.tts import get_tts
 from app.core.translation import get_translation_service
@@ -241,13 +237,15 @@ async def _ws_authenticate(token: str, db: AsyncSession) -> Optional[User]:
             api_key = result.scalar_one_or_none()
             if not api_key:
                 return None
+            from app.models.user import UserRole
             user_result = await db.execute(
                 select(UserModel).where(
                     UserModel.tenant_id == api_key.tenant_id,
+                    UserModel.role == UserRole.TENANT_ADMIN,
                     UserModel.is_active == True,
                 )
             )
-            return user_result.scalars().first()
+            return user_result.scalar_one_or_none()
         else:
             payload = decode_token(token)
             if payload.get("type") != "access":

@@ -5,11 +5,9 @@ import time
 import uuid
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect, status
-from fastapi.responses import StreamingResponse
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy import select, update
-from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -200,8 +198,6 @@ async def send_message(
     detected_lang = conv.source_language
 
     if body.is_audio and body.audio_base64:
-        import base64
-
         audio_bytes = base64.b64decode(body.audio_base64)
         stt = get_stt()
         transcript = await stt.transcribe(audio_bytes)
@@ -296,8 +292,6 @@ async def send_message(
 
     elapsed_ms = (time.perf_counter() - start_time) * 1000
 
-    import base64
-
     assistant_msg = Message(
         conversation_id=conv.id,
         role=MessageRole.ASSISTANT,
@@ -327,13 +321,13 @@ async def send_message(
 async def get_transcript(
     conversation_id: uuid.UUID,
     format: str = "json",
+    skip: int = 0,
+    limit: int = 200,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(
-        select(Conversation)
-        .options(selectinload(Conversation.messages))
-        .where(
+        select(Conversation).where(
             Conversation.id == conversation_id,
             Conversation.tenant_id == current_user.tenant_id,
         )
@@ -342,9 +336,18 @@ async def get_transcript(
     if not conv:
         raise HTTPException(status_code=404, detail="Conversation not found")
 
+    messages_result = await db.execute(
+        select(Message)
+        .where(Message.conversation_id == conv.id)
+        .order_by(Message.created_at.asc())
+        .offset(skip)
+        .limit(min(limit, 500))
+    )
+    messages = messages_result.scalars().all()
+
     if format == "text":
         lines = []
-        for m in conv.messages:
+        for m in messages:
             speaker = "User" if m.role == MessageRole.USER else "Assistant"
             ts = m.created_at.strftime("%H:%M:%S")
             lines.append(f"[{ts}] {speaker}: {m.content_original}")
@@ -357,6 +360,8 @@ async def get_transcript(
         "target_language": conv.target_language,
         "started_at": conv.created_at.isoformat(),
         "ended_at": conv.ended_at.isoformat() if conv.ended_at else None,
+        "skip": skip,
+        "limit": limit,
         "messages": [
             {
                 "timestamp": m.created_at.isoformat(),
@@ -367,7 +372,7 @@ async def get_transcript(
                 "sentiment": m.sentiment,
                 "intent": m.intent,
             }
-            for m in conv.messages
+            for m in messages
         ],
     }
 

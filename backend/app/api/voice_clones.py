@@ -76,6 +76,9 @@ async def get_voice_clone(
     return _to_response(clone)
 
 
+MAX_SAMPLE_BYTES = 50 * 1024 * 1024
+
+
 @router.post("/{clone_id}/samples", response_model=VoiceCloneResponse)
 async def upload_sample_audio(
     clone_id: uuid.UUID,
@@ -86,6 +89,8 @@ async def upload_sample_audio(
     clone = await _get_or_404(clone_id, current_user.tenant_id, db)
 
     audio_bytes = await audio.read()
+    if len(audio_bytes) > MAX_SAMPLE_BYTES:
+        raise HTTPException(status_code=413, detail="Sample audio exceeds 50 MB limit")
     s3_key = f"voice-clones/{clone.id}/samples/{uuid.uuid4()}.wav"
     try:
         url = await upload_audio(audio_bytes, s3_key, current_user.tenant_id)
@@ -109,13 +114,18 @@ async def train_voice_clone(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    from app.tasks.voice_clone import train_voice_clone_task
+
     clone = await _get_or_404(clone_id, current_user.tenant_id, db)
 
     if not clone.sample_audio_urls:
         raise HTTPException(status_code=400, detail="Upload at least one audio sample before training")
 
-    if clone.status == VoiceCloneStatus.READY:
-        raise HTTPException(status_code=400, detail="Voice clone is already trained")
+    if clone.status in (VoiceCloneStatus.READY, VoiceCloneStatus.TRAINING):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Voice clone is already {clone.status.value}",
+        )
 
     await db.execute(
         update(VoiceClone)
@@ -124,6 +134,14 @@ async def train_voice_clone(
     )
     await db.commit()
     await db.refresh(clone)
+
+    train_voice_clone_task.delay(
+        str(clone_id),
+        str(current_user.tenant_id),
+        list(clone.sample_audio_urls),
+        clone.language,
+    )
+
     return _to_response(clone)
 
 

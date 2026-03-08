@@ -8,7 +8,7 @@ celery = Celery(
     "vaaniai",
     broker=settings.CELERY_BROKER_URL,
     backend=settings.CELERY_RESULT_BACKEND,
-    include=["app.tasks.knowledge"],
+    include=["app.tasks.knowledge", "app.tasks.voice_clone"],
 )
 
 celery.conf.update(
