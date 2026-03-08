@@ -1,11 +1,10 @@
 from __future__ import annotations
-import uuid
 from typing import Optional, AsyncGenerator
 
 from app.core.config import settings
 
 
-SYSTEM_PROMPT_TEMPLATE = """You are a helpful AI assistant for {tenant_name}. 
+SYSTEM_PROMPT_TEMPLATE = """You are a helpful AI assistant for {tenant_name}.
 You answer questions based on the provided knowledge base context.
 Always respond in {response_language}.
 Be concise, accurate, and helpful.
@@ -112,6 +111,30 @@ class RAGAgent:
             for doc, score in results
         ]
 
+    async def _build_messages(
+        self,
+        question: str,
+        namespace: str,
+        conversation_history: list[dict],
+        tenant_name: str,
+        response_language: str,
+    ) -> tuple[list[dict], list[dict]]:
+        """Shared logic: retrieve context and build the OpenAI messages list."""
+        sources = await self.query(question, namespace)
+        context = "\n\n".join([s["content"] for s in sources[:3]])
+
+        lang_display = settings.LANGUAGE_NAMES.get(response_language, response_language)
+        system_msg = SYSTEM_PROMPT_TEMPLATE.format(
+            tenant_name=tenant_name,
+            response_language=lang_display,
+            context=context if context else "No relevant context found.",
+        )
+
+        messages: list[dict] = [{"role": "system", "content": system_msg}]
+        messages.extend(conversation_history[-10:])
+        messages.append({"role": "user", "content": question})
+        return messages, sources
+
     async def generate_response(
         self,
         question: str,
@@ -123,22 +146,9 @@ class RAGAgent:
         from openai import AsyncOpenAI
 
         client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
-
-        sources = await self.query(question, namespace)
-        context = "\n\n".join([s["content"] for s in sources[:3]])
-
-        lang_names = settings.LANGUAGE_NAMES
-        lang_display = lang_names.get(response_language, response_language)
-
-        system_msg = SYSTEM_PROMPT_TEMPLATE.format(
-            tenant_name=tenant_name,
-            response_language=lang_display,
-            context=context if context else "No relevant context found.",
+        messages, sources = await self._build_messages(
+            question, namespace, conversation_history, tenant_name, response_language
         )
-
-        messages = [{"role": "system", "content": system_msg}]
-        messages.extend(conversation_history[-10:])
-        messages.append({"role": "user", "content": question})
 
         response = await client.chat.completions.create(
             model=settings.OPENAI_MODEL,
@@ -161,22 +171,9 @@ class RAGAgent:
         from openai import AsyncOpenAI
 
         client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
-
-        sources = await self.query(question, namespace)
-        context = "\n\n".join([s["content"] for s in sources[:3]])
-
-        lang_names = settings.LANGUAGE_NAMES
-        lang_display = lang_names.get(response_language, response_language)
-
-        system_msg = SYSTEM_PROMPT_TEMPLATE.format(
-            tenant_name=tenant_name,
-            response_language=lang_display,
-            context=context if context else "No relevant context found.",
+        messages, _ = await self._build_messages(
+            question, namespace, conversation_history, tenant_name, response_language
         )
-
-        messages = [{"role": "system", "content": system_msg}]
-        messages.extend(conversation_history[-10:])
-        messages.append({"role": "user", "content": question})
 
         stream = await client.chat.completions.create(
             model=settings.OPENAI_MODEL,

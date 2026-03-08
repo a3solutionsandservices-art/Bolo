@@ -120,13 +120,13 @@ async def list_conversations(
 @router.get("/{conversation_id}")
 async def get_conversation(
     conversation_id: uuid.UUID,
+    messages_skip: int = 0,
+    messages_limit: int = 50,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(
-        select(Conversation)
-        .options(selectinload(Conversation.messages))
-        .where(
+        select(Conversation).where(
             Conversation.id == conversation_id,
             Conversation.tenant_id == current_user.tenant_id,
         )
@@ -134,6 +134,15 @@ async def get_conversation(
     conv = result.scalar_one_or_none()
     if not conv:
         raise HTTPException(status_code=404, detail="Conversation not found")
+
+    messages_result = await db.execute(
+        select(Message)
+        .where(Message.conversation_id == conv.id)
+        .order_by(Message.created_at.asc())
+        .offset(messages_skip)
+        .limit(min(messages_limit, 100))
+    )
+    messages = messages_result.scalars().all()
 
     return {
         "id": str(conv.id),
@@ -147,6 +156,8 @@ async def get_conversation(
         "total_duration_seconds": conv.total_duration_seconds,
         "created_at": conv.created_at.isoformat(),
         "ended_at": conv.ended_at.isoformat() if conv.ended_at else None,
+        "messages_skip": messages_skip,
+        "messages_limit": messages_limit,
         "messages": [
             {
                 "id": str(m.id),
@@ -160,7 +171,7 @@ async def get_conversation(
                 "rag_sources": m.rag_sources,
                 "created_at": m.created_at.isoformat(),
             }
-            for m in conv.messages
+            for m in messages
         ],
     }
 
@@ -238,7 +249,6 @@ async def send_message(
         rag = get_rag_agent()
 
         if conv.knowledge_base_id:
-            from sqlalchemy.orm import selectinload
             from app.models.knowledge_base import KnowledgeBase
 
             kb_result = await db.execute(

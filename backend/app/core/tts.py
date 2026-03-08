@@ -6,17 +6,7 @@ from typing import Optional
 import httpx
 
 from app.core.config import settings
-
-
-SARVAM_LANGUAGE_CODES = {
-    "hi": "hi-IN",
-    "ta": "ta-IN",
-    "te": "te-IN",
-    "bn": "bn-IN",
-    "gu": "gu-IN",
-    "mr": "mr-IN",
-    "en": "en-IN",
-}
+from app.core.constants import SARVAM_LANGUAGE_CODES
 
 SARVAM_DEFAULT_SPEAKERS = {
     "hi": "meera",
