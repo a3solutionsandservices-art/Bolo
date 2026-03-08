@@ -1,4 +1,5 @@
 from __future__ import annotations
+import asyncio
 import uuid
 from datetime import datetime, timezone, timedelta
 from typing import Optional
@@ -87,7 +88,8 @@ async def create_subscription(
     tenant = tenant_result.scalar_one()
 
     if not tenant.stripe_customer_id:
-        customer = stripe.Customer.create(
+        customer = await asyncio.to_thread(
+            stripe.Customer.create,
             email=current_user.email,
             name=tenant.name,
             metadata={"tenant_id": str(tenant.id)},
@@ -95,7 +97,8 @@ async def create_subscription(
         tenant.stripe_customer_id = customer.id
         await db.commit()
 
-    session = stripe.checkout.Session.create(
+    session = await asyncio.to_thread(
+        stripe.checkout.Session.create,
         customer=tenant.stripe_customer_id,
         mode="subscription",
         line_items=[{"price": plan["price_id"], "quantity": 1}],
@@ -119,7 +122,8 @@ async def billing_portal(
     if not tenant.stripe_customer_id:
         raise HTTPException(status_code=400, detail="No billing account found")
 
-    session = stripe.billing_portal.Session.create(
+    session = await asyncio.to_thread(
+        stripe.billing_portal.Session.create,
         customer=tenant.stripe_customer_id,
         return_url=return_url,
     )
@@ -214,7 +218,7 @@ async def stripe_webhook(request: Request, db: AsyncSession = Depends(get_db)):
         stripe_sub_id = session_data.get("subscription")
 
         if stripe_sub_id:
-            stripe_sub = stripe.Subscription.retrieve(stripe_sub_id)
+            stripe_sub = await asyncio.to_thread(stripe.Subscription.retrieve, stripe_sub_id)
             sub = Subscription(
                 tenant_id=uuid.UUID(tenant_id),
                 stripe_subscription_id=stripe_sub_id,

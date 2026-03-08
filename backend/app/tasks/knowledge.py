@@ -61,8 +61,8 @@ async def _process_document_async(
                 aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
                 aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
             )
-            obj = s3.get_object(Bucket=settings.AWS_S3_BUCKET, Key=s3_key)
-            raw_bytes = obj["Body"].read()
+            obj = await asyncio.to_thread(s3.get_object, Bucket=settings.AWS_S3_BUCKET, Key=s3_key)
+            raw_bytes = await asyncio.to_thread(obj["Body"].read)
 
             text = _extract_text(raw_bytes, content_type)
 

@@ -70,7 +70,7 @@ async def get_overview(
         )
         .group_by(UsageEvent.event_type)
     )
-    usage_by_type = {row.event_type: {"total": float(row.total), "cost_usd": float(row.cost)} for row in usage_result}
+    usage_by_type = {row.event_type: {"total": float(row.total or 0), "cost_usd": float(row.cost or 0)} for row in usage_result}
 
     return {
         "period_days": days,

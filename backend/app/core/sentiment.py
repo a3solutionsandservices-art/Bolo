@@ -32,12 +32,24 @@ class SentimentResult:
     raw_response: dict
 
 
+_NEUTRAL = SentimentResult(
+    sentiment="neutral",
+    sentiment_score=0.0,
+    intent="other",
+    intent_confidence=0.0,
+    raw_response={},
+)
+
+
 class SentimentIntentAnalyzer:
     """LLM-based sentiment and intent detection."""
 
     _instance: Optional["SentimentIntentAnalyzer"] = None
 
     def __init__(self) -> None:
+        if not settings.OPENAI_API_KEY:
+            self._client = None
+            return
         from openai import AsyncOpenAI
 
         self._client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
@@ -49,6 +61,8 @@ class SentimentIntentAnalyzer:
         return cls._instance
 
     async def analyze(self, text: str, language: str = "en") -> SentimentResult:
+        if self._client is None:
+            return _NEUTRAL
         prompt = f"""Analyze the following text and respond ONLY with a JSON object.
 
 Text: "{text}"

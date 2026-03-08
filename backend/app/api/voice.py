@@ -16,7 +16,6 @@ from app.core.stt import get_stt
 from app.core.tts import get_tts
 from app.core.translation import get_translation_service
 from app.core.language_detection import get_language_detector
-from app.core.sentiment import get_sentiment_analyzer
 from app.core.security import decode_token, hash_api_key
 from app.db.base import get_db
 from app.middleware.auth import get_current_user

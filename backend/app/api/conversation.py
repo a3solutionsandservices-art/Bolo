@@ -203,6 +203,16 @@ async def send_message(
         transcript = await stt.transcribe(audio_bytes)
         content = transcript.text
         detected_lang = transcript.language
+        await UsageService.record(
+            db=db,
+            tenant_id=current_user.tenant_id,
+            conversation_id=conv.id,
+            event_type="stt",
+            quantity=transcript.duration_seconds / 60,
+            unit="minutes",
+            source_language=detected_lang,
+            model_used=transcript.provider,
+        )
 
     detector = get_language_detector()
     lang_result = detector.detect(content)
@@ -260,6 +270,17 @@ async def send_message(
             translator = get_translation_service()
             trans = await translator.translate(content, detected_lang, "en")
             question_in_english = trans.translated_text
+            await UsageService.record(
+                db=db,
+                tenant_id=current_user.tenant_id,
+                conversation_id=conv.id,
+                event_type="translation",
+                quantity=len(content),
+                unit="characters",
+                source_language=detected_lang,
+                target_language="en",
+                model_used=trans.model_used,
+            )
 
         response_text, rag_sources = await rag.generate_response(
             question=question_in_english,
@@ -273,10 +294,31 @@ async def send_message(
         translator = get_translation_service()
         trans = await translator.translate(content, detected_lang, conv.target_language)
         response_text = trans.translated_text
+        await UsageService.record(
+            db=db,
+            tenant_id=current_user.tenant_id,
+            conversation_id=conv.id,
+            event_type="translation",
+            quantity=len(content),
+            unit="characters",
+            source_language=detected_lang,
+            target_language=conv.target_language,
+            model_used=trans.model_used,
+        )
 
     tts_language = conv.target_language if conv.mode == ConversationMode.TRANSLATION else conv.source_language
     tts = get_tts()
     synth = await tts.synthesize(response_text, tts_language)
+    await UsageService.record(
+        db=db,
+        tenant_id=current_user.tenant_id,
+        conversation_id=conv.id,
+        event_type="tts",
+        quantity=len(response_text),
+        unit="characters",
+        source_language=tts_language,
+        model_used=settings.SARVAM_TTS_MODEL,
+    )
 
     audio_url = None
     try:

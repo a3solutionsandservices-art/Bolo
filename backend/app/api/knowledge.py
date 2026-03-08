@@ -3,7 +3,7 @@ import uuid
 from typing import Optional
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, BackgroundTasks, status
-from sqlalchemy import select, func
+from sqlalchemy import select, func, update
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
@@ -126,7 +126,11 @@ async def upload_document(
         status=DocumentStatus.PENDING,
     )
     db.add(doc)
-    kb.document_count = kb.document_count + 1
+    await db.execute(
+        update(KnowledgeBase)
+        .where(KnowledgeBase.id == kb.id)
+        .values(document_count=KnowledgeBase.document_count + 1)
+    )
     await db.commit()
     await db.refresh(doc)
 
@@ -278,7 +282,7 @@ def _extract_text(content: bytes, content_type: str) -> str:
             import pypdf
 
             reader = pypdf.PdfReader(io.BytesIO(content))
-            return "\n".join(page.extract_text() for page in reader.pages)
+            return "\n".join(page.extract_text() or "" for page in reader.pages)
         except ImportError:
             pass
 
