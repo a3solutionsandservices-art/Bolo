@@ -1,6 +1,17 @@
 from slowapi import Limiter
-from slowapi.util import get_remote_address
+from starlette.requests import Request
 
 from app.core.config import settings
 
-limiter = Limiter(key_func=get_remote_address, default_limits=[settings.RATE_LIMIT_DEFAULT])
+
+def _get_client_ip(request: Request) -> str:
+    forwarded_for = request.headers.get("X-Forwarded-For")
+    if forwarded_for:
+        return forwarded_for.split(",")[0].strip()
+    real_ip = request.headers.get("X-Real-IP")
+    if real_ip:
+        return real_ip.strip()
+    return request.client.host if request.client else "unknown"
+
+
+limiter = Limiter(key_func=_get_client_ip, default_limits=[settings.RATE_LIMIT_DEFAULT])

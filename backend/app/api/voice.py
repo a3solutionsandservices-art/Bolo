@@ -291,6 +291,8 @@ async def voice_stream(
     detector = get_language_detector()
 
     audio_buffer = bytearray()
+    conversation_history: list[dict] = []
+    knowledge_base_id: Optional[str] = None
 
     try:
         while True:
@@ -316,23 +318,59 @@ async def voice_stream(
                         "is_final": True,
                     })
 
-                    if mode == "translation" and detected_lang != target_language:
-                        trans = await translator.translate(
-                            transcript.text, detected_lang, target_language
+                    if mode == "translation":
+                        if detected_lang != target_language:
+                            trans = await translator.translate(
+                                transcript.text, detected_lang, target_language
+                            )
+                            await websocket.send_json({
+                                "type": "translation",
+                                "text": trans.translated_text,
+                                "source_language": detected_lang,
+                                "target_language": target_language,
+                            })
+                            synth = await tts.synthesize(trans.translated_text, target_language)
+                            await websocket.send_json({
+                                "type": "audio",
+                                "data": base64.b64encode(synth.audio_bytes).decode(),
+                                "format": "wav",
+                                "language": target_language,
+                            })
+
+                    elif mode in ("conversation", "agent"):
+                        from app.core.rag import get_rag_agent
+
+                        question = transcript.text
+                        if detected_lang != "en":
+                            trans = await translator.translate(question, detected_lang, "en")
+                            question = trans.translated_text
+
+                        conversation_history.append({"role": "user", "content": question})
+
+                        rag = get_rag_agent()
+                        namespace = knowledge_base_id or str(user.tenant_id)
+                        response_text, sources = await rag.generate_response(
+                            question=question,
+                            namespace=namespace,
+                            conversation_history=conversation_history[:-1],
+                            tenant_name=str(user.tenant_id),
+                            response_language=source_language if source_language != "auto" else detected_lang,
                         )
+                        conversation_history.append({"role": "assistant", "content": response_text})
+
                         await websocket.send_json({
-                            "type": "translation",
-                            "text": trans.translated_text,
-                            "source_language": detected_lang,
-                            "target_language": target_language,
+                            "type": "response",
+                            "text": response_text,
+                            "sources": sources[:3],
                         })
 
-                        synth = await tts.synthesize(trans.translated_text, target_language)
+                        reply_lang = source_language if source_language != "auto" else detected_lang
+                        synth = await tts.synthesize(response_text, reply_lang)
                         await websocket.send_json({
                             "type": "audio",
                             "data": base64.b64encode(synth.audio_bytes).decode(),
                             "format": "wav",
-                            "language": target_language,
+                            "language": reply_lang,
                         })
 
                 except Exception as e:
@@ -347,6 +385,7 @@ async def voice_stream(
                         source_language = msg.get("source_language", source_language)
                         target_language = msg.get("target_language", target_language)
                         mode = msg.get("mode", mode)
+                        knowledge_base_id = msg.get("knowledge_base_id", knowledge_base_id)
                 except Exception:
                     pass
 

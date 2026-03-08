@@ -1,4 +1,5 @@
 from __future__ import annotations
+import asyncio
 import time
 from dataclasses import dataclass
 from typing import Optional
@@ -70,9 +71,8 @@ class SarvamTranslate:
         tgt_code = SARVAM_LANGUAGE_CODES.get(target_language, "en-IN")
 
         chunks = self._split_text(text, max_chars=1000)
-        translated_parts: list[str] = []
 
-        for chunk in chunks:
+        async def _translate_chunk(chunk: str) -> str:
             payload = {
                 "input": chunk,
                 "source_language_code": src_code,
@@ -84,9 +84,9 @@ class SarvamTranslate:
             }
             resp = await self._client.post("/translate", json=payload)
             resp.raise_for_status()
-            data = resp.json()
-            translated_parts.append(data.get("translated_text", chunk))
+            return resp.json().get("translated_text", chunk)
 
+        translated_parts = await asyncio.gather(*[_translate_chunk(c) for c in chunks])
         translated = " ".join(translated_parts)
         return TranslationResult(
             translated_text=translated,

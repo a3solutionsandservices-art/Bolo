@@ -116,11 +116,12 @@ async def upload_document(
         raise HTTPException(status_code=404, detail="Knowledge base not found")
 
     content = await file.read()
+    content_type = file.content_type or "text/plain"
     doc = KnowledgeDocument(
         knowledge_base_id=kb.id,
         title=title,
         filename=file.filename,
-        content_type=file.content_type or "text/plain",
+        content_type=content_type,
         file_size_bytes=len(content),
         language=language,
         status=DocumentStatus.PENDING,
@@ -134,15 +135,42 @@ async def upload_document(
     await db.commit()
     await db.refresh(doc)
 
-    background_tasks.add_task(
-        _process_document,
-        doc_id=str(doc.id),
-        content=content,
-        content_type=file.content_type or "text/plain",
-        namespace=kb.pinecone_namespace,
-        language=language,
-        metadata={"kb_id": str(kb.id), "tenant_id": str(current_user.tenant_id)},
-    )
+    from app.core.config import settings as _settings
+
+    if _settings.AWS_ACCESS_KEY_ID and _settings.AWS_S3_BUCKET:
+        from app.services.storage import upload_document as s3_upload
+        from app.tasks.knowledge import process_document
+
+        s3_key = f"knowledge/{current_user.tenant_id}/{doc.id}/{file.filename}"
+        try:
+            await s3_upload(content, s3_key, content_type)
+            process_document.delay(
+                document_id=str(doc.id),
+                kb_id=str(kb.id),
+                namespace=kb.pinecone_namespace,
+                s3_key=s3_key,
+                content_type=content_type,
+            )
+        except Exception:
+            background_tasks.add_task(
+                _process_document,
+                doc_id=str(doc.id),
+                content=content,
+                content_type=content_type,
+                namespace=kb.pinecone_namespace,
+                language=language,
+                metadata={"kb_id": str(kb.id), "tenant_id": str(current_user.tenant_id)},
+            )
+    else:
+        background_tasks.add_task(
+            _process_document,
+            doc_id=str(doc.id),
+            content=content,
+            content_type=content_type,
+            namespace=kb.pinecone_namespace,
+            language=language,
+            metadata={"kb_id": str(kb.id), "tenant_id": str(current_user.tenant_id)},
+        )
 
     return {
         "id": str(doc.id),

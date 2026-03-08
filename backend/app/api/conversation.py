@@ -69,6 +69,19 @@ async def start_conversation(
         caller_metadata=body.caller_metadata,
     )
     db.add(conv)
+    await db.flush()
+
+    await UsageService.record(
+        db=db,
+        tenant_id=current_user.tenant_id,
+        conversation_id=conv.id,
+        event_type="conversation",
+        quantity=1,
+        unit="session",
+        source_language=body.source_language,
+        target_language=body.target_language,
+    )
+
     await db.commit()
     await db.refresh(conv)
 

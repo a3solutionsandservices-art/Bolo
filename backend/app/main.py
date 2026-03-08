@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+import sys
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
@@ -14,6 +16,23 @@ from app.core.limiter import limiter
 from app.api import auth, voice, conversation, knowledge, analytics, billing, tenants, telephony, voice_clones
 
 
+def _configure_logging() -> None:
+    log_level = logging.DEBUG if settings.DEBUG else logging.INFO
+    logging.basicConfig(
+        level=log_level,
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+        datefmt="%Y-%m-%dT%H:%M:%S",
+        handlers=[logging.StreamHandler(sys.stdout)],
+        force=True,
+    )
+    for noisy in ("httpx", "httpcore", "urllib3", "botocore", "boto3"):
+        logging.getLogger(noisy).setLevel(logging.WARNING)
+
+
+_configure_logging()
+logger = logging.getLogger(__name__)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     if not settings.DEBUG and settings.SECRET_KEY == "change-me-in-production":
@@ -21,9 +40,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             "SECRET_KEY must be changed from the default value in production. "
             "Set SECRET_KEY in your environment or .env file."
         )
-    print(f"Starting {settings.APP_NAME} v{settings.APP_VERSION}")
+    logger.info("Starting %s v%s", settings.APP_NAME, settings.APP_VERSION)
     yield
-    print("Shutting down...")
+    logger.info("Shutting down %s", settings.APP_NAME)
 
 
 app = FastAPI(
@@ -61,10 +80,25 @@ app.include_router(voice_clones.router, prefix="/api/v1")
 
 @app.get("/health")
 async def health_check():
+    from sqlalchemy import text
+    from app.db.base import engine
+
+    db_ok = False
+    try:
+        async with engine.connect() as conn:
+            await conn.execute(text("SELECT 1"))
+        db_ok = True
+    except Exception:
+        pass
+
+    status = "healthy" if db_ok else "degraded"
     return {
-        "status": "healthy",
+        "status": status,
         "version": settings.APP_VERSION,
         "service": settings.APP_NAME,
+        "checks": {
+            "database": "ok" if db_ok else "error",
+        },
     }
 
 
