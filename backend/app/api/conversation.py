@@ -192,7 +192,7 @@ async def send_message(
 
         audio_bytes = base64.b64decode(body.audio_base64)
         stt = get_stt()
-        transcript = stt.transcribe(audio_bytes)
+        transcript = await stt.transcribe(audio_bytes)
         content = transcript.text
         detected_lang = transcript.language
 

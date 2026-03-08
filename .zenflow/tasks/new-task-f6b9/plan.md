@@ -35,3 +35,9 @@ Full platform implementation covering all deliverables described in `spec.md`.
 - [x] Widget: Embeddable JS voice widget (`vaani.min.js`)
 - [x] Infra: Docker Compose, Dockerfile(s), Nginx config
 - [x] Docs: OpenAPI auto-generated + `/docs/api.md` summary
+- [x] Backend: Translation refactored to Sarvam Translate (primary) → IndicTrans2 → Google fallback
+- [x] Backend: Telephony router — Twilio inbound call + gather webhooks (`/api/v1/telephony`)
+- [x] SDK: React Native SDK (`sdk/react-native/`) — `VaaniClient`, `useVaani` hook
+- [x] SDK: Plain JS SDK (`sdk/js/`) — `VaaniClient` for browser/Node
+- [x] Bug fix: `await stt.transcribe()` in `conversation.py`
+- [x] `.env.example` updated with Twilio + Sarvam STT vars

@@ -1,0 +1,13 @@
+{
+  "name": "@vaaniai/react-native-sdk",
+  "version": "0.1.0",
+  "description": "VaaniAI React Native SDK for Indian language voice conversations",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "peerDependencies": {
+    "react": ">=18.0.0",
+    "react-native": ">=0.72.0"
+  },
+  "keywords": ["vaaniai", "voice", "speech", "indian-languages", "react-native"],
+  "license": "MIT"
+}

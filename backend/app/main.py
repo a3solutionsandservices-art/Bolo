@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 
 from app.core.config import settings
-from app.api import auth, voice, conversation, knowledge, analytics, billing, tenants
+from app.api import auth, voice, conversation, knowledge, analytics, billing, tenants, telephony
 
 
 @asynccontextmanager
@@ -44,6 +44,7 @@ app.include_router(knowledge.router, prefix="/api/v1")
 app.include_router(analytics.router, prefix="/api/v1")
 app.include_router(billing.router, prefix="/api/v1")
 app.include_router(tenants.router, prefix="/api/v1")
+app.include_router(telephony.router, prefix="/api/v1")
 
 
 @app.get("/health")
