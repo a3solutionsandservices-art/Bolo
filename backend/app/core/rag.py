@@ -120,7 +120,12 @@ class RAGAgent:
         response_language: str,
     ) -> tuple[list[dict], list[dict]]:
         """Shared logic: retrieve context and build the OpenAI messages list."""
-        sources = await self.query(question, namespace)
+        sources: list[dict] = []
+        if settings.PINECONE_API_KEY and settings.OPENAI_API_KEY:
+            try:
+                sources = await self.query(question, namespace)
+            except Exception:
+                pass
         context = "\n\n".join([s["content"] for s in sources[:3]])
 
         lang_display = settings.LANGUAGE_NAMES.get(response_language, response_language)
@@ -143,6 +148,12 @@ class RAGAgent:
         tenant_name: str,
         response_language: str = "en",
     ) -> tuple[str, list[dict]]:
+        if not settings.OPENAI_API_KEY:
+            return (
+                "I'm sorry, the AI assistant is not configured yet. Please set up an OpenAI API key.",
+                [],
+            )
+
         from openai import AsyncOpenAI
 
         client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
@@ -168,6 +179,10 @@ class RAGAgent:
         tenant_name: str,
         response_language: str = "en",
     ) -> AsyncGenerator[str, None]:
+        if not settings.OPENAI_API_KEY:
+            yield "I'm sorry, the AI assistant is not configured yet. Please set up an OpenAI API key."
+            return
+
         from openai import AsyncOpenAI
 
         client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)

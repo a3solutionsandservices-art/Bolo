@@ -49,3 +49,17 @@ Full platform implementation covering all deliverables described in `spec.md`.
 - [x] Bug fix: `pypdf` added to `pyproject.toml` dependencies
 - [x] Fix: Analytics, settings, billing pages moved under `/dashboard/` layout for auth guard
 - [x] Fix: Sidebar nav links updated to `/dashboard/analytics`, `/dashboard/settings`, `/dashboard/settings/billing`
+- [x] Fix: Deleted unauthenticated duplicate routes (old `/analytics`, `/settings`, `/settings/billing`)
+- [x] Fix: `tests/conftest.py` supports `TEST_DATABASE_URL` env var for PostgreSQL compatibility
+- [x] Fix: SECRET_KEY startup validation guard in `main.py` lifespan
+- [x] Fix: `telephony.py` — moved `import base64` to module top
+- [x] Fix: `tenants.py` widget snippet uses `settings.API_BASE_URL` (configurable)
+- [x] Fix: `tasks/voice_clone.py` uses explicit fresh event loop (safe for all Celery pool types)
+- [x] Fix: `backend/start.sh` — waits for DB, runs Alembic migrations, starts uvicorn
+- [x] Fix: `backend/Dockerfile` CMD updated to use `start.sh`
+- [x] Fix: RAG graceful degradation when PINECONE_API_KEY or OPENAI_API_KEY not set
+- [x] Fix: `infra/docker-compose.yml` demo-ready (DEBUG=true, UVICORN_WORKERS=1, migration order)
+- [x] Fix: `infra/nginx/nginx.local.conf` — HTTP-only nginx for local demo (no SSL certs required)
+- [x] Fix: docker-compose uses `nginx.local.conf` instead of SSL-requiring `nginx.conf`
+- [x] Fix: Frontend Dockerfile healthcheck uses `wget` (alpine-compatible, not curl)
+- [x] Fix: `NEXT_PUBLIC_API_URL` passed as Docker build arg so Next.js bakes it at build time
