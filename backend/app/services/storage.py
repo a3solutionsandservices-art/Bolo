@@ -1,4 +1,5 @@
 from __future__ import annotations
+import asyncio
 import uuid
 
 import boto3
@@ -26,7 +27,8 @@ async def upload_audio(audio_bytes: bytes, key: str, tenant_id: uuid.UUID) -> st
     s3 = _get_s3()
     bucket = settings.AWS_S3_BUCKET
 
-    s3.put_object(
+    await asyncio.to_thread(
+        s3.put_object,
         Bucket=bucket,
         Key=key,
         Body=audio_bytes,
@@ -34,7 +36,8 @@ async def upload_audio(audio_bytes: bytes, key: str, tenant_id: uuid.UUID) -> st
         Metadata={"tenant_id": str(tenant_id)},
     )
 
-    url = s3.generate_presigned_url(
+    url = await asyncio.to_thread(
+        s3.generate_presigned_url,
         "get_object",
         Params={"Bucket": bucket, "Key": key},
         ExpiresIn=86400,
@@ -46,7 +49,8 @@ async def upload_document(content: bytes, key: str, content_type: str) -> str:
     s3 = _get_s3()
     bucket = settings.AWS_S3_BUCKET
 
-    s3.put_object(
+    await asyncio.to_thread(
+        s3.put_object,
         Bucket=bucket,
         Key=key,
         Body=content,
@@ -57,7 +61,8 @@ async def upload_document(content: bytes, key: str, content_type: str) -> str:
 
 async def generate_presigned_url(key: str, expires_in: int = 3600) -> str:
     s3 = _get_s3()
-    return s3.generate_presigned_url(
+    return await asyncio.to_thread(
+        s3.generate_presigned_url,
         "get_object",
         Params={"Bucket": settings.AWS_S3_BUCKET, "Key": key},
         ExpiresIn=expires_in,

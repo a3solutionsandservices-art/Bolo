@@ -9,10 +9,17 @@ export class APIClient {
     this.config = config;
   }
 
+  private get authHeaders(): Record<string, string> {
+    return {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${this.config.apiKey}`,
+    };
+  }
+
   async startConversation(): Promise<string> {
     const res = await fetch(`${this.config.apiEndpoint}/api/v1/conversations`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", "X-Tenant-Id": this.config.tenantId },
+      headers: this.authHeaders,
       body: JSON.stringify({
         mode: this.config.mode || "conversation",
         source_language: this.config.language || "en",
@@ -31,7 +38,7 @@ export class APIClient {
       `${this.config.apiEndpoint}/api/v1/conversations/${conversationId}/message`,
       {
         method: "POST",
-        headers: { "Content-Type": "application/json", "X-Tenant-Id": this.config.tenantId },
+        headers: this.authHeaders,
         body: JSON.stringify({ content: text }),
       }
     );
@@ -53,7 +60,7 @@ export class APIClient {
 
     const res = await fetch(`${this.config.apiEndpoint}/api/v1/voice/transcribe`, {
       method: "POST",
-      headers: { "X-Tenant-Id": this.config.tenantId },
+      headers: { "Authorization": `Bearer ${this.config.apiKey}` },
       body: form,
     });
     if (!res.ok) throw new Error("Transcription failed");
@@ -67,9 +74,13 @@ export class APIClient {
     onError: (msg: string) => void
   ): void {
     const wsUrl = this.config.apiEndpoint.replace("https://", "wss://").replace("http://", "ws://");
-    this.ws = new WebSocket(
-      `${wsUrl}/api/v1/voice/stream?source_language=${this.config.language || "auto"}&target_language=${this.config.targetLanguage || "en"}&mode=${this.config.mode || "conversation"}`
-    );
+    const params = new URLSearchParams({
+      token: this.config.apiKey,
+      source_language: this.config.language || "auto",
+      target_language: this.config.targetLanguage || "en",
+      mode: this.config.mode || "conversation",
+    });
+    this.ws = new WebSocket(`${wsUrl}/api/v1/voice/stream?${params}`);
 
     this.ws.onmessage = (event) => {
       try {

@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, field_validator
 
 from app.core.security import (
     hash_password, verify_password,
@@ -27,6 +27,25 @@ class RegisterRequest(BaseModel):
     full_name: str
     tenant_name: str
     tenant_slug: str
+
+    @field_validator("password")
+    @classmethod
+    def password_strength(cls, v: str) -> str:
+        if len(v) < 8:
+            raise ValueError("Password must be at least 8 characters")
+        if not any(c.isupper() for c in v):
+            raise ValueError("Password must contain at least one uppercase letter")
+        if not any(c.isdigit() for c in v):
+            raise ValueError("Password must contain at least one digit")
+        return v
+
+    @field_validator("tenant_slug")
+    @classmethod
+    def slug_format(cls, v: str) -> str:
+        import re
+        if not re.match(r"^[a-z0-9-]{3,50}$", v):
+            raise ValueError("Slug must be 3-50 lowercase alphanumeric characters or hyphens")
+        return v
 
 
 class LoginRequest(BaseModel):

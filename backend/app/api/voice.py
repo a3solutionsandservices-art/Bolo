@@ -4,8 +4,13 @@ import time
 import uuid
 from typing import Optional
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, WebSocket, WebSocketDisconnect, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile, WebSocket, WebSocketDisconnect, status
 from fastapi.responses import Response
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+
+limiter = Limiter(key_func=get_remote_address)
+
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -15,9 +20,11 @@ from app.core.tts import get_tts
 from app.core.translation import get_translation_service
 from app.core.language_detection import get_language_detector
 from app.core.sentiment import get_sentiment_analyzer
+from app.core.security import decode_token, hash_api_key
 from app.db.base import get_db
 from app.middleware.auth import get_current_user
 from app.models.user import User
+from app.models.api_key import APIKey
 from app.services.usage import UsageService
 
 router = APIRouter(prefix="/voice", tags=["voice"])
@@ -80,7 +87,9 @@ class DetectLanguageResponse(BaseModel):
 
 
 @router.post("/transcribe", response_model=TranscribeResponse)
+@limiter.limit(settings.RATE_LIMIT_VOICE)
 async def transcribe_audio(
+    request: Request,
     audio: UploadFile = File(...),
     language: Optional[str] = Form(None),
     current_user: User = Depends(get_current_user),
@@ -113,7 +122,9 @@ async def transcribe_audio(
 
 
 @router.post("/synthesize")
+@limiter.limit(settings.RATE_LIMIT_VOICE)
 async def synthesize_speech(
+    request: Request,
     body: SynthesizeRequest,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -217,23 +228,64 @@ async def detect_language(
     )
 
 
+async def _ws_authenticate(token: str, db: AsyncSession) -> Optional[User]:
+    """Authenticate a WebSocket connection via JWT or API key."""
+    from sqlalchemy import select
+    from app.models.user import User as UserModel
+    try:
+        if token.startswith("vai_"):
+            key_hash = hash_api_key(token)
+            result = await db.execute(
+                select(APIKey).where(APIKey.key_hash == key_hash, APIKey.is_active == True)
+            )
+            api_key = result.scalar_one_or_none()
+            if not api_key:
+                return None
+            user_result = await db.execute(
+                select(UserModel).where(
+                    UserModel.tenant_id == api_key.tenant_id,
+                    UserModel.is_active == True,
+                )
+            )
+            return user_result.scalars().first()
+        else:
+            payload = decode_token(token)
+            if payload.get("type") != "access":
+                return None
+            user_id = payload.get("sub")
+            result = await db.execute(
+                select(UserModel).where(UserModel.id == uuid.UUID(user_id), UserModel.is_active == True)
+            )
+            return result.scalar_one_or_none()
+    except Exception:
+        return None
+
+
 @router.websocket("/stream")
 async def voice_stream(
     websocket: WebSocket,
+    token: str,
     session_id: Optional[str] = None,
     source_language: str = "auto",
     target_language: str = "en",
     mode: str = "translation",
+    db: AsyncSession = Depends(get_db),
 ):
     """
     WebSocket endpoint for real-time voice streaming.
 
+    Requires ?token=<jwt_or_api_key> query parameter.
     Client sends binary audio chunks, server responds with JSON events:
     - {"type": "transcript", "text": "...", "language": "hi", "is_final": true}
     - {"type": "translation", "text": "...", "language": "en"}
     - {"type": "audio", "data": "<base64>", "format": "wav"}
     - {"type": "error", "message": "..."}
     """
+    user = await _ws_authenticate(token, db)
+    if not user:
+        await websocket.close(code=4001)
+        return
+
     await websocket.accept()
     stt = get_stt()
     translator = get_translation_service()

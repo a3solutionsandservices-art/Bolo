@@ -1,4 +1,5 @@
 from __future__ import annotations
+import base64
 import json
 import time
 import uuid
@@ -267,10 +268,10 @@ async def send_message(
         trans = await translator.translate(content, detected_lang, conv.target_language)
         response_text = trans.translated_text
 
+    tts_language = conv.target_language if conv.mode == ConversationMode.TRANSLATION else conv.source_language
     tts = get_tts()
-    synth = await tts.synthesize(response_text, conv.source_language)
+    synth = await tts.synthesize(response_text, tts_language)
 
-    import boto3, io
     audio_url = None
     try:
         from app.services.storage import upload_audio
@@ -285,20 +286,20 @@ async def send_message(
 
     elapsed_ms = (time.perf_counter() - start_time) * 1000
 
+    import base64
+
     assistant_msg = Message(
         conversation_id=conv.id,
         role=MessageRole.ASSISTANT,
         content_original=response_text,
         source_language=conv.source_language,
-        target_language=conv.source_language,
+        target_language=tts_language,
         audio_url=audio_url,
         rag_sources=rag_sources,
         processing_latency_ms=elapsed_ms,
     )
     db.add(assistant_msg)
     await db.commit()
-
-    import base64
 
     return {
         "message_id": str(assistant_msg.id),

@@ -1,0 +1,191 @@
+from __future__ import annotations
+import uuid
+from typing import Optional
+
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
+from pydantic import BaseModel
+from sqlalchemy import select, update
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.db.base import get_db
+from app.middleware.auth import get_current_user
+from app.models.voice_clone import VoiceClone, VoiceCloneStatus
+from app.models.user import User
+from app.services.storage import upload_audio
+
+router = APIRouter(prefix="/voice-clones", tags=["voice-clones"])
+
+
+class CreateVoiceCloneRequest(BaseModel):
+    name: str
+    description: Optional[str] = None
+    language: str = "hi"
+
+
+class VoiceCloneResponse(BaseModel):
+    id: str
+    name: str
+    description: Optional[str]
+    language: str
+    status: str
+    sarvam_voice_id: Optional[str]
+    is_default: bool
+    sample_audio_urls: list[str]
+    created_at: str
+
+
+@router.post("", response_model=VoiceCloneResponse, status_code=status.HTTP_201_CREATED)
+async def create_voice_clone(
+    body: CreateVoiceCloneRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    clone = VoiceClone(
+        tenant_id=current_user.tenant_id,
+        name=body.name,
+        description=body.description,
+        language=body.language,
+        status=VoiceCloneStatus.PENDING,
+    )
+    db.add(clone)
+    await db.commit()
+    await db.refresh(clone)
+    return _to_response(clone)
+
+
+@router.get("", response_model=list[VoiceCloneResponse])
+async def list_voice_clones(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(VoiceClone)
+        .where(VoiceClone.tenant_id == current_user.tenant_id)
+        .order_by(VoiceClone.created_at.desc())
+    )
+    return [_to_response(c) for c in result.scalars().all()]
+
+
+@router.get("/{clone_id}", response_model=VoiceCloneResponse)
+async def get_voice_clone(
+    clone_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    clone = await _get_or_404(clone_id, current_user.tenant_id, db)
+    return _to_response(clone)
+
+
+@router.post("/{clone_id}/samples", response_model=VoiceCloneResponse)
+async def upload_sample_audio(
+    clone_id: uuid.UUID,
+    audio: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    clone = await _get_or_404(clone_id, current_user.tenant_id, db)
+
+    audio_bytes = await audio.read()
+    s3_key = f"voice-clones/{clone.id}/samples/{uuid.uuid4()}.wav"
+    try:
+        url = await upload_audio(audio_bytes, s3_key, current_user.tenant_id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to upload sample: {e}")
+
+    updated_urls = list(clone.sample_audio_urls or []) + [url]
+    await db.execute(
+        update(VoiceClone)
+        .where(VoiceClone.id == clone_id)
+        .values(sample_audio_urls=updated_urls)
+    )
+    await db.commit()
+    await db.refresh(clone)
+    return _to_response(clone)
+
+
+@router.post("/{clone_id}/train", response_model=VoiceCloneResponse)
+async def train_voice_clone(
+    clone_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    clone = await _get_or_404(clone_id, current_user.tenant_id, db)
+
+    if not clone.sample_audio_urls:
+        raise HTTPException(status_code=400, detail="Upload at least one audio sample before training")
+
+    if clone.status == VoiceCloneStatus.READY:
+        raise HTTPException(status_code=400, detail="Voice clone is already trained")
+
+    await db.execute(
+        update(VoiceClone)
+        .where(VoiceClone.id == clone_id)
+        .values(status=VoiceCloneStatus.TRAINING)
+    )
+    await db.commit()
+    await db.refresh(clone)
+    return _to_response(clone)
+
+
+@router.patch("/{clone_id}/default", response_model=VoiceCloneResponse)
+async def set_default_voice_clone(
+    clone_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    clone = await _get_or_404(clone_id, current_user.tenant_id, db)
+
+    if clone.status != VoiceCloneStatus.READY:
+        raise HTTPException(status_code=400, detail="Only READY voice clones can be set as default")
+
+    await db.execute(
+        update(VoiceClone)
+        .where(VoiceClone.tenant_id == current_user.tenant_id)
+        .values(is_default=False)
+    )
+    await db.execute(
+        update(VoiceClone)
+        .where(VoiceClone.id == clone_id)
+        .values(is_default=True)
+    )
+    await db.commit()
+    await db.refresh(clone)
+    return _to_response(clone)
+
+
+@router.delete("/{clone_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_voice_clone(
+    clone_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    clone = await _get_or_404(clone_id, current_user.tenant_id, db)
+    await db.delete(clone)
+    await db.commit()
+
+
+async def _get_or_404(clone_id: uuid.UUID, tenant_id: uuid.UUID, db: AsyncSession) -> VoiceClone:
+    result = await db.execute(
+        select(VoiceClone).where(
+            VoiceClone.id == clone_id,
+            VoiceClone.tenant_id == tenant_id,
+        )
+    )
+    clone = result.scalar_one_or_none()
+    if not clone:
+        raise HTTPException(status_code=404, detail="Voice clone not found")
+    return clone
+
+
+def _to_response(clone: VoiceClone) -> VoiceCloneResponse:
+    return VoiceCloneResponse(
+        id=str(clone.id),
+        name=clone.name,
+        description=clone.description,
+        language=clone.language,
+        status=clone.status.value,
+        sarvam_voice_id=clone.sarvam_voice_id,
+        is_default=clone.is_default,
+        sample_audio_urls=clone.sample_audio_urls or [],
+        created_at=clone.created_at.isoformat(),
+    )

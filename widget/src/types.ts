@@ -1,4 +1,5 @@
 export interface VaaniConfig {
+  apiKey: string;
   tenantId: string;
   apiEndpoint: string;
   language?: string;
