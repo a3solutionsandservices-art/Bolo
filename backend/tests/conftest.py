@@ -31,12 +31,8 @@ async def engine():
 
     _engine = create_async_engine(TEST_DATABASE_URL, **kwargs)
 
-    if _IS_SQLITE:
-        async with _engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-    else:
-        async with _engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
+    async with _engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
 
     yield _engine
 

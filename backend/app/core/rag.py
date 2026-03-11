@@ -24,6 +24,12 @@ class RAGAgent:
     def __init__(self) -> None:
         self._openai_client = None
 
+    def _get_openai_client(self):
+        if self._openai_client is None:
+            from openai import AsyncOpenAI
+            self._openai_client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+        return self._openai_client
+
     @classmethod
     def get_instance(cls) -> "RAGAgent":
         if cls._instance is None:
@@ -154,9 +160,7 @@ class RAGAgent:
                 [],
             )
 
-        from openai import AsyncOpenAI
-
-        client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+        client = self._get_openai_client()
         messages, sources = await self._build_messages(
             question, namespace, conversation_history, tenant_name, response_language
         )
@@ -183,9 +187,7 @@ class RAGAgent:
             yield "I'm sorry, the AI assistant is not configured yet. Please set up an OpenAI API key."
             return
 
-        from openai import AsyncOpenAI
-
-        client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+        client = self._get_openai_client()
         messages, _ = await self._build_messages(
             question, namespace, conversation_history, tenant_name, response_language
         )

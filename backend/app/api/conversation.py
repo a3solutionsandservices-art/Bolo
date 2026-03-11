@@ -3,6 +3,7 @@ import base64
 import json
 import time
 import uuid
+from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -438,8 +439,6 @@ async def end_conversation(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    from datetime import datetime, timezone
-
     result = await db.execute(
         select(Conversation).where(
             Conversation.id == conversation_id,

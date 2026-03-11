@@ -112,6 +112,7 @@ async def test_send_message_translation_mode(client: AsyncClient, auth_headers):
          patch("app.api.conversation.get_tts") as mock_get_tts, \
          patch("app.api.conversation.get_sentiment_analyzer") as mock_get_sent, \
          patch("app.api.conversation.get_language_detector") as mock_get_lang, \
+         patch("app.api.conversation.UsageService.record", new_callable=AsyncMock), \
          patch("app.services.storage.upload_audio", new_callable=AsyncMock) as mock_upload:
 
         mock_translator = MagicMock()

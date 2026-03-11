@@ -6,6 +6,8 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select, func, and_, case
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
+from app.core.db_utils import trunc_day, trunc_hour, as_date_str, as_datetime_str
 from app.db.base import get_db
 from app.middleware.auth import get_current_user
 from app.models.conversation import Conversation, ConversationStatus
@@ -95,7 +97,7 @@ async def get_conversation_analytics(
 
     daily_result = await db.execute(
         select(
-            func.date_trunc("day", Conversation.created_at).label("day"),
+            trunc_day(Conversation.created_at).label("day"),
             func.count(Conversation.id).label("count"),
         )
         .where(
@@ -121,7 +123,7 @@ async def get_conversation_analytics(
 
     return {
         "daily": [
-            {"date": row.day.date().isoformat(), "count": row.count}
+            {"date": as_date_str(row.day), "count": row.count}
             for row in daily_result
         ],
         "sentiment_distribution": {
@@ -152,8 +154,6 @@ async def get_language_analytics(
         .order_by(func.count(Conversation.id).desc())
     )
 
-    from app.core.config import settings
-
     return {
         "language_pairs": [
             {
@@ -178,7 +178,7 @@ async def get_latency_analytics(
 
     result = await db.execute(
         select(
-            func.date_trunc("hour", Message.created_at).label("hour"),
+            trunc_hour(Message.created_at).label("hour"),
             func.avg(Message.processing_latency_ms).label("avg_ms"),
             func.min(Message.processing_latency_ms).label("min_ms"),
             func.max(Message.processing_latency_ms).label("max_ms"),
@@ -197,7 +197,7 @@ async def get_latency_analytics(
     return {
         "hourly": [
             {
-                "hour": row.hour.isoformat(),
+                "hour": as_datetime_str(row.hour),
                 "avg_ms": float(row.avg_ms),
                 "min_ms": float(row.min_ms),
                 "max_ms": float(row.max_ms),

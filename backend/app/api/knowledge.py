@@ -129,11 +129,6 @@ async def upload_document(
         status=DocumentStatus.PENDING,
     )
     db.add(doc)
-    await db.execute(
-        update(KnowledgeBase)
-        .where(KnowledgeBase.id == kb.id)
-        .values(document_count=KnowledgeBase.document_count + 1)
-    )
     await db.commit()
     await db.refresh(doc)
 
@@ -298,6 +293,11 @@ async def _process_document(
 
             doc.status = DocumentStatus.READY
             doc.chunk_count = chunk_count
+            await db.execute(
+                update(KnowledgeBase)
+                .where(KnowledgeBase.id == doc.knowledge_base_id)
+                .values(document_count=KnowledgeBase.document_count + 1)
+            )
             await db.commit()
         except Exception as e:
             doc.status = DocumentStatus.FAILED
