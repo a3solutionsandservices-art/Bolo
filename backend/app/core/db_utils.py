@@ -1,4 +1,3 @@
-from __future__ import annotations
 
 from sqlalchemy import DateTime
 from sqlalchemy.ext.compiler import compiles
