@@ -15,8 +15,11 @@ const schema = z.object({
   email: z.string().email("Invalid email"),
   password: z.string().min(8, "Min 8 characters"),
   tenant_name: z.string().min(2, "Company name required"),
-  tenant_slug: z.string().min(2).regex(/^[a-z0-9-]+$/, "Lowercase letters, numbers, and hyphens only"),
 });
+
+function toSlug(name: string): string {
+  return name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
 
 type RegisterForm = z.infer<typeof schema>;
 
@@ -32,7 +35,10 @@ export default function RegisterPage() {
   const onSubmit = async (data: RegisterForm) => {
     setLoading(true);
     try {
-      const { data: tokenData } = await api.auth.register(data);
+      const { data: tokenData } = await api.auth.register({
+        ...data,
+        tenant_slug: toSlug(data.tenant_name),
+      });
       const payload = JSON.parse(atob(tokenData.access_token.split(".")[1]));
       login(tokenData.access_token, tokenData.refresh_token, {
         email: data.email,
@@ -67,7 +73,6 @@ export default function RegisterPage() {
               { name: "email" as const, label: "Email", type: "email", placeholder: "you@company.com" },
               { name: "password" as const, label: "Password", type: "password", placeholder: "••••••••" },
               { name: "tenant_name" as const, label: "Company Name", type: "text", placeholder: "Acme Corp" },
-              { name: "tenant_slug" as const, label: "Workspace URL", type: "text", placeholder: "acme-corp" },
             ].map(({ name, label, type, placeholder }) => (
               <div key={name}>
                 <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
