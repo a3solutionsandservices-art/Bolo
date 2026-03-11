@@ -63,3 +63,25 @@ Full platform implementation covering all deliverables described in `spec.md`.
 - [x] Fix: docker-compose uses `nginx.local.conf` instead of SSL-requiring `nginx.conf`
 - [x] Fix: Frontend Dockerfile healthcheck uses `wget` (alpine-compatible, not curl)
 - [x] Fix: `NEXT_PUBLIC_API_URL` passed as Docker build arg so Next.js bakes it at build time
+- [x] Fix: Stripe SDK calls wrapped with `asyncio.to_thread` (non-blocking async)
+- [x] Fix: S3 boto3 calls in Celery task wrapped with `asyncio.to_thread`
+- [x] Fix: `UsageService.record()` called after STT/TTS/Translation in `send_message`
+- [x] Fix: Atomic `document_count` increment via SQL UPDATE in knowledge.py
+- [x] Fix: `float(None)` crash in analytics.py — `or 0` fallback
+- [x] Fix: `SentimentIntentAnalyzer` guard for missing OPENAI_API_KEY
+- [x] Fix: PDF `page.extract_text() or ""` to prevent TypeError
+- [x] Fix: Deprecated `event_loop` fixture removed from conftest.py
+- [x] Fix: Rate limiter uses `X-Forwarded-For` / `X-Real-IP` headers for proxy-aware IP detection
+- [x] Fix: Translation chunks parallelized with `asyncio.gather`
+- [x] Fix: Smart document processing dispatch (S3+Celery or BackgroundTasks fallback)
+- [x] Fix: WebSocket voice stream supports all 3 modes (translation, conversation, agent)
+- [x] Fix: DB-connected health check at `/health`
+- [x] Fix: Shared limiter singleton (`app/core/limiter.py`) used by both main.py and voice.py
+- [x] Fix: `get_transcript` paginated (skip/limit params)
+- [x] Fix: `train_voice_clone` dispatches real Celery task to Sarvam API
+- [x] Fix: Voice clone upload guarded with 50 MB file-size limit
+- [x] Fix: Dashboard Quick Actions links fixed (`/dashboard/analytics`, `/dashboard/settings`)
+- [x] Fix: Widget TypeScript warnings — definite assignment assertions on private fields
+- [x] Fix: Widget builds cleanly to `dist/vaani.js` and `dist/vaani.min.js`
+- [x] Fix: Frontend ESLint config added (`.eslintrc.json`)
+- [x] Fix: `transcribeAndSend` refactored to `useCallback` in new conversation page

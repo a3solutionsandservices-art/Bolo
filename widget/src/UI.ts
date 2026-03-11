@@ -151,16 +151,16 @@ const CLOSE_SVG = `<svg width="16" height="16" viewBox="0 0 24 24" fill="current
 const PLAY_SVG = `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>`;
 
 export class WidgetUI {
-  private container: HTMLDivElement;
-  private btn: HTMLButtonElement;
-  private panel: HTMLDivElement;
-  private messagesEl: HTMLDivElement;
-  private textInput: HTMLTextAreaElement;
-  private micBtn: HTMLButtonElement;
-  private sendBtn: HTMLButtonElement;
-  private statusEl: HTMLDivElement;
-  private langFromSelect: HTMLSelectElement;
-  private langToSelect: HTMLSelectElement;
+  private container!: HTMLDivElement;
+  private btn!: HTMLButtonElement;
+  private panel!: HTMLDivElement;
+  private messagesEl!: HTMLDivElement;
+  private textInput!: HTMLTextAreaElement;
+  private micBtn!: HTMLButtonElement;
+  private sendBtn!: HTMLButtonElement;
+  private statusEl!: HTMLDivElement;
+  private langFromSelect!: HTMLSelectElement;
+  private langToSelect!: HTMLSelectElement;
   private isOpen = false;
   private config: VaaniConfig;
 

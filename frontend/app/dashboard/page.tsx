@@ -117,8 +117,8 @@ export default function DashboardPage() {
             {[
               { label: "Start a new conversation", href: "/dashboard/conversations/new", color: "bg-brand-600" },
               { label: "Upload knowledge documents", href: "/dashboard/knowledge", color: "bg-violet-600" },
-              { label: "View analytics", href: "/analytics", color: "bg-emerald-600" },
-              { label: "Get embed code", href: "/settings", color: "bg-amber-500" },
+              { label: "View analytics", href: "/dashboard/analytics", color: "bg-emerald-600" },
+              { label: "Get embed code", href: "/dashboard/settings", color: "bg-amber-500" },
             ].map(({ label, href, color }) => (
               <a
                 key={href}
