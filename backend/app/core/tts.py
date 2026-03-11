@@ -6,7 +6,7 @@ from typing import Optional
 import httpx
 
 from app.core.config import settings
-from app.core.constants import SARVAM_LANGUAGE_CODES
+from app.core.constants import SARVAM_LANGUAGE_CODES, split_text_into_chunks
 
 SARVAM_DEFAULT_SPEAKERS = {
     "hi": "meera",
@@ -133,21 +133,7 @@ class SarvamTTS:
         return base64.b64decode(audio_b64)
 
     def _split_text(self, text: str, max_chars: int) -> list[str]:
-        import re
-
-        sentences = re.split(r"(?<=[।.!?])\s+", text)
-        chunks: list[str] = []
-        current = ""
-        for sentence in sentences:
-            if len(current) + len(sentence) + 1 <= max_chars:
-                current = f"{current} {sentence}".strip() if current else sentence
-            else:
-                if current:
-                    chunks.append(current)
-                current = sentence
-        if current:
-            chunks.append(current)
-        return chunks or [text[:max_chars]]
+        return split_text_into_chunks(text, max_chars) or [text[:max_chars]]
 
     def _combine_audio_chunks(self, chunks: list[bytes]) -> bytes:
         import io

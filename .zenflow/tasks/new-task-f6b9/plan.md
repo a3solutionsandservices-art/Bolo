@@ -85,3 +85,5 @@ Full platform implementation covering all deliverables described in `spec.md`.
 - [x] Fix: Widget builds cleanly to `dist/vaani.js` and `dist/vaani.min.js`
 - [x] Fix: Frontend ESLint config added (`.eslintrc.json`)
 - [x] Fix: `transcribeAndSend` refactored to `useCallback` in new conversation page
+- [x] Fix: Shared `split_text_into_chunks` in `constants.py` — eliminates duplication across `tts.py` and `translation.py`
+- [x] Fix: Moved inline `import re` (auth.py), `import json` (sentiment.py, knowledge.py), `import io` (knowledge.py, tasks/knowledge.py), `import logging`/`import asyncio` (stt.py, translation.py) to module level

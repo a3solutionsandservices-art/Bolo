@@ -1,6 +1,8 @@
 from __future__ import annotations
 import asyncio
+import io
 import logging
+import uuid
 
 from app.celery_app import celery
 
@@ -26,7 +28,6 @@ async def _process_document_async(
     s3_key: str,
     content_type: str,
 ) -> None:
-    import uuid
     from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
     from sqlalchemy.orm import sessionmaker
     from sqlalchemy import select, update
@@ -105,7 +106,6 @@ def _extract_text(raw_bytes: bytes, content_type: str) -> str:
     if "pdf" in content_type:
         try:
             import pypdf
-            import io
             reader = pypdf.PdfReader(io.BytesIO(raw_bytes))
             return "\n".join(page.extract_text() or "" for page in reader.pages)
         except ImportError:
@@ -114,7 +114,6 @@ def _extract_text(raw_bytes: bytes, content_type: str) -> str:
     if "word" in content_type or "docx" in content_type:
         try:
             import docx
-            import io
             doc = docx.Document(io.BytesIO(raw_bytes))
             return "\n".join(p.text for p in doc.paragraphs)
         except ImportError:

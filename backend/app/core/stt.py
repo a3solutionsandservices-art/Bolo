@@ -1,6 +1,8 @@
 from __future__ import annotations
+import asyncio
 import base64
 import io
+import logging
 import time
 from dataclasses import dataclass
 from typing import Optional
@@ -276,14 +278,12 @@ class STTPipeline:
             except Exception as exc:
                 if settings.STT_FALLBACK_PROVIDER != "whisper":
                     raise
-                import logging
                 logging.getLogger(__name__).warning(
                     "Sarvam STT failed (%s), falling back to Whisper", exc
                 )
 
         whisper = self._get_whisper()
         if whisper:
-            import asyncio
             return await asyncio.to_thread(whisper.transcribe, audio_bytes, language)
 
         raise RuntimeError("No STT provider available. Set SARVAM_API_KEY or ensure Whisper model is loaded.")

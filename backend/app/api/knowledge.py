@@ -1,4 +1,6 @@
 from __future__ import annotations
+import io
+import json
 import uuid
 from typing import Optional
 
@@ -306,7 +308,6 @@ async def _process_document(
 def _extract_text(content: bytes, content_type: str) -> str:
     if "pdf" in content_type:
         try:
-            import io
             import pypdf
 
             reader = pypdf.PdfReader(io.BytesIO(content))
@@ -315,8 +316,6 @@ def _extract_text(content: bytes, content_type: str) -> str:
             pass
 
     if "json" in content_type:
-        import json
-
         data = json.loads(content.decode("utf-8"))
         if isinstance(data, dict):
             return json.dumps(data, ensure_ascii=False)

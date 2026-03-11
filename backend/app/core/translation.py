@@ -1,12 +1,13 @@
 from __future__ import annotations
 import asyncio
+import logging
 import time
 from dataclasses import dataclass
 from typing import Optional
 import httpx
 
 from app.core.config import settings
-from app.core.constants import SARVAM_LANGUAGE_CODES
+from app.core.constants import SARVAM_LANGUAGE_CODES, split_text_into_chunks
 
 FLORES_CODES = {
     "hi": "hin_Deva",
@@ -98,20 +99,7 @@ class SarvamTranslate:
         )
 
     def _split_text(self, text: str, max_chars: int) -> list[str]:
-        import re
-        sentences = re.split(r"(?<=[।.!?])\s+", text)
-        chunks: list[str] = []
-        current = ""
-        for s in sentences:
-            if len(current) + len(s) + 1 <= max_chars:
-                current = f"{current} {s}".strip() if current else s
-            else:
-                if current:
-                    chunks.append(current)
-                current = s
-        if current:
-            chunks.append(current)
-        return chunks or [text]
+        return split_text_into_chunks(text, max_chars)
 
     async def close(self) -> None:
         await self._client.aclose()
@@ -153,8 +141,6 @@ class IndicTransTranslate:
             return False
 
     async def translate(self, text: str, source_language: str, target_language: str) -> TranslationResult:
-        import asyncio
-
         start = time.perf_counter()
         if not self._load():
             raise RuntimeError("IndicTrans2 model unavailable")
@@ -246,13 +232,11 @@ class TranslationService:
             try:
                 return await SarvamTranslate.get_instance().translate(text, source_language, target_language)
             except Exception as exc:
-                import logging
                 logging.getLogger(__name__).warning("Sarvam Translate failed (%s), trying IndicTrans2", exc)
 
         try:
             return await IndicTransTranslate.get_instance().translate(text, source_language, target_language)
         except Exception as exc:
-            import logging
             logging.getLogger(__name__).warning("IndicTrans2 failed (%s), falling back to Google", exc)
 
         if settings.GOOGLE_TRANSLATE_API_KEY:

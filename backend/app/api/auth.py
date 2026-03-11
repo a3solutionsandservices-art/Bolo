@@ -1,4 +1,5 @@
 from __future__ import annotations
+import re
 import uuid
 from datetime import datetime, timezone
 
@@ -42,7 +43,6 @@ class RegisterRequest(BaseModel):
     @field_validator("tenant_slug")
     @classmethod
     def slug_format(cls, v: str) -> str:
-        import re
         if not re.match(r"^[a-z0-9-]{3,50}$", v):
             raise ValueError("Slug must be 3-50 lowercase alphanumeric characters or hyphens")
         return v

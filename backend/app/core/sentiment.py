@@ -1,4 +1,5 @@
 from __future__ import annotations
+import json
 from dataclasses import dataclass
 from typing import Optional
 import httpx
@@ -84,8 +85,6 @@ Respond with:
                 temperature=0.0,
                 max_tokens=150,
             )
-            import json
-
             raw = json.loads(response.choices[0].message.content)
             return SentimentResult(
                 sentiment=raw.get("sentiment", "neutral"),
