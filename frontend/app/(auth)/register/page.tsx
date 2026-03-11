@@ -19,7 +19,7 @@ const schema = z.object({
 
 function toSlug(name: string): string {
   const slug = name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-  return slug.length >= 2 ? slug : `workspace-${Date.now()}`;
+  return slug.length >= 2 ? slug : `workspace-${Math.random().toString(36).slice(2, 8)}`;
 }
 
 type RegisterForm = z.infer<typeof schema>;
