@@ -13,7 +13,7 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
         <h2 className="text-xl font-bold text-red-600 mb-4">Something went wrong</h2>
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
           <p className="text-sm font-mono text-red-800 break-all">{error.message}</p>
-          {error.stack && (
+          {error.stack && process.env.NODE_ENV === "development" && (
             <pre className="text-xs text-red-700 mt-2 overflow-auto max-h-48 whitespace-pre-wrap">{error.stack}</pre>
           )}
         </div>
