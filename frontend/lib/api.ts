@@ -1,8 +1,12 @@
 import axios from "axios";
 import Cookies from "js-cookie";
 
+const API_BASE = typeof window !== "undefined"
+  ? ""
+  : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000");
+
 export const apiClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000",
+  baseURL: API_BASE,
   headers: { "Content-Type": "application/json" },
 });
 
@@ -22,7 +26,7 @@ apiClient.interceptors.response.use(
       if (refreshToken) {
         try {
           const { data } = await axios.post(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/refresh`,
+            `${process.env.NEXT_PUBLIC_API_URL || ""}/api/v1/auth/refresh`,
             { refresh_token: refreshToken }
           );
           Cookies.set("access_token", data.access_token, { expires: 1 });
@@ -31,7 +35,9 @@ apiClient.interceptors.response.use(
         } catch {
           Cookies.remove("access_token");
           Cookies.remove("refresh_token");
-          window.location.href = "/login";
+          if (typeof window !== "undefined") {
+            window.location.href = "/login";
+          }
         }
       }
     }

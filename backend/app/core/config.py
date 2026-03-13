@@ -62,7 +62,13 @@ class Settings(BaseSettings):
 
     API_BASE_URL: str = "https://api.vaaniai.com"
 
-    CORS_ORIGINS: List[str] = ["http://localhost:3000", "https://app.vaaniai.com"]
+    CORS_ORIGINS: List[str] = [
+        "http://localhost",
+        "http://localhost:80",
+        "http://localhost:3000",
+        "http://localhost:8000",
+        "https://app.vaaniai.com",
+    ]
 
     RATE_LIMIT_DEFAULT: str = "100/minute"
     RATE_LIMIT_VOICE: str = "30/minute"
