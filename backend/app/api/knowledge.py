@@ -171,7 +171,7 @@ async def upload_document(
         "id": str(doc.id),
         "title": doc.title,
         "filename": doc.filename,
-        "status": doc.status.value,
+        "status": doc.status,
         "created_at": doc.created_at.isoformat(),
     }
 
@@ -196,7 +196,7 @@ async def list_documents(
             "id": str(d.id),
             "title": d.title,
             "filename": d.filename,
-            "status": d.status.value,
+            "status": d.status,
             "chunk_count": d.chunk_count,
             "language": d.language,
             "file_size_bytes": d.file_size_bytes,

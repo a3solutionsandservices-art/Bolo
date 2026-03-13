@@ -88,8 +88,8 @@ async def start_conversation(
     return ConversationResponse(
         id=str(conv.id),
         session_id=conv.session_id,
-        mode=conv.mode.value,
-        status=conv.status.value,
+        mode=conv.mode,
+        status=conv.status,
         source_language=conv.source_language,
         target_language=conv.target_language,
         message_count=0,
@@ -116,8 +116,8 @@ async def list_conversations(
         {
             "id": str(c.id),
             "session_id": c.session_id,
-            "mode": c.mode.value,
-            "status": c.status.value,
+            "mode": c.mode,
+            "status": c.status,
             "source_language": c.source_language,
             "target_language": c.target_language,
             "total_duration_seconds": c.total_duration_seconds,
@@ -158,8 +158,8 @@ async def get_conversation(
     return {
         "id": str(conv.id),
         "session_id": conv.session_id,
-        "mode": conv.mode.value,
-        "status": conv.status.value,
+        "mode": conv.mode,
+        "status": conv.status,
         "source_language": conv.source_language,
         "target_language": conv.target_language,
         "overall_sentiment": conv.overall_sentiment,
@@ -172,7 +172,7 @@ async def get_conversation(
         "messages": [
             {
                 "id": str(m.id),
-                "role": m.role.value,
+                "role": m.role,
                 "content_original": m.content_original,
                 "content_translated": m.content_translated,
                 "detected_language": m.detected_language,
@@ -261,7 +261,7 @@ async def send_message(
         )
         prev = list(reversed(prev_messages_result.scalars().all()))
         history = [
-            {"role": m.role.value, "content": m.content_original}
+            {"role": m.role, "content": m.content_original}
             for m in prev
         ]
 
@@ -420,7 +420,7 @@ async def get_transcript(
         "messages": [
             {
                 "timestamp": m.created_at.isoformat(),
-                "role": m.role.value,
+                "role": m.role,
                 "original": m.content_original,
                 "translated": m.content_translated,
                 "language": m.detected_language,

@@ -123,7 +123,7 @@ async def train_voice_clone(
     if clone.status in (VoiceCloneStatus.READY, VoiceCloneStatus.TRAINING):
         raise HTTPException(
             status_code=400,
-            detail=f"Voice clone is already {clone.status.value}",
+            detail=f"Voice clone is already {clone.status}",
         )
 
     await db.execute(
@@ -200,7 +200,7 @@ def _to_response(clone: VoiceClone) -> VoiceCloneResponse:
         name=clone.name,
         description=clone.description,
         language=clone.language,
-        status=clone.status.value,
+        status=clone.status,
         sarvam_voice_id=clone.sarvam_voice_id,
         is_default=clone.is_default,
         sample_audio_urls=clone.sample_audio_urls or [],

@@ -107,7 +107,7 @@ async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
     await db.commit()
     await db.refresh(user)
 
-    token_data = {"sub": str(user.id), "tenant_id": str(tenant.id), "role": user.role.value, "full_name": user.full_name}
+    token_data = {"sub": str(user.id), "tenant_id": str(tenant.id), "role": user.role, "full_name": user.full_name}
     return TokenResponse(
         access_token=create_access_token(token_data),
         refresh_token=create_refresh_token(token_data),
@@ -125,7 +125,7 @@ async def login(body: LoginRequest, db: AsyncSession = Depends(get_db)):
     user.last_login_at = datetime.now(timezone.utc)
     await db.commit()
 
-    token_data = {"sub": str(user.id), "tenant_id": str(user.tenant_id), "role": user.role.value, "full_name": user.full_name}
+    token_data = {"sub": str(user.id), "tenant_id": str(user.tenant_id), "role": user.role, "full_name": user.full_name}
     return TokenResponse(
         access_token=create_access_token(token_data),
         refresh_token=create_refresh_token(token_data),
@@ -147,7 +147,7 @@ async def refresh_token(body: RefreshRequest, db: AsyncSession = Depends(get_db)
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
 
-    token_data = {"sub": str(user.id), "tenant_id": str(user.tenant_id), "role": user.role.value, "full_name": user.full_name}
+    token_data = {"sub": str(user.id), "tenant_id": str(user.tenant_id), "role": user.role, "full_name": user.full_name}
     return TokenResponse(
         access_token=create_access_token(token_data),
         refresh_token=create_refresh_token(token_data),

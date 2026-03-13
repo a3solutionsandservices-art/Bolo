@@ -190,7 +190,7 @@ async def get_subscription(
         "subscription": {
             "id": str(sub.id),
             "plan_tier": sub.plan_tier,
-            "status": sub.status.value,
+            "status": sub.status,
             "current_period_start": sub.current_period_start.isoformat(),
             "current_period_end": sub.current_period_end.isoformat(),
             "cancel_at_period_end": sub.cancel_at_period_end,
