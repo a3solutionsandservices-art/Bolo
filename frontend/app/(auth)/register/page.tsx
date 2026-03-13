@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { Mic } from "lucide-react";
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
+import { parseJwt } from "@/lib/jwt";
 
 const schema = z.object({
   full_name: z.string().min(2, "Name required"),
@@ -40,12 +41,12 @@ export default function RegisterPage() {
         ...data,
         tenant_slug: toSlug(data.tenant_name),
       });
-      const payload = JSON.parse(atob(tokenData.access_token.split(".")[1]));
+      const payload = parseJwt(tokenData.access_token);
       login(tokenData.access_token, tokenData.refresh_token, {
         email: data.email,
         full_name: data.full_name,
-        role: payload.role,
-      }, payload.tenant_id);
+        role: (payload.role as string) || "tenant_admin",
+      }, payload.tenant_id as string);
       toast.success("Account created successfully!");
       router.push("/dashboard");
     } catch (error: unknown) {

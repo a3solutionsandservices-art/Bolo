@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { Mic } from "lucide-react";
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
+import { parseJwt } from "@/lib/jwt";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email"),
@@ -31,12 +32,12 @@ export default function LoginPage() {
     try {
       const { data: tokenData } = await api.auth.login(data.email, data.password);
 
-      const payload = JSON.parse(atob(tokenData.access_token.split(".")[1]));
+      const payload = parseJwt(tokenData.access_token);
       login(tokenData.access_token, tokenData.refresh_token, {
         email: data.email,
-        full_name: payload.full_name || data.email,
-        role: payload.role,
-      }, payload.tenant_id);
+        full_name: (payload.full_name as string) || data.email,
+        role: (payload.role as string) || "viewer",
+      }, payload.tenant_id as string);
 
       router.push("/dashboard");
     } catch {
