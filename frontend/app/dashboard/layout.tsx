@@ -4,6 +4,7 @@ import { useAuthStore } from "@/lib/auth-store";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Sidebar } from "@/components/layout/sidebar";
+import Cookies from "js-cookie";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuthStore();
@@ -15,7 +16,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, []);
 
   useEffect(() => {
-    if (mounted && !isAuthenticated) {
+    if (!mounted) return;
+    const hasCookie = !!Cookies.get("access_token");
+    if (!isAuthenticated && !hasCookie) {
       router.push("/login");
     }
   }, [mounted, isAuthenticated, router]);
@@ -28,7 +31,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     );
   }
 
-  if (!isAuthenticated) return null;
+  const hasCookie = typeof window !== "undefined" && !!Cookies.get("access_token");
+  if (!isAuthenticated && !hasCookie) return null;
 
   return (
     <div className="flex h-screen bg-gray-50">
