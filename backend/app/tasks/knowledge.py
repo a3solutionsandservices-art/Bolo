@@ -2,6 +2,9 @@ import asyncio
 import io
 import logging
 import uuid
+from pathlib import Path
+
+import boto3
 
 from app.celery_app import celery
 
@@ -55,10 +58,8 @@ async def _process_document_async(
 
         try:
             from app.services.storage import s3_configured
-            from pathlib import Path
 
             if s3_configured():
-                import boto3
                 s3 = boto3.client(
                     "s3",
                     region_name=settings.AWS_REGION,
@@ -68,7 +69,7 @@ async def _process_document_async(
                 obj = await asyncio.to_thread(s3.get_object, Bucket=settings.AWS_S3_BUCKET, Key=s3_key)
                 raw_bytes = await asyncio.to_thread(obj["Body"].read)
             else:
-                local_path = Path("/app/media") / s3_key
+                local_path = Path("/app/media") / s3_key  # local fallback when S3 not configured
                 raw_bytes = await asyncio.to_thread(local_path.read_bytes)
 
             text = _extract_text(raw_bytes, content_type)

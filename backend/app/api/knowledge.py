@@ -135,7 +135,7 @@ async def upload_document(
     await _upload_document(content, s3_key, content_type)
 
     if s3_configured():
-        from app.tasks.knowledge import process_document
+        from app.tasks.knowledge import process_document  # deferred to avoid circular import
 
         try:
             process_document.delay(

@@ -20,7 +20,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-RUN mkdir -p models uploads audio_cache && chmod +x start.sh
+RUN mkdir -p models uploads audio_cache media && chmod +x start.sh
 
 EXPOSE 8000
 
