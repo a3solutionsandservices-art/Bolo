@@ -12,6 +12,7 @@ import {
   Key,
   Mic,
   LogOut,
+  Puzzle,
 } from "lucide-react";
 import { clsx } from "clsx";
 import { useAuthStore } from "@/lib/auth-store";
@@ -22,6 +23,7 @@ const navItems = [
   { href: "/dashboard/conversations", icon: MessageSquare, label: "Conversations" },
   { href: "/dashboard/knowledge", icon: BookOpen, label: "Knowledge Bases" },
   { href: "/dashboard/voice-clones", icon: Mic, label: "Voice Clones" },
+  { href: "/dashboard/integrations", icon: Puzzle, label: "Integrations" },
   { href: "/dashboard/analytics", icon: BarChart3, label: "Analytics" },
   { href: "/dashboard/api-keys", icon: Key, label: "API Keys" },
   { href: "/dashboard/settings", icon: Settings, label: "Settings" },

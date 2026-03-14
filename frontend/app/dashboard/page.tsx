@@ -115,10 +115,10 @@ export default function DashboardPage() {
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
           <div className="space-y-3">
             {[
-              { label: "Start a new conversation", href: "/dashboard/conversations/new", color: "bg-brand-600" },
+              { label: "Build a widget integration", href: "/dashboard/integrations", color: "bg-brand-600" },
               { label: "Upload knowledge documents", href: "/dashboard/knowledge", color: "bg-violet-600" },
               { label: "View analytics", href: "/dashboard/analytics", color: "bg-emerald-600" },
-              { label: "Get embed code", href: "/dashboard/settings", color: "bg-amber-500" },
+              { label: "Start a new conversation", href: "/dashboard/conversations", color: "bg-amber-500" },
             ].map(({ label, href, color }) => (
               <a
                 key={href}
