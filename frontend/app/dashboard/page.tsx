@@ -1,8 +1,11 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { MessageSquare, Mic, Languages, Zap } from "lucide-react";
+import { ProductTour, TourLauncher } from "@/components/ui/product-tour";
+import { DASHBOARD_TOUR } from "@/lib/tour-steps";
 
 interface OverviewData {
   total_conversations: number;
@@ -37,7 +40,23 @@ function StatCard({ title, value, subtitle, icon: Icon, color }: {
   );
 }
 
+const TOUR_KEY = "vaaniai_tour_done";
+
 export default function DashboardPage() {
+  const [tourActive, setTourActive] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && !localStorage.getItem(TOUR_KEY)) {
+      const t = setTimeout(() => setTourActive(true), 800);
+      return () => clearTimeout(t);
+    }
+  }, []);
+
+  const finishTour = () => {
+    localStorage.setItem(TOUR_KEY, "1");
+    setTourActive(false);
+  };
+
   const { data, isLoading } = useQuery<OverviewData>({
     queryKey: ["analytics-overview"],
     queryFn: () => api.analytics.overview(30).then((r) => r.data),
@@ -60,9 +79,20 @@ export default function DashboardPage() {
 
   return (
     <div className="p-8">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-500 mt-1">Last 30 days overview</p>
+      {tourActive && (
+        <ProductTour
+          steps={DASHBOARD_TOUR}
+          onFinish={finishTour}
+          onSkip={finishTour}
+        />
+      )}
+
+      <div className="mb-8 flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-gray-500 mt-1">Last 30 days overview</p>
+        </div>
+        <TourLauncher onStart={() => setTourActive(true)} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -111,7 +141,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
+        <div className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm" data-tour="quick-actions">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
           <div className="space-y-3">
             {[

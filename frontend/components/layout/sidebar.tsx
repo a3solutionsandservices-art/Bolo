@@ -13,21 +13,23 @@ import {
   Mic,
   LogOut,
   Puzzle,
+  HelpCircle,
 } from "lucide-react";
 import { clsx } from "clsx";
 import { useAuthStore } from "@/lib/auth-store";
 import { useRouter } from "next/navigation";
 
 const navItems = [
-  { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { href: "/dashboard/conversations", icon: MessageSquare, label: "Conversations" },
-  { href: "/dashboard/knowledge", icon: BookOpen, label: "Knowledge Bases" },
-  { href: "/dashboard/voice-clones", icon: Mic, label: "Voice Clones" },
-  { href: "/dashboard/integrations", icon: Puzzle, label: "Integrations" },
-  { href: "/dashboard/analytics", icon: BarChart3, label: "Analytics" },
-  { href: "/dashboard/api-keys", icon: Key, label: "API Keys" },
-  { href: "/dashboard/settings", icon: Settings, label: "Settings" },
-  { href: "/dashboard/settings/billing", icon: CreditCard, label: "Billing" },
+  { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard", tour: "sidebar-dashboard" },
+  { href: "/dashboard/conversations", icon: MessageSquare, label: "Conversations", tour: "sidebar-conversations" },
+  { href: "/dashboard/knowledge", icon: BookOpen, label: "Knowledge Bases", tour: "sidebar-knowledge" },
+  { href: "/dashboard/voice-clones", icon: Mic, label: "Voice Clones", tour: "sidebar-voice-clones" },
+  { href: "/dashboard/integrations", icon: Puzzle, label: "Integrations", tour: "sidebar-integrations" },
+  { href: "/dashboard/analytics", icon: BarChart3, label: "Analytics", tour: "sidebar-analytics" },
+  { href: "/dashboard/api-keys", icon: Key, label: "API Keys", tour: "sidebar-api-keys" },
+  { href: "/dashboard/settings", icon: Settings, label: "Settings", tour: "sidebar-settings" },
+  { href: "/dashboard/settings/billing", icon: CreditCard, label: "Billing", tour: undefined },
+  { href: "/dashboard/help", icon: HelpCircle, label: "Help & Guides", tour: undefined },
 ];
 
 export function Sidebar() {
@@ -52,10 +54,11 @@ export function Sidebar() {
       </div>
 
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-        {navItems.map(({ href, icon: Icon, label }) => (
+        {navItems.map(({ href, icon: Icon, label, tour }) => (
           <Link
             key={href}
             href={href}
+            data-tour={tour}
             className={clsx(
               "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
               pathname === href || pathname.startsWith(href + "/")
