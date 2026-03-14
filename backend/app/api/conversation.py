@@ -397,7 +397,7 @@ async def get_transcript(
         .where(Message.conversation_id == conv.id)
         .order_by(Message.created_at.asc())
         .offset(skip)
-        .limit(min(limit, 500))
+        .limit(min(limit, 200))
     )
     messages = messages_result.scalars().all()
 

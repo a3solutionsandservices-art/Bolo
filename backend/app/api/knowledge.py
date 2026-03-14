@@ -9,11 +9,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
 
 from app.core.rag import get_rag_agent
-from app.db.base import get_db
+from app.db.base import get_db, AsyncSessionLocal
 from app.middleware.auth import get_current_user
 from app.models.knowledge_base import KnowledgeBase, KnowledgeDocument, DocumentStatus
 from app.models.user import User
-from app.services.storage import _s3_configured, upload_document as _upload_document
+from app.services.storage import s3_configured, upload_document as _upload_document
 
 router = APIRouter(prefix="/knowledge-bases", tags=["knowledge"])
 
@@ -134,7 +134,7 @@ async def upload_document(
     s3_key = f"knowledge/{current_user.tenant_id}/{doc.id}/{file.filename}"
     await _upload_document(content, s3_key, content_type)
 
-    if _s3_configured():
+    if s3_configured():
         from app.tasks.knowledge import process_document
 
         try:
@@ -268,9 +268,6 @@ async def _process_document(
     language: str,
     metadata: dict,
 ) -> None:
-    from app.db.base import AsyncSessionLocal
-    from sqlalchemy import select
-
     text = _extract_text(content, content_type)
     rag = get_rag_agent()
 

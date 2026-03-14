@@ -54,10 +54,10 @@ async def _process_document_async(
         await db.commit()
 
         try:
-            from app.services.storage import _s3_configured
+            from app.services.storage import s3_configured
             from pathlib import Path
 
-            if _s3_configured():
+            if s3_configured():
                 import boto3
                 s3 = boto3.client(
                     "s3",

@@ -42,6 +42,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             "SECRET_KEY must be changed from the default value in production. "
             "Set SECRET_KEY in your environment or .env file."
         )
+    _MEDIA_DIR.mkdir(parents=True, exist_ok=True)
     logger.info("Starting %s v%s", settings.APP_NAME, settings.APP_VERSION)
     yield
     logger.info("Shutting down %s", settings.APP_NAME)
@@ -80,7 +81,6 @@ app.include_router(telephony.router, prefix="/api/v1")
 app.include_router(voice_clones.router, prefix="/api/v1")
 
 _MEDIA_DIR = Path("/app/media")
-_MEDIA_DIR.mkdir(parents=True, exist_ok=True)
 app.mount("/media", StaticFiles(directory=str(_MEDIA_DIR)), name="media")
 
 
