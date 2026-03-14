@@ -1,5 +1,4 @@
 import base64
-import json
 import time
 import uuid
 from datetime import datetime, timezone
@@ -7,22 +6,18 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
-from sqlalchemy import select, update
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config import settings
-from app.core.stt import get_stt
-from app.core.tts import get_tts
-from app.core.translation import get_translation_service
-from app.core.language_detection import get_language_detector
-from app.core.sentiment import get_sentiment_analyzer
 from app.core.rag import get_rag_agent
+from app.core.sentiment import get_sentiment_analyzer
 from app.db.base import get_db
 from app.middleware.auth import get_current_user
 from app.models.conversation import Conversation, ConversationMode, ConversationStatus
 from app.models.knowledge_base import KnowledgeBase
 from app.models.message import Message, MessageRole
 from app.models.user import User
+from app.services import ai_ops
 from app.services.storage import upload_audio
 from app.services.usage import UsageService
 
@@ -53,6 +48,73 @@ class ConversationResponse(BaseModel):
     target_language: str
     message_count: int
     created_at: str
+
+
+def _serialize_message(m: Message) -> dict:
+    return {
+        "id": str(m.id),
+        "role": m.role,
+        "content_original": m.content_original,
+        "content_translated": m.content_translated,
+        "detected_language": m.detected_language,
+        "sentiment": m.sentiment,
+        "intent": m.intent,
+        "audio_url": m.audio_url,
+        "rag_sources": m.rag_sources,
+        "created_at": m.created_at.isoformat(),
+    }
+
+
+def _serialize_transcript_message(m: Message) -> dict:
+    return {
+        "timestamp": m.created_at.isoformat(),
+        "role": m.role,
+        "original": m.content_original,
+        "translated": m.content_translated,
+        "language": m.detected_language,
+        "sentiment": m.sentiment,
+        "intent": m.intent,
+    }
+
+
+async def _get_conv_or_404(
+    conversation_id: uuid.UUID,
+    tenant_id: uuid.UUID,
+    db: AsyncSession,
+    require_active: bool = False,
+) -> Conversation:
+    filters = [
+        Conversation.id == conversation_id,
+        Conversation.tenant_id == tenant_id,
+    ]
+    if require_active:
+        filters.append(Conversation.status == ConversationStatus.ACTIVE)
+
+    result = await db.execute(select(Conversation).where(*filters))
+    conv = result.scalar_one_or_none()
+    if not conv:
+        detail = "Active conversation not found" if require_active else "Conversation not found"
+        raise HTTPException(status_code=404, detail=detail)
+    return conv
+
+
+async def _get_messages(
+    conversation_id: uuid.UUID,
+    db: AsyncSession,
+    skip: int = 0,
+    limit: int = 50,
+    max_limit: int = 100,
+    ascending: bool = True,
+) -> list[Message]:
+    order = Message.created_at.asc() if ascending else Message.created_at.desc()
+    result = await db.execute(
+        select(Message)
+        .where(Message.conversation_id == conversation_id)
+        .order_by(order)
+        .offset(skip)
+        .limit(min(limit, max_limit))
+    )
+    return result.scalars().all()
 
 
 @router.post("", response_model=ConversationResponse, status_code=status.HTTP_201_CREATED)
@@ -138,24 +200,8 @@ async def get_conversation(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    result = await db.execute(
-        select(Conversation).where(
-            Conversation.id == conversation_id,
-            Conversation.tenant_id == current_user.tenant_id,
-        )
-    )
-    conv = result.scalar_one_or_none()
-    if not conv:
-        raise HTTPException(status_code=404, detail="Conversation not found")
-
-    messages_result = await db.execute(
-        select(Message)
-        .where(Message.conversation_id == conv.id)
-        .order_by(Message.created_at.asc())
-        .offset(messages_skip)
-        .limit(min(messages_limit, 100))
-    )
-    messages = messages_result.scalars().all()
+    conv = await _get_conv_or_404(conversation_id, current_user.tenant_id, db)
+    messages = await _get_messages(conv.id, db, skip=messages_skip, limit=messages_limit)
 
     return {
         "id": str(conv.id),
@@ -171,21 +217,7 @@ async def get_conversation(
         "ended_at": conv.ended_at.isoformat() if conv.ended_at else None,
         "messages_skip": messages_skip,
         "messages_limit": messages_limit,
-        "messages": [
-            {
-                "id": str(m.id),
-                "role": m.role,
-                "content_original": m.content_original,
-                "content_translated": m.content_translated,
-                "detected_language": m.detected_language,
-                "sentiment": m.sentiment,
-                "intent": m.intent,
-                "audio_url": m.audio_url,
-                "rag_sources": m.rag_sources,
-                "created_at": m.created_at.isoformat(),
-            }
-            for m in messages
-        ],
+        "messages": [_serialize_message(m) for m in messages],
     }
 
 
@@ -196,43 +228,10 @@ async def send_message(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    result = await db.execute(
-        select(Conversation).where(
-            Conversation.id == conversation_id,
-            Conversation.tenant_id == current_user.tenant_id,
-            Conversation.status == ConversationStatus.ACTIVE,
-        )
-    )
-    conv = result.scalar_one_or_none()
-    if not conv:
-        raise HTTPException(status_code=404, detail="Active conversation not found")
-
+    conv = await _get_conv_or_404(conversation_id, current_user.tenant_id, db, require_active=True)
     start_time = time.perf_counter()
 
-    content = body.content
-    detected_lang = conv.source_language
-
-    if body.is_audio and body.audio_base64:
-        audio_bytes = base64.b64decode(body.audio_base64)
-        stt = get_stt()
-        transcript = await stt.transcribe(audio_bytes)
-        content = transcript.text
-        detected_lang = transcript.language
-        await UsageService.record(
-            db=db,
-            tenant_id=current_user.tenant_id,
-            conversation_id=conv.id,
-            event_type="stt",
-            quantity=transcript.duration_seconds / 60,
-            unit="minutes",
-            source_language=detected_lang,
-            model_used=transcript.provider,
-        )
-
-    detector = get_language_detector()
-    lang_result = detector.detect(content)
-    if lang_result.confidence > 0.8:
-        detected_lang = lang_result.language
+    content, detected_lang = await _resolve_input(body, conv, current_user.tenant_id, db)
 
     sentiment_analyzer = get_sentiment_analyzer()
     sentiment = await sentiment_analyzer.analyze(content, detected_lang)
@@ -251,89 +250,14 @@ async def send_message(
     db.add(user_msg)
     await db.flush()
 
-    response_text = ""
-    rag_sources: list[dict] = []
+    response_text, rag_sources = await _generate_response(conv, content, detected_lang, current_user.tenant_id, db)
 
-    if conv.mode in (ConversationMode.CONVERSATION, ConversationMode.AGENT):
-        prev_messages_result = await db.execute(
-            select(Message)
-            .where(Message.conversation_id == conv.id)
-            .order_by(Message.created_at.desc())
-            .limit(10)
-        )
-        prev = list(reversed(prev_messages_result.scalars().all()))
-        history = [
-            {"role": m.role, "content": m.content_original}
-            for m in prev
-        ]
-
-        rag = get_rag_agent()
-
-        if conv.knowledge_base_id:
-            kb_result = await db.execute(
-                select(KnowledgeBase).where(KnowledgeBase.id == conv.knowledge_base_id)
-            )
-            kb = kb_result.scalar_one_or_none()
-            namespace = kb.pinecone_namespace if kb else str(conv.tenant_id)
-        else:
-            namespace = str(conv.tenant_id)
-
-        question_in_english = content
-        if detected_lang != "en":
-            translator = get_translation_service()
-            trans = await translator.translate(content, detected_lang, "en")
-            question_in_english = trans.translated_text
-            await UsageService.record(
-                db=db,
-                tenant_id=current_user.tenant_id,
-                conversation_id=conv.id,
-                event_type="translation",
-                quantity=len(content),
-                unit="characters",
-                source_language=detected_lang,
-                target_language="en",
-                model_used=trans.model_used,
-            )
-
-        response_text, rag_sources = await rag.generate_response(
-            question=question_in_english,
-            namespace=namespace,
-            conversation_history=history,
-            tenant_name=str(conv.tenant_id),
-            response_language=conv.source_language,
-        )
-
-    elif conv.mode == ConversationMode.TRANSLATION:
-        translator = get_translation_service()
-        trans = await translator.translate(content, detected_lang, conv.target_language)
-        response_text = trans.translated_text
-        await UsageService.record(
-            db=db,
-            tenant_id=current_user.tenant_id,
-            conversation_id=conv.id,
-            event_type="translation",
-            quantity=len(content),
-            unit="characters",
-            source_language=detected_lang,
-            target_language=conv.target_language,
-            model_used=trans.model_used,
-        )
-
-    if not response_text:
-        raise HTTPException(status_code=400, detail="No response generated for this conversation mode")
-
-    tts_language = conv.target_language if conv.mode == ConversationMode.TRANSLATION else conv.source_language
-    tts = get_tts()
-    synth = await tts.synthesize(response_text, tts_language)
-    await UsageService.record(
+    synth = await ai_ops.synthesize(
+        text=response_text,
+        language=conv.target_language if conv.mode == ConversationMode.TRANSLATION else conv.source_language,
         db=db,
         tenant_id=current_user.tenant_id,
         conversation_id=conv.id,
-        event_type="tts",
-        quantity=len(response_text),
-        unit="characters",
-        source_language=tts_language,
-        model_used=settings.SARVAM_TTS_MODEL,
     )
 
     audio_url = None
@@ -353,7 +277,7 @@ async def send_message(
         role=MessageRole.ASSISTANT,
         content_original=response_text,
         source_language=conv.source_language,
-        target_language=tts_language,
+        target_language=synth.language,
         audio_url=audio_url,
         rag_sources=rag_sources,
         processing_latency_ms=elapsed_ms,
@@ -373,6 +297,68 @@ async def send_message(
     }
 
 
+async def _resolve_input(
+    body: MessageRequest,
+    conv: Conversation,
+    tenant_id: uuid.UUID,
+    db: AsyncSession,
+) -> tuple[str, str]:
+    """Decode audio or use text; detect language. Returns (content, detected_language)."""
+    content = body.content
+    detected_lang = conv.source_language
+
+    if body.is_audio and body.audio_base64:
+        audio_bytes = base64.b64decode(body.audio_base64)
+        transcript = await ai_ops.transcribe(audio_bytes, db, tenant_id, conv.id)
+        content = transcript.text
+        detected_lang = transcript.language
+
+    detected_lang = ai_ops.detect_language(content, fallback=detected_lang)
+    return content, detected_lang
+
+
+async def _generate_response(
+    conv: Conversation,
+    content: str,
+    detected_lang: str,
+    tenant_id: uuid.UUID,
+    db: AsyncSession,
+) -> tuple[str, list[dict]]:
+    """Generate a response based on conversation mode. Returns (response_text, rag_sources)."""
+    if conv.mode in (ConversationMode.CONVERSATION, ConversationMode.AGENT):
+        prev = await _get_messages(conv.id, db, limit=10, ascending=False)
+        history = [{"role": m.role, "content": m.content_original} for m in reversed(prev)]
+
+        question = content
+        if detected_lang != "en":
+            trans = await ai_ops.translate(content, detected_lang, "en", db, tenant_id, conv.id)
+            question = trans.translated_text
+
+        namespace = await _resolve_namespace(conv, db)
+        rag = get_rag_agent()
+        return await rag.generate_response(
+            question=question,
+            namespace=namespace,
+            conversation_history=history,
+            tenant_name=str(conv.tenant_id),
+            response_language=conv.source_language,
+        )
+
+    elif conv.mode == ConversationMode.TRANSLATION:
+        trans = await ai_ops.translate(content, detected_lang, conv.target_language, db, tenant_id, conv.id)
+        return trans.translated_text, []
+
+    raise HTTPException(status_code=400, detail="No response generated for this conversation mode")
+
+
+async def _resolve_namespace(conv: Conversation, db: AsyncSession) -> str:
+    if not conv.knowledge_base_id:
+        return str(conv.tenant_id)
+    result = await db.execute(select(KnowledgeBase).where(KnowledgeBase.id == conv.knowledge_base_id))
+    kb = result.scalar_one_or_none()
+    return kb.pinecone_namespace if kb else str(conv.tenant_id)
+
+
 @router.get("/{conversation_id}/transcript")
 async def get_transcript(
     conversation_id: uuid.UUID,
@@ -382,31 +368,14 @@ async def get_transcript(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    result = await db.execute(
-        select(Conversation).where(
-            Conversation.id == conversation_id,
-            Conversation.tenant_id == current_user.tenant_id,
-        )
-    )
-    conv = result.scalar_one_or_none()
-    if not conv:
-        raise HTTPException(status_code=404, detail="Conversation not found")
-
-    messages_result = await db.execute(
-        select(Message)
-        .where(Message.conversation_id == conv.id)
-        .order_by(Message.created_at.asc())
-        .offset(skip)
-        .limit(min(limit, 200))
-    )
-    messages = messages_result.scalars().all()
+    conv = await _get_conv_or_404(conversation_id, current_user.tenant_id, db)
+    messages = await _get_messages(conv.id, db, skip=skip, limit=limit, max_limit=200)
 
     if format == "text":
-        lines = []
-        for m in messages:
-            speaker = "User" if m.role == MessageRole.USER else "Assistant"
-            ts = m.created_at.strftime("%H:%M:%S")
-            lines.append(f"[{ts}] {speaker}: {m.content_original}")
+        lines = [
+            f"[{m.created_at.strftime('%H:%M:%S')}] {'User' if m.role == MessageRole.USER else 'Assistant'}: {m.content_original}"
+            for m in messages
+        ]
         return "\n".join(lines)
 
     return {
@@ -418,18 +387,7 @@ async def get_transcript(
         "ended_at": conv.ended_at.isoformat() if conv.ended_at else None,
         "skip": skip,
         "limit": limit,
-        "messages": [
-            {
-                "timestamp": m.created_at.isoformat(),
-                "role": m.role,
-                "original": m.content_original,
-                "translated": m.content_translated,
-                "language": m.detected_language,
-                "sentiment": m.sentiment,
-                "intent": m.intent,
-            }
-            for m in messages
-        ],
+        "messages": [_serialize_transcript_message(m) for m in messages],
     }
 
 
@@ -439,16 +397,7 @@ async def end_conversation(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    result = await db.execute(
-        select(Conversation).where(
-            Conversation.id == conversation_id,
-            Conversation.tenant_id == current_user.tenant_id,
-        )
-    )
-    conv = result.scalar_one_or_none()
-    if not conv:
-        raise HTTPException(status_code=404, detail="Conversation not found")
-
+    conv = await _get_conv_or_404(conversation_id, current_user.tenant_id, db)
     conv.status = ConversationStatus.COMPLETED
     conv.ended_at = datetime.now(timezone.utc)
     await db.commit()

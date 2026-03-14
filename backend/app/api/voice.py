@@ -9,19 +9,21 @@ from fastapi.responses import Response
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config import settings
-from app.core.limiter import limiter
-from app.core.stt import get_stt
-from app.core.tts import get_tts
-from app.core.translation import get_translation_service
-from app.core.language_detection import get_language_detector
 from sqlalchemy import select
+
+from app.core.config import settings
+from app.core.language_detection import get_language_detector
+from app.core.limiter import limiter
 from app.core.rag import get_rag_agent
 from app.core.security import decode_token, hash_api_key
+from app.core.stt import get_stt
+from app.core.translation import get_translation_service
+from app.core.tts import get_tts
 from app.db.base import get_db
 from app.middleware.auth import get_current_user
 from app.models.api_key import APIKey
 from app.models.user import User, UserRole
+from app.services import ai_ops
 from app.services.usage import UsageService
 
 router = APIRouter(prefix="/voice", tags=["voice"])
@@ -283,14 +285,11 @@ async def voice_stream(
         return
 
     await websocket.accept()
-    stt = get_stt()
-    translator = get_translation_service()
-    tts = get_tts()
-    detector = get_language_detector()
-
     audio_buffer = bytearray()
     conversation_history: list[dict] = []
     knowledge_base_id: Optional[str] = None
+
+    session = {"source_language": source_language, "target_language": target_language, "mode": mode, "knowledge_base_id": knowledge_base_id}
 
     try:
         while True:
@@ -300,75 +299,9 @@ async def voice_stream(
                 audio_buffer.extend(data["bytes"])
                 if len(audio_buffer) < 65536:
                     continue
-
-                chunk = bytes(audio_buffer)
-                audio_buffer.clear()
-
+                chunk, audio_buffer = bytes(audio_buffer), bytearray()
                 try:
-                    transcript = await stt.transcribe(chunk, language=None if source_language == "auto" else source_language)
-
-                    detected_lang = transcript.language
-                    await websocket.send_json({
-                        "type": "transcript",
-                        "text": transcript.text,
-                        "language": detected_lang,
-                        "confidence": transcript.confidence,
-                        "is_final": True,
-                    })
-
-                    if mode == "translation":
-                        if detected_lang != target_language:
-                            trans = await translator.translate(
-                                transcript.text, detected_lang, target_language
-                            )
-                            await websocket.send_json({
-                                "type": "translation",
-                                "text": trans.translated_text,
-                                "source_language": detected_lang,
-                                "target_language": target_language,
-                            })
-                            synth = await tts.synthesize(trans.translated_text, target_language)
-                            await websocket.send_json({
-                                "type": "audio",
-                                "data": base64.b64encode(synth.audio_bytes).decode(),
-                                "format": "wav",
-                                "language": target_language,
-                            })
-
-                    elif mode in ("conversation", "agent"):
-                        question = transcript.text
-                        if detected_lang != "en":
-                            trans = await translator.translate(question, detected_lang, "en")
-                            question = trans.translated_text
-
-                        conversation_history.append({"role": "user", "content": question})
-
-                        rag = get_rag_agent()
-                        namespace = knowledge_base_id or str(user.tenant_id)
-                        response_text, sources = await rag.generate_response(
-                            question=question,
-                            namespace=namespace,
-                            conversation_history=conversation_history[:-1],
-                            tenant_name=str(user.tenant_id),
-                            response_language=source_language if source_language != "auto" else detected_lang,
-                        )
-                        conversation_history.append({"role": "assistant", "content": response_text})
-
-                        await websocket.send_json({
-                            "type": "response",
-                            "text": response_text,
-                            "sources": sources[:3],
-                        })
-
-                        reply_lang = source_language if source_language != "auto" else detected_lang
-                        synth = await tts.synthesize(response_text, reply_lang)
-                        await websocket.send_json({
-                            "type": "audio",
-                            "data": base64.b64encode(synth.audio_bytes).decode(),
-                            "format": "wav",
-                            "language": reply_lang,
-                        })
-
+                    await _handle_audio_chunk(websocket, chunk, user, conversation_history, session)
                 except Exception as e:
                     await websocket.send_json({"type": "error", "message": str(e)})
 
@@ -378,10 +311,7 @@ async def voice_stream(
                     if msg.get("type") == "end":
                         break
                     elif msg.get("type") == "config":
-                        source_language = msg.get("source_language", source_language)
-                        target_language = msg.get("target_language", target_language)
-                        mode = msg.get("mode", mode)
-                        knowledge_base_id = msg.get("knowledge_base_id", knowledge_base_id)
+                        session.update({k: msg[k] for k in ("source_language", "target_language", "mode", "knowledge_base_id") if k in msg})
                 except Exception:
                     pass
 
@@ -389,3 +319,58 @@ async def voice_stream(
         pass
     finally:
         await websocket.close()
+
+
+async def _handle_audio_chunk(
+    websocket: WebSocket,
+    chunk: bytes,
+    user: User,
+    conversation_history: list[dict],
+    session: dict,
+) -> None:
+    source_language = session["source_language"]
+    target_language = session["target_language"]
+    mode = session["mode"]
+    knowledge_base_id = session.get("knowledge_base_id")
+
+    stt = get_stt()
+    transcript = await stt.transcribe(chunk, language=None if source_language == "auto" else source_language)
+    detected_lang = transcript.language
+
+    await websocket.send_json({
+        "type": "transcript",
+        "text": transcript.text,
+        "language": detected_lang,
+        "confidence": transcript.confidence,
+        "is_final": True,
+    })
+
+    if mode == "translation":
+        if detected_lang != target_language:
+            trans = await get_translation_service().translate(transcript.text, detected_lang, target_language)
+            await websocket.send_json({"type": "translation", "text": trans.translated_text, "source_language": detected_lang, "target_language": target_language})
+            synth = await get_tts().synthesize(trans.translated_text, target_language)
+            await websocket.send_json({"type": "audio", "data": base64.b64encode(synth.audio_bytes).decode(), "format": "wav", "language": target_language})
+
+    elif mode in ("conversation", "agent"):
+        question = transcript.text
+        if detected_lang != "en":
+            trans = await get_translation_service().translate(question, detected_lang, "en")
+            question = trans.translated_text
+
+        conversation_history.append({"role": "user", "content": question})
+
+        reply_lang = source_language if source_language != "auto" else detected_lang
+        namespace = knowledge_base_id or str(user.tenant_id)
+        response_text, sources = await get_rag_agent().generate_response(
+            question=question,
+            namespace=namespace,
+            conversation_history=conversation_history[:-1],
+            tenant_name=str(user.tenant_id),
+            response_language=reply_lang,
+        )
+        conversation_history.append({"role": "assistant", "content": response_text})
+
+        await websocket.send_json({"type": "response", "text": response_text, "sources": sources[:3]})
+        synth = await get_tts().synthesize(response_text, reply_lang)
+        await websocket.send_json({"type": "audio", "data": base64.b64encode(synth.audio_bytes).decode(), "format": "wav", "language": reply_lang})
