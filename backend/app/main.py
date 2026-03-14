@@ -4,9 +4,12 @@ import sys
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
+from fastapi.staticfiles import StaticFiles
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
@@ -75,6 +78,10 @@ app.include_router(billing.router, prefix="/api/v1")
 app.include_router(tenants.router, prefix="/api/v1")
 app.include_router(telephony.router, prefix="/api/v1")
 app.include_router(voice_clones.router, prefix="/api/v1")
+
+_MEDIA_DIR = Path("/app/media")
+_MEDIA_DIR.mkdir(parents=True, exist_ok=True)
+app.mount("/media", StaticFiles(directory=str(_MEDIA_DIR)), name="media")
 
 
 @app.get("/health")

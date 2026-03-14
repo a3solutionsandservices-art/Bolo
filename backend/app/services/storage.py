@@ -1,13 +1,25 @@
 import asyncio
+import os
 import uuid
+from pathlib import Path
 
 import boto3
 from botocore.exceptions import ClientError
 
 from app.core.config import settings
 
-
 _s3_client = None
+_LOCAL_MEDIA_DIR = Path("/app/media")
+
+
+def _s3_configured() -> bool:
+    return bool(
+        settings.AWS_ACCESS_KEY_ID
+        and settings.AWS_ACCESS_KEY_ID != "your-aws-key"
+        and settings.AWS_SECRET_ACCESS_KEY
+        and settings.AWS_SECRET_ACCESS_KEY != "your-aws-secret"
+        and settings.AWS_S3_BUCKET
+    )
 
 
 def _get_s3():
@@ -22,7 +34,20 @@ def _get_s3():
     return _s3_client
 
 
+def _local_url(key: str) -> str:
+    return f"/media/{key}"
+
+
+async def _save_local(audio_bytes: bytes, key: str) -> str:
+    dest = _LOCAL_MEDIA_DIR / key
+    await asyncio.to_thread(lambda: (dest.parent.mkdir(parents=True, exist_ok=True), dest.write_bytes(audio_bytes)))
+    return _local_url(key)
+
+
 async def upload_audio(audio_bytes: bytes, key: str, tenant_id: uuid.UUID) -> str:
+    if not _s3_configured():
+        return await _save_local(audio_bytes, key)
+
     s3 = _get_s3()
     bucket = settings.AWS_S3_BUCKET
 
@@ -45,6 +70,11 @@ async def upload_audio(audio_bytes: bytes, key: str, tenant_id: uuid.UUID) -> st
 
 
 async def upload_document(content: bytes, key: str, content_type: str) -> str:
+    if not _s3_configured():
+        dest = _LOCAL_MEDIA_DIR / key
+        await asyncio.to_thread(lambda: (dest.parent.mkdir(parents=True, exist_ok=True), dest.write_bytes(content)))
+        return f"local://{key}"
+
     s3 = _get_s3()
     bucket = settings.AWS_S3_BUCKET
 
@@ -59,6 +89,9 @@ async def upload_document(content: bytes, key: str, content_type: str) -> str:
 
 
 async def generate_presigned_url(key: str, expires_in: int = 3600) -> str:
+    if not _s3_configured():
+        return _local_url(key)
+
     s3 = _get_s3()
     return await asyncio.to_thread(
         s3.generate_presigned_url,

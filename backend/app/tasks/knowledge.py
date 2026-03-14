@@ -54,15 +54,22 @@ async def _process_document_async(
         await db.commit()
 
         try:
-            import boto3
-            s3 = boto3.client(
-                "s3",
-                region_name=settings.AWS_REGION,
-                aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-                aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-            )
-            obj = await asyncio.to_thread(s3.get_object, Bucket=settings.AWS_S3_BUCKET, Key=s3_key)
-            raw_bytes = await asyncio.to_thread(obj["Body"].read)
+            from app.services.storage import _s3_configured
+            from pathlib import Path
+
+            if _s3_configured():
+                import boto3
+                s3 = boto3.client(
+                    "s3",
+                    region_name=settings.AWS_REGION,
+                    aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+                    aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+                )
+                obj = await asyncio.to_thread(s3.get_object, Bucket=settings.AWS_S3_BUCKET, Key=s3_key)
+                raw_bytes = await asyncio.to_thread(obj["Body"].read)
+            else:
+                local_path = Path("/app/media") / s3_key
+                raw_bytes = await asyncio.to_thread(local_path.read_bytes)
 
             text = _extract_text(raw_bytes, content_type)
 

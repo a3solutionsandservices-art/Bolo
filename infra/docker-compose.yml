@@ -54,6 +54,7 @@ services:
     volumes:
       - backend_models:/app/models
       - audio_cache:/app/audio_cache
+      - media_data:/app/media
     restart: unless-stopped
 
   worker:
@@ -76,6 +77,7 @@ services:
       - backend
     volumes:
       - backend_models:/app/models
+      - media_data:/app/media
     restart: unless-stopped
 
   frontend:
@@ -101,6 +103,7 @@ services:
       - "80:80"
     volumes:
       - ./nginx/nginx.local.conf:/etc/nginx/nginx.conf:ro
+      - media_data:/app/media:ro
     depends_on:
       - backend
       - frontend
@@ -111,3 +114,4 @@ volumes:
   redis_data:
   backend_models:
   audio_cache:
+  media_data:

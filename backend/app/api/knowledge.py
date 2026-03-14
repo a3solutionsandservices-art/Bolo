@@ -13,6 +13,7 @@ from app.db.base import get_db
 from app.middleware.auth import get_current_user
 from app.models.knowledge_base import KnowledgeBase, KnowledgeDocument, DocumentStatus
 from app.models.user import User
+from app.services.storage import _s3_configured, upload_document as _upload_document
 
 router = APIRouter(prefix="/knowledge-bases", tags=["knowledge"])
 
@@ -130,15 +131,13 @@ async def upload_document(
     await db.commit()
     await db.refresh(doc)
 
-    from app.core.config import settings as _settings
+    s3_key = f"knowledge/{current_user.tenant_id}/{doc.id}/{file.filename}"
+    await _upload_document(content, s3_key, content_type)
 
-    if _settings.AWS_ACCESS_KEY_ID and _settings.AWS_S3_BUCKET:
-        from app.services.storage import upload_document as s3_upload
+    if _s3_configured():
         from app.tasks.knowledge import process_document
 
-        s3_key = f"knowledge/{current_user.tenant_id}/{doc.id}/{file.filename}"
         try:
-            await s3_upload(content, s3_key, content_type)
             process_document.delay(
                 document_id=str(doc.id),
                 kb_id=str(kb.id),
