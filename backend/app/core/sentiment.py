@@ -78,7 +78,7 @@ Respond with:
 
         try:
             response = await self._client.chat.completions.create(
-                model="gpt-4o-mini",
+                model=settings.SENTIMENT_MODEL,
                 messages=[{"role": "user", "content": prompt}],
                 response_format={"type": "json_object"},
                 temperature=0.0,

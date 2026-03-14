@@ -19,6 +19,7 @@ class Settings(BaseSettings):
 
     OPENAI_API_KEY: str = ""
     OPENAI_MODEL: str = "gpt-4o"
+    SENTIMENT_MODEL: str = "gpt-4o-mini"
 
     SARVAM_API_KEY: str = ""
     SARVAM_API_BASE: str = "https://api.sarvam.ai"

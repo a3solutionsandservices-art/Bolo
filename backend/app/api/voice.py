@@ -15,11 +15,13 @@ from app.core.stt import get_stt
 from app.core.tts import get_tts
 from app.core.translation import get_translation_service
 from app.core.language_detection import get_language_detector
+from sqlalchemy import select
+from app.core.rag import get_rag_agent
 from app.core.security import decode_token, hash_api_key
 from app.db.base import get_db
 from app.middleware.auth import get_current_user
-from app.models.user import User
 from app.models.api_key import APIKey
+from app.models.user import User, UserRole
 from app.services.usage import UsageService
 
 router = APIRouter(prefix="/voice", tags=["voice"])
@@ -225,8 +227,6 @@ async def detect_language(
 
 async def _ws_authenticate(token: str, db: AsyncSession) -> Optional[User]:
     """Authenticate a WebSocket connection via JWT or API key."""
-    from sqlalchemy import select
-    from app.models.user import User as UserModel
     try:
         if token.startswith("vai_"):
             key_hash = hash_api_key(token)
@@ -236,12 +236,11 @@ async def _ws_authenticate(token: str, db: AsyncSession) -> Optional[User]:
             api_key = result.scalar_one_or_none()
             if not api_key:
                 return None
-            from app.models.user import UserRole
             user_result = await db.execute(
-                select(UserModel).where(
-                    UserModel.tenant_id == api_key.tenant_id,
-                    UserModel.role == UserRole.TENANT_ADMIN,
-                    UserModel.is_active == True,
+                select(User).where(
+                    User.tenant_id == api_key.tenant_id,
+                    User.role == UserRole.TENANT_ADMIN,
+                    User.is_active == True,
                 )
             )
             return user_result.scalar_one_or_none()
@@ -251,7 +250,7 @@ async def _ws_authenticate(token: str, db: AsyncSession) -> Optional[User]:
                 return None
             user_id = payload.get("sub")
             result = await db.execute(
-                select(UserModel).where(UserModel.id == uuid.UUID(user_id), UserModel.is_active == True)
+                select(User).where(User.id == uuid.UUID(user_id), User.is_active == True)
             )
             return result.scalar_one_or_none()
     except Exception:
@@ -299,7 +298,7 @@ async def voice_stream(
 
             if "bytes" in data:
                 audio_buffer.extend(data["bytes"])
-                if len(audio_buffer) < 32000:
+                if len(audio_buffer) < 65536:
                     continue
 
                 chunk = bytes(audio_buffer)
@@ -337,8 +336,6 @@ async def voice_stream(
                             })
 
                     elif mode in ("conversation", "agent"):
-                        from app.core.rag import get_rag_agent
-
                         question = transcript.text
                         if detected_lang != "en":
                             trans = await translator.translate(question, detected_lang, "en")

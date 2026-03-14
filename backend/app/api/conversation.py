@@ -20,8 +20,10 @@ from app.core.rag import get_rag_agent
 from app.db.base import get_db
 from app.middleware.auth import get_current_user
 from app.models.conversation import Conversation, ConversationMode, ConversationStatus
+from app.models.knowledge_base import KnowledgeBase
 from app.models.message import Message, MessageRole
 from app.models.user import User
+from app.services.storage import upload_audio
 from app.services.usage import UsageService
 
 router = APIRouter(prefix="/conversations", tags=["conversations"])
@@ -109,7 +111,7 @@ async def list_conversations(
         .where(Conversation.tenant_id == current_user.tenant_id)
         .order_by(Conversation.created_at.desc())
         .offset(skip)
-        .limit(limit)
+        .limit(min(limit, 100))
     )
     convs = result.scalars().all()
     return [
@@ -268,8 +270,6 @@ async def send_message(
         rag = get_rag_agent()
 
         if conv.knowledge_base_id:
-            from app.models.knowledge_base import KnowledgeBase
-
             kb_result = await db.execute(
                 select(KnowledgeBase).where(KnowledgeBase.id == conv.knowledge_base_id)
             )
@@ -319,6 +319,9 @@ async def send_message(
             model_used=trans.model_used,
         )
 
+    if not response_text:
+        raise HTTPException(status_code=400, detail="No response generated for this conversation mode")
+
     tts_language = conv.target_language if conv.mode == ConversationMode.TRANSLATION else conv.source_language
     tts = get_tts()
     synth = await tts.synthesize(response_text, tts_language)
@@ -335,8 +338,6 @@ async def send_message(
 
     audio_url = None
     try:
-        from app.services.storage import upload_audio
-
         audio_url = await upload_audio(
             synth.audio_bytes,
             f"conversations/{conv.id}/messages/{uuid.uuid4()}.wav",
