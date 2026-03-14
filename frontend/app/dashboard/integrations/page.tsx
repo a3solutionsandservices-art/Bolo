@@ -20,6 +20,8 @@ import {
   Palette,
   Zap,
   ExternalLink,
+  X,
+  FileCode,
 } from "lucide-react";
 
 const LANGUAGES = [
@@ -95,7 +97,28 @@ const USE_CASES = [
   },
 ];
 
-const CONNECTORS = [
+type TemplateTab = { label: string; lang: string; code: (ctx: TemplateContext) => string };
+
+interface TemplateContext {
+  tenantId: string;
+  apiEndpoint: string;
+  widgetName: string;
+  primaryColor: string;
+  sourceLanguage: string;
+  targetLanguage: string;
+}
+
+interface Connector {
+  id: string;
+  label: string;
+  logo: string;
+  description: string;
+  steps: string[];
+  docsUrl: string;
+  templateTabs: TemplateTab[];
+}
+
+const CONNECTORS: Connector[] = [
   {
     id: "shopify",
     label: "Shopify",
@@ -103,70 +126,486 @@ const CONNECTORS = [
     description: "Add voice search to your Shopify store product pages",
     steps: [
       "Go to Shopify Admin → Online Store → Themes → Edit code",
-      "Open `theme.liquid` and paste the embed snippet before `</body>`",
+      "Open `theme.liquid` and paste the snippet before `</body>`",
       "Save and preview your store",
     ],
     docsUrl: "https://help.shopify.com/en/manual/online-store/themes/theme-structure",
+    templateTabs: [
+      {
+        label: "theme.liquid",
+        lang: "liquid",
+        code: (ctx) => `{% comment %} VaaniAI Multilingual Voice Widget {% endcomment %}
+<script>
+  window.VaaniConfig = {
+    tenantId: "${ctx.tenantId}",
+    apiEndpoint: "${ctx.apiEndpoint}",
+    widgetName: "${ctx.widgetName}",
+    primaryColor: "${ctx.primaryColor}",
+    position: "bottom-right",
+    mode: "agent",
+    language: "{{ shop.locale | replace: '-', '_' | downcase | truncate: 2, '' }}",
+    targetLanguage: "${ctx.targetLanguage}",
+    context: {
+      shop: "{{ shop.name }}",
+      page: "{{ page_title }}",
+      product: "{% if product %}{{ product.title }}{% endif %}"
+    }
+  };
+  (function(w,d,s,o,f,js,fjs){
+    w['VaaniWidget']=o;w[o]=w[o]||function(){(w[o].q=w[o].q||[]).push(arguments)};
+    js=d.createElement(s),fjs=d.getElementsByTagName(s)[0];
+    js.id=o;js.src=f;js.async=1;fjs.parentNode.insertBefore(js,fjs);
+  }(window,document,'script','vaani','${ctx.apiEndpoint}/widget/vaani.min.js'));
+  vaani('init', window.VaaniConfig);
+</script>`,
+      },
+      {
+        label: "Product page snippet",
+        lang: "liquid",
+        code: (ctx) => `{% comment %} vaani-voice-search.liquid — include on product pages {% endcomment %}
+<div id="vaani-search-bar" data-tenant="${ctx.tenantId}">
+  <button
+    onclick="vaani('openSearch')"
+    style="background:${ctx.primaryColor};color:#fff;border:none;border-radius:8px;padding:10px 18px;cursor:pointer;font-size:14px;"
+  >
+    🎤 Search in your language
+  </button>
+</div>
+
+<script>
+  vaani('on', 'search', function(query) {
+    window.location.href = '/search?q=' + encodeURIComponent(query.translated || query.original);
+  });
+</script>`,
+      },
+    ],
   },
   {
     id: "wordpress",
     label: "WordPress",
     logo: "📝",
-    description: "Embed the widget on any WordPress site or WooCommerce store",
+    description: "Embed on any WordPress site or WooCommerce store",
     steps: [
-      "Install a custom HTML plugin (e.g. Insert Headers and Footers)",
-      "Paste the embed snippet into the Footer Scripts section",
+      "Add the PHP snippet to your theme's `functions.php`",
+      "Or use a plugin like Insert Headers and Footers",
       "Save and visit your site",
     ],
     docsUrl: "https://wordpress.org/plugins/insert-headers-and-footers/",
+    templateTabs: [
+      {
+        label: "functions.php",
+        lang: "php",
+        code: (ctx) => `<?php
+/**
+ * VaaniAI Voice Widget Integration
+ * Add this to your theme's functions.php
+ */
+function vaaniai_enqueue_widget() {
+    $config = array(
+        'tenantId'       => '${ctx.tenantId}',
+        'apiEndpoint'    => '${ctx.apiEndpoint}',
+        'widgetName'     => '${ctx.widgetName}',
+        'primaryColor'   => '${ctx.primaryColor}',
+        'language'       => get_locale() ? substr(get_locale(), 0, 2) : '${ctx.sourceLanguage}',
+        'targetLanguage' => '${ctx.targetLanguage}',
+        'position'       => 'bottom-right',
+        'mode'           => 'agent',
+    );
+
+    wp_register_script(
+        'vaaniai-widget',
+        '${ctx.apiEndpoint}/widget/vaani.min.js',
+        array(),
+        null,
+        true
+    );
+    wp_enqueue_script('vaaniai-widget');
+    wp_add_inline_script(
+        'vaaniai-widget',
+        'window.VaaniConfig = ' . json_encode($config) . '; vaani("init", window.VaaniConfig);',
+        'before'
+    );
+}
+add_action('wp_enqueue_scripts', 'vaaniai_enqueue_widget');`,
+      },
+      {
+        label: "Shortcode widget",
+        lang: "php",
+        code: (ctx) => `<?php
+/**
+ * [vaaniai_button] shortcode — renders a voice search button anywhere in content
+ */
+function vaaniai_button_shortcode($atts) {
+    $a = shortcode_atts(array(
+        'label'    => 'Search in your language',
+        'language' => '${ctx.sourceLanguage}',
+    ), $atts);
+
+    return sprintf(
+        '<button onclick="vaani(\'openSearch\')" style="background:%s;color:#fff;border:none;border-radius:8px;padding:10px 18px;cursor:pointer;">🎤 %s</button>',
+        '${ctx.primaryColor}',
+        esc_html($a['label'])
+    );
+}
+add_shortcode('vaaniai_button', 'vaaniai_button_shortcode');`,
+      },
+    ],
   },
   {
     id: "freshdesk",
     label: "Freshdesk",
     logo: "🎧",
-    description: "Live translation overlay for Freshdesk support tickets and chat",
+    description: "Live translation overlay for Freshdesk support agents",
     steps: [
       "Go to Freshdesk Admin → Portals → Portal Customization",
-      "Paste the embed snippet in the Header/Footer HTML area",
-      "Save — agents will see the translation widget on every ticket",
+      "Paste the snippet into the Header Scripts section",
+      "Save — agents see the translation panel on every ticket",
     ],
     docsUrl: "https://support.freshdesk.com/en/support/solutions/articles/37599",
+    templateTabs: [
+      {
+        label: "Portal script",
+        lang: "javascript",
+        code: (ctx) => `// VaaniAI Freshdesk Integration
+// Paste this in: Admin → Portals → Portal Customization → Header Scripts
+
+window.VaaniConfig = {
+  tenantId: "${ctx.tenantId}",
+  apiEndpoint: "${ctx.apiEndpoint}",
+  widgetName: "${ctx.widgetName}",
+  primaryColor: "${ctx.primaryColor}",
+  position: "bottom-right",
+  mode: "translation",
+  language: "${ctx.sourceLanguage}",
+  targetLanguage: "${ctx.targetLanguage}",
+};
+
+(function(w,d,s,o,f,js,fjs){
+  w['VaaniWidget']=o;w[o]=w[o]||function(){(w[o].q=w[o].q||[]).push(arguments)};
+  js=d.createElement(s),fjs=d.getElementsByTagName(s)[0];
+  js.id=o;js.src=f;js.async=1;fjs.parentNode.insertBefore(js,fjs);
+}(window,document,'script','vaani','${ctx.apiEndpoint}/widget/vaani.min.js'));
+
+vaani('init', window.VaaniConfig);
+
+// Auto-inject translation of ticket body when agent opens a ticket
+document.addEventListener('DOMContentLoaded', function() {
+  var observer = new MutationObserver(function() {
+    var ticketBody = document.querySelector('.ticket-body, .note-body');
+    if (ticketBody && !ticketBody.dataset.vaaniProcessed) {
+      ticketBody.dataset.vaaniProcessed = '1';
+      vaani('translateElement', ticketBody, {
+        from: '${ctx.sourceLanguage}',
+        to: '${ctx.targetLanguage}',
+      });
+    }
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
+});`,
+      },
+    ],
   },
   {
     id: "whatsapp",
     label: "WhatsApp Business",
     logo: "💬",
-    description: "Connect via Twilio for multilingual WhatsApp conversations",
+    description: "Multilingual WhatsApp bot via Twilio webhook",
     steps: [
-      "Configure a Twilio WhatsApp number in your Twilio console",
-      "Set the webhook URL to your VaaniAI telephony endpoint",
-      "Messages are auto-translated and routed through your AI agent",
+      "Deploy the Python webhook to your server",
+      "Set the Twilio WhatsApp webhook URL to `https://yourserver.com/webhook/whatsapp`",
+      "Messages are auto-translated and answered by VaaniAI",
     ],
     docsUrl: "https://www.twilio.com/docs/whatsapp",
+    templateTabs: [
+      {
+        label: "webhook.py",
+        lang: "python",
+        code: (ctx) => `"""
+VaaniAI × WhatsApp Business via Twilio
+Deploy with: uvicorn webhook:app --host 0.0.0.0 --port 8080
+Set Twilio webhook to: https://yourserver.com/webhook/whatsapp
+"""
+
+import httpx
+from fastapi import FastAPI, Form, Response
+
+app = FastAPI()
+
+VAANIAI_API = "${ctx.apiEndpoint}/api/v1"
+VAANIAI_API_KEY = "YOUR_VAANIAI_API_KEY"  # create one in API Keys page
+SESSIONS: dict[str, str] = {}             # phone → conversation_id
+
+HEADERS = {"X-API-Key": VAANIAI_API_KEY}
+
+
+@app.post("/webhook/whatsapp")
+async def handle_whatsapp(
+    Body: str = Form(...),
+    From: str = Form(...),
+):
+    async with httpx.AsyncClient(timeout=30) as client:
+        conv_id = SESSIONS.get(From)
+
+        if not conv_id:
+            resp = await client.post(
+                f"{VAANIAI_API}/conversations",
+                headers=HEADERS,
+                json={
+                    "mode": "agent",
+                    "source_language": "${ctx.sourceLanguage}",
+                    "target_language": "${ctx.targetLanguage}",
+                    "caller_id": From,
+                },
+            )
+            conv_id = resp.json()["id"]
+            SESSIONS[From] = conv_id
+
+        msg_resp = await client.post(
+            f"{VAANIAI_API}/conversations/{conv_id}/message",
+            headers=HEADERS,
+            json={"content": Body},
+        )
+        reply = msg_resp.json().get("content_translated") or msg_resp.json().get("content_original", "")
+
+    twiml = f"""<?xml version="1.0" encoding="UTF-8"?>
+<Response><Message>{reply}</Message></Response>"""
+    return Response(content=twiml, media_type="application/xml")`,
+      },
+      {
+        label: "requirements.txt",
+        lang: "text",
+        code: () => `fastapi>=0.110.0
+uvicorn[standard]>=0.29.0
+httpx>=0.27.0
+python-multipart>=0.0.9`,
+      },
+    ],
   },
   {
     id: "react",
     label: "React / Next.js",
     logo: "⚛️",
-    description: "Install the NPM SDK for React and Next.js apps",
+    description: "Drop-in React component for any React or Next.js app",
     steps: [
-      "`npm install @vaaniai/react-widget`",
-      "Import and render `<VaaniWidget apiKey='...' tenantId='...' />`",
-      "Pass `language` and `targetLanguage` props to configure defaults",
+      "Copy the component into your project",
+      "Render `<VaaniWidget />` in your layout or page",
+      "Pass your API key as a prop",
     ],
     docsUrl: "#",
+    templateTabs: [
+      {
+        label: "VaaniWidget.tsx",
+        lang: "tsx",
+        code: (ctx) => `"use client";
+
+import { useEffect } from "react";
+
+declare global {
+  interface Window {
+    VaaniConfig?: Record<string, unknown>;
+    vaani?: (cmd: string, ...args: unknown[]) => void;
+  }
+}
+
+interface VaaniWidgetProps {
+  apiKey: string;
+  language?: string;
+  targetLanguage?: string;
+  mode?: "agent" | "translation" | "conversation";
+  position?: "bottom-right" | "bottom-left" | "top-right" | "top-left";
+}
+
+export function VaaniWidget({
+  apiKey,
+  language = "${ctx.sourceLanguage}",
+  targetLanguage = "${ctx.targetLanguage}",
+  mode = "agent",
+  position = "bottom-right",
+}: VaaniWidgetProps) {
+  useEffect(() => {
+    window.VaaniConfig = {
+      tenantId: "${ctx.tenantId}",
+      apiEndpoint: "${ctx.apiEndpoint}",
+      widgetName: "${ctx.widgetName}",
+      primaryColor: "${ctx.primaryColor}",
+      language,
+      targetLanguage,
+      mode,
+      position,
+      apiKey,
+    };
+
+    if (document.getElementById("vaaniai-widget-script")) return;
+
+    const script = document.createElement("script");
+    script.id = "vaaniai-widget-script";
+    script.src = "${ctx.apiEndpoint}/widget/vaani.min.js";
+    script.async = true;
+    script.onload = () => window.vaani?.("init", window.VaaniConfig);
+    document.body.appendChild(script);
+
+    return () => {
+      document.getElementById("vaaniai-widget-script")?.remove();
+    };
+  }, [apiKey, language, targetLanguage, mode, position]);
+
+  return null;
+}`,
+      },
+      {
+        label: "Usage (layout.tsx)",
+        lang: "tsx",
+        code: (ctx) => `import { VaaniWidget } from "@/components/VaaniWidget";
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <body>
+        {children}
+        <VaaniWidget
+          apiKey={process.env.NEXT_PUBLIC_VAANIAI_API_KEY!}
+          language="${ctx.sourceLanguage}"
+          targetLanguage="${ctx.targetLanguage}"
+          mode="agent"
+          position="bottom-right"
+        />
+      </body>
+    </html>
+  );
+}`,
+      },
+    ],
   },
   {
     id: "rest",
     label: "REST API",
     logo: "🔌",
-    description: "Use the full REST + WebSocket API directly in any stack",
+    description: "Full REST + WebSocket API for any backend or mobile app",
     steps: [
       "Create an API key from the API Keys page",
       "POST to `/api/v1/conversations` to start a session",
-      "Stream audio via WebSocket at `/api/v1/voice/stream`",
+      "Send messages or stream audio via WebSocket",
     ],
     docsUrl: "/docs",
+    templateTabs: [
+      {
+        label: "cURL",
+        lang: "bash",
+        code: (ctx) => `# 1. Start a conversation
+curl -X POST ${ctx.apiEndpoint}/api/v1/conversations \\
+  -H "X-API-Key: YOUR_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "mode": "agent",
+    "source_language": "${ctx.sourceLanguage}",
+    "target_language": "${ctx.targetLanguage}"
+  }'
+
+# 2. Send a message (use conversation id from step 1)
+curl -X POST ${ctx.apiEndpoint}/api/v1/conversations/{CONV_ID}/message \\
+  -H "X-API-Key: YOUR_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{"content": "मुझे प्रोडक्ट की जानकारी दें"}'
+
+# 3. Transcribe audio (multipart)
+curl -X POST ${ctx.apiEndpoint}/api/v1/voice/transcribe \\
+  -H "X-API-Key: YOUR_API_KEY" \\
+  -F "audio=@recording.wav" \\
+  -F "language=${ctx.sourceLanguage}"`,
+      },
+      {
+        label: "Python",
+        lang: "python",
+        code: (ctx) => `"""VaaniAI Python integration example"""
+import httpx
+
+API = "${ctx.apiEndpoint}/api/v1"
+HEADERS = {"X-API-Key": "YOUR_API_KEY"}
+
+
+async def run():
+    async with httpx.AsyncClient(timeout=30, headers=HEADERS) as client:
+        # Start conversation
+        resp = await client.post(f"{API}/conversations", json={
+            "mode": "agent",
+            "source_language": "${ctx.sourceLanguage}",
+            "target_language": "${ctx.targetLanguage}",
+        })
+        conv_id = resp.json()["id"]
+        print("Conversation:", conv_id)
+
+        # Send a text message
+        resp = await client.post(f"{API}/conversations/{conv_id}/message", json={
+            "content": "मुझे प्रोडक्ट की जानकारी दें",
+        })
+        data = resp.json()
+        print("Original:", data["content_original"])
+        print("Translated:", data["content_translated"])
+        print("Audio URL:", data.get("audio_url"))
+
+        # End the conversation
+        await client.patch(f"{API}/conversations/{conv_id}/end")
+
+
+if __name__ == "__main__":
+    import asyncio
+    asyncio.run(run())`,
+      },
+      {
+        label: "Node.js",
+        lang: "javascript",
+        code: (ctx) => `// VaaniAI Node.js integration
+const API = "${ctx.apiEndpoint}/api/v1";
+const HEADERS = {
+  "X-API-Key": "YOUR_API_KEY",
+  "Content-Type": "application/json",
+};
+
+async function main() {
+  // Start conversation
+  const startRes = await fetch(\`\${API}/conversations\`, {
+    method: "POST",
+    headers: HEADERS,
+    body: JSON.stringify({
+      mode: "agent",
+      source_language: "${ctx.sourceLanguage}",
+      target_language: "${ctx.targetLanguage}",
+    }),
+  });
+  const { id: convId } = await startRes.json();
+  console.log("Conversation ID:", convId);
+
+  // Send a message
+  const msgRes = await fetch(\`\${API}/conversations/\${convId}/message\`, {
+    method: "POST",
+    headers: HEADERS,
+    body: JSON.stringify({ content: "मुझे प्रोडक्ट की जानकारी दें" }),
+  });
+  const msg = await msgRes.json();
+  console.log("Original:", msg.content_original);
+  console.log("Translated:", msg.content_translated);
+
+  // WebSocket streaming (for real-time voice)
+  const ws = new WebSocket(
+    \`${ctx.apiEndpoint.replace("http", "ws")}/api/v1/voice/stream?token=YOUR_JWT_TOKEN\`
+  );
+  ws.onopen = () => {
+    ws.send(JSON.stringify({
+      type: "config",
+      language: "${ctx.sourceLanguage}",
+      target_language: "${ctx.targetLanguage}",
+    }));
+  };
+  ws.onmessage = (e) => {
+    const data = JSON.parse(e.data);
+    if (data.type === "transcript") console.log("Heard:", data.text);
+    if (data.type === "translation") console.log("Translation:", data.translated_text);
+  };
+}
+
+main().catch(console.error);`,
+      },
+    ],
   },
 ];
 
@@ -299,20 +738,137 @@ const STEPS = [
   { id: 4, label: "Embed", icon: Code2 },
 ];
 
+function TemplatePanel({
+  connector,
+  ctx,
+  onClose,
+}: {
+  connector: Connector;
+  ctx: TemplateContext;
+  onClose: () => void;
+}) {
+  const [activeTabIdx, setActiveTabIdx] = useState(0);
+  const [copied, setCopied] = useState(false);
+  const tab = connector.templateTabs[activeTabIdx];
+  const code = tab.code(ctx);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(code);
+    setCopied(true);
+    toast.success("Template code copied!");
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex">
+      <div className="flex-1 bg-black/40" onClick={onClose} />
+      <div className="w-full max-w-2xl bg-white shadow-2xl flex flex-col h-full overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">{connector.logo}</span>
+            <div>
+              <div className="font-semibold text-gray-900">{connector.label} — Full Template</div>
+              <div className="text-xs text-gray-500">{connector.description}</div>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+            <X className="w-5 h-5 text-gray-500" />
+          </button>
+        </div>
+
+        <div className="px-6 pt-4">
+          <div className="flex gap-1 border-b border-gray-100">
+            {connector.templateTabs.map((t, i) => (
+              <button
+                key={t.label}
+                onClick={() => setActiveTabIdx(i)}
+                className={`px-4 py-2 text-xs font-medium rounded-t-lg transition-colors ${
+                  activeTabIdx === i
+                    ? "bg-gray-900 text-white"
+                    : "text-gray-500 hover:text-gray-900 hover:bg-gray-50"
+                }`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-auto px-6 pb-6 pt-0">
+          <div className="relative">
+            <button
+              onClick={handleCopy}
+              className="absolute top-3 right-3 z-10 flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white text-xs rounded-lg transition-colors backdrop-blur-sm border border-white/20"
+            >
+              {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+              {copied ? "Copied!" : "Copy"}
+            </button>
+            <pre className="bg-gray-950 text-gray-100 rounded-b-lg rounded-tr-lg p-4 text-xs overflow-x-auto whitespace-pre font-mono leading-relaxed min-h-64">
+              {code}
+            </pre>
+          </div>
+        </div>
+
+        <div className="px-6 py-4 border-t border-gray-100 bg-gray-50">
+          <div className="space-y-2">
+            <div className="text-xs font-medium text-gray-700 mb-2">Installation steps</div>
+            {connector.steps.map((step, i) => (
+              <div key={i} className="flex gap-2.5 text-xs text-gray-600">
+                <span
+                  className="w-5 h-5 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center shrink-0 font-medium"
+                  style={{ fontSize: "10px" }}
+                >
+                  {i + 1}
+                </span>
+                <span
+                  className="leading-relaxed"
+                  dangerouslySetInnerHTML={{
+                    __html: step.replace(/`([^`]+)`/g, "<code class='bg-gray-100 px-1 rounded font-mono'>$1</code>"),
+                  }}
+                />
+              </div>
+            ))}
+          </div>
+          {connector.docsUrl !== "#" && (
+            <a
+              href={connector.docsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 text-xs text-brand-600 hover:underline mt-4"
+            >
+              <ExternalLink className="w-3 h-3" /> Platform documentation
+            </a>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function IntegrationsPage() {
   const [activeTab, setActiveTab] = useState<"wizard" | "connectors">("wizard");
   const [step, setStep] = useState(1);
   const [config, setConfig] = useState<WizardConfig>(DEFAULT_CONFIG);
+  const [openTemplate, setOpenTemplate] = useState<Connector | null>(null);
 
   const { data: tenant } = useQuery({
     queryKey: ["tenant"],
-    queryFn: () => api.tenant.me().then((r) => r.data as { id: string; name: string }),
+    queryFn: () => api.tenant.me().then((r) => r.data as { id: string; name: string; widget_name?: string; primary_color?: string; default_source_language?: string; default_target_language?: string }),
   });
 
   const { data: kbList } = useQuery({
     queryKey: ["knowledge-bases"],
     queryFn: () => api.knowledge.list().then((r) => r.data as { id: string; name: string }[]),
   });
+
+  const templateCtx: TemplateContext = {
+    tenantId: tenant?.id ?? "YOUR_TENANT_ID",
+    apiEndpoint: typeof window !== "undefined" ? window.location.origin : "https://app.vaaniai.com",
+    widgetName: config.widgetName || tenant?.widget_name || "VaaniAI Assistant",
+    primaryColor: config.primaryColor || tenant?.primary_color || "#6366f1",
+    sourceLanguage: config.sourceLanguage || tenant?.default_source_language || "hi",
+    targetLanguage: config.targetLanguage || tenant?.default_target_language || "en",
+  };
 
   const update = (patch: Partial<WizardConfig>) => setConfig((c) => ({ ...c, ...patch }));
 
@@ -630,17 +1186,20 @@ export default function IntegrationsPage() {
       {activeTab === "connectors" && (
         <div>
           <p className="text-sm text-gray-500 mb-6">
-            Follow these platform-specific guides to embed your VaaniAI widget. Run the Widget Builder first to generate your embed code.
+            Click <strong>View Template</strong> on any card to get the full, ready-to-use code with your tenant ID already filled in.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {CONNECTORS.map((connector) => (
               <div key={connector.id} className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex flex-col">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="text-2xl">{connector.logo}</div>
-                  <div>
+                  <div className="flex-1 min-w-0">
                     <div className="font-semibold text-gray-900 text-sm">{connector.label}</div>
-                    <div className="text-xs text-gray-500">{connector.description}</div>
+                    <div className="text-xs text-gray-500 truncate">{connector.description}</div>
                   </div>
+                  <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full shrink-0">
+                    {connector.templateTabs.length} file{connector.templateTabs.length !== 1 ? "s" : ""}
+                  </span>
                 </div>
                 <ol className="space-y-2 flex-1">
                   {connector.steps.map((step, i) => (
@@ -655,17 +1214,25 @@ export default function IntegrationsPage() {
                     </li>
                   ))}
                 </ol>
-                {connector.docsUrl !== "#" && (
-                  <a
-                    href={connector.docsUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 text-xs text-brand-600 hover:underline mt-4"
+                <div className="flex items-center gap-2 mt-4 pt-3 border-t border-gray-50">
+                  <button
+                    onClick={() => setOpenTemplate(connector)}
+                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-brand-600 hover:bg-brand-700 text-white text-xs font-medium rounded-lg transition-colors"
                   >
-                    <ExternalLink className="w-3 h-3" />
-                    View documentation
-                  </a>
-                )}
+                    <FileCode className="w-3.5 h-3.5" /> View Template
+                  </button>
+                  {connector.docsUrl !== "#" && (
+                    <a
+                      href={connector.docsUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-center gap-1 px-3 py-2 border border-gray-200 text-gray-500 hover:text-gray-900 hover:bg-gray-50 text-xs rounded-lg transition-colors"
+                      title="Platform docs"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -687,6 +1254,14 @@ export default function IntegrationsPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {openTemplate && (
+        <TemplatePanel
+          connector={openTemplate}
+          ctx={templateCtx}
+          onClose={() => setOpenTemplate(null)}
+        />
       )}
     </div>
   );
