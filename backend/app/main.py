@@ -82,7 +82,7 @@ app.include_router(voice_clones.router, prefix="/api/v1")
 app.include_router(marketplace.router, prefix="/api/v1")
 
 _MEDIA_DIR = Path("/app/media")
-app.mount("/media", StaticFiles(directory=str(_MEDIA_DIR)), name="media")
+app.mount("/media", StaticFiles(directory=str(_MEDIA_DIR), check_dir=False), name="media")
 
 
 @app.get("/health")
