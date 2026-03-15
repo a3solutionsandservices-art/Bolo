@@ -29,6 +29,7 @@ import {
   Puzzle,
   HelpCircle,
   ChevronRight,
+  Store,
 } from "lucide-react";
 import { clsx } from "clsx";
 import { useAuthStore } from "@/lib/auth-store";
@@ -48,6 +49,7 @@ const NAV_GROUPS: NavGroup[] = [
     label: "Deploy",
     items: [
       { href: "/dashboard/integrations", icon: Puzzle, label: "Integrations", tour: "sidebar-integrations" },
+      { href: "/dashboard/marketplace", icon: Store, label: "Voice Marketplace", tour: "sidebar-marketplace" },
       { href: "/dashboard/analytics", icon: BarChart3, label: "Analytics", tour: "sidebar-analytics" },
     ],
   },
