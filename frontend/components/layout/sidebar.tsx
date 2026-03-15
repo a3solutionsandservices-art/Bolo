@@ -2,6 +2,20 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+
+interface NavItem {
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  tour?: string;
+  exact?: boolean;
+}
+
+interface NavGroup {
+  label: string;
+  items: NavItem[];
+}
+
 import {
   LayoutDashboard,
   MessageSquare,
@@ -20,7 +34,7 @@ import { clsx } from "clsx";
 import { useAuthStore } from "@/lib/auth-store";
 import { useRouter } from "next/navigation";
 
-const NAV_GROUPS = [
+const NAV_GROUPS: NavGroup[] = [
   {
     label: "Workspace",
     items: [
