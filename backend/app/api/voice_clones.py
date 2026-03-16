@@ -6,11 +6,15 @@ from pydantic import BaseModel
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.stt import get_stt
 from app.db.base import get_db
 from app.middleware.auth import get_current_user
 from app.models.voice_clone import VoiceClone, VoiceCloneStatus
 from app.models.user import User
 from app.services.storage import upload_audio
+
+MIN_STT_CONFIDENCE = 0.4
+MIN_DURATION_SECONDS = 3.0
 
 router = APIRouter(prefix="/voice-clones", tags=["voice-clones"])
 
@@ -82,6 +86,8 @@ MAX_SAMPLE_BYTES = 50 * 1024 * 1024
 async def upload_sample_audio(
     clone_id: uuid.UUID,
     audio: UploadFile = File(...),
+    language: Optional[str] = Form(None),
+    skip_validation: bool = Form(False),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -90,6 +96,31 @@ async def upload_sample_audio(
     audio_bytes = await audio.read()
     if len(audio_bytes) > MAX_SAMPLE_BYTES:
         raise HTTPException(status_code=413, detail="Sample audio exceeds 50 MB limit")
+
+    if not skip_validation:
+        stt = get_stt()
+        try:
+            result = await stt.transcribe(audio_bytes, language=language or clone.language)
+            if result.duration_seconds < MIN_DURATION_SECONDS:
+                raise HTTPException(
+                    status_code=422,
+                    detail=f"Recording too short ({result.duration_seconds:.1f}s). Minimum is {MIN_DURATION_SECONDS}s. Please record a longer sample."
+                )
+            if result.confidence < MIN_STT_CONFIDENCE:
+                raise HTTPException(
+                    status_code=422,
+                    detail=f"Audio quality too low (confidence {result.confidence:.0%}). Please record in a quieter environment with a clear voice."
+                )
+            if not result.text.strip():
+                raise HTTPException(
+                    status_code=422,
+                    detail="No speech detected in the recording. Please ensure your microphone is working."
+                )
+        except HTTPException:
+            raise
+        except Exception:
+            pass
+
     s3_key = f"voice-clones/{clone.id}/samples/{uuid.uuid4()}.wav"
     try:
         url = await upload_audio(audio_bytes, s3_key, current_user.tenant_id)

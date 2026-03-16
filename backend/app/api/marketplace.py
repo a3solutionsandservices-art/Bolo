@@ -1,16 +1,20 @@
+import difflib
 import uuid
 from datetime import datetime, timezone
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile, status
 from pydantic import BaseModel
 from sqlalchemy import select, update, func, or_, cast, String
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.core.limiter import limiter
+from app.core.stt import get_stt
 from app.db.base import get_db
 from app.middleware.auth import get_current_user
+from app.models.data_contribution import DataContribution
 from app.models.user import User, UserRole
 from app.models.voice_artist import (
     VoiceArtist,
@@ -20,6 +24,7 @@ from app.models.voice_artist import (
     LicenseStatus,
     VerificationStatus,
 )
+from app.services.storage import upload_audio
 
 router = APIRouter(prefix="/marketplace", tags=["marketplace"])
 
@@ -69,6 +74,11 @@ class RegisterArtistRequest(BaseModel):
     email: Optional[str] = None
     phone: Optional[str] = None
     upi_id: Optional[str] = None
+    data_collection_consent: bool = False
+    age_range: Optional[str] = None
+    district: Optional[str] = None
+    native_region: Optional[str] = None
+    dialect_subtype: Optional[str] = None
 
 
 class UpdateArtistRequest(BaseModel):
@@ -203,6 +213,7 @@ async def register_as_artist(
     if existing.scalar_one_or_none():
         raise HTTPException(status_code=409, detail="Slug already taken")
 
+    now = datetime.now(timezone.utc)
     artist = VoiceArtist(
         display_name=body.display_name,
         slug=body.slug,
@@ -225,6 +236,12 @@ async def register_as_artist(
         platform_fee_pct=PLATFORM_FEE_PCT,
         verification_status=VerificationStatus.PENDING,
         is_public=False,
+        data_collection_consent=body.data_collection_consent,
+        data_consent_signed_at=now if body.data_collection_consent else None,
+        age_range=body.age_range,
+        district=body.district,
+        native_region=body.native_region,
+        dialect_subtype=body.dialect_subtype,
     )
     db.add(artist)
     await db.commit()
@@ -443,6 +460,208 @@ async def revoke_license(
     await db.commit()
     await db.refresh(license)
     return _to_license_response(license)
+
+
+_CONTRIBUTE_PROMPTS: dict[str, list[dict]] = {
+    "hi": [
+        {"id": "hi-001", "text": "मेरा नाम रामू है और मैं दिल्ली में रहता हूं।"},
+        {"id": "hi-002", "text": "आज मौसम बहुत अच्छा है, धूप खिली हुई है।"},
+        {"id": "hi-003", "text": "हमारे देश में कई भाषाएं बोली जाती हैं।"},
+        {"id": "hi-004", "text": "बाज़ार में सब्ज़ियों के दाम बहुत बढ़ गए हैं।"},
+        {"id": "hi-005", "text": "मुझे अपने परिवार के साथ समय बिताना बहुत पसंद है।"},
+        {"id": "hi-006", "text": "डॉक्टर ने कहा कि रोज़ व्यायाम करना ज़रूरी है।"},
+        {"id": "hi-007", "text": "बच्चे स्कूल से घर लौट आए हैं।"},
+        {"id": "hi-008", "text": "खेत में किसान फसल काट रहे हैं।"},
+        {"id": "hi-009", "text": "नदी के किनारे बहुत सारे पेड़ लगे हैं।"},
+        {"id": "hi-010", "text": "रेलगाड़ी समय पर स्टेशन पहुंच गई।"},
+    ],
+    "ta": [
+        {"id": "ta-001", "text": "என் பெயர் முருகன், நான் சென்னையில் வசிக்கிறேன்."},
+        {"id": "ta-002", "text": "இன்று வானிலை மிகவும் நல்லாக இருக்கிறது."},
+        {"id": "ta-003", "text": "நம் நாட்டில் பல மொழிகள் பேசப்படுகின்றன."},
+        {"id": "ta-004", "text": "சந்தையில் காய்கறிகளின் விலை அதிகரித்துள்ளது."},
+        {"id": "ta-005", "text": "குழந்தைகள் பள்ளியிலிருந்து திரும்பி வந்துள்ளனர்."},
+    ],
+    "te": [
+        {"id": "te-001", "text": "నా పేరు రామారావు, నేను హైదరాబాద్‌లో నివసిస్తున్నాను."},
+        {"id": "te-002", "text": "ఈరోజు వాతావరణం చాలా బాగుంది."},
+        {"id": "te-003", "text": "మన దేశంలో అనేక భాషలు మాట్లాడతారు."},
+        {"id": "te-004", "text": "పిల్లలు పాఠశాల నుండి తిరిగి వచ్చారు."},
+        {"id": "te-005", "text": "రైతులు పొలంలో పని చేస్తున్నారు."},
+    ],
+    "bn": [
+        {"id": "bn-001", "text": "আমার নাম রাহুল, আমি কলকাতায় থাকি।"},
+        {"id": "bn-002", "text": "আজ আবহাওয়া খুব সুন্দর।"},
+        {"id": "bn-003", "text": "আমাদের দেশে অনেক ভাষা বলা হয়।"},
+        {"id": "bn-004", "text": "বাজারে সবজির দাম অনেক বেড়ে গেছে।"},
+        {"id": "bn-005", "text": "শিশুরা স্কুল থেকে বাড়ি ফিরে এসেছে।"},
+    ],
+    "gu": [
+        {"id": "gu-001", "text": "મારું નામ ધ્રુવ છે અને હું અમદાવાદમાં રહું છું."},
+        {"id": "gu-002", "text": "આજે હવામાન ખૂબ સારું છે."},
+        {"id": "gu-003", "text": "આપણા દેશમાં ઘણી ભાષાઓ બોલવામાં આવે છે."},
+        {"id": "gu-004", "text": "બજારમાં શાકભાજીના ભાવ વધી ગયા છે."},
+        {"id": "gu-005", "text": "બાળકો શાળામાંથી ઘરે આવ્યા છે."},
+    ],
+    "mr": [
+        {"id": "mr-001", "text": "माझे नाव राहुल आहे आणि मी पुण्यात राहतो."},
+        {"id": "mr-002", "text": "आज हवामान खूप छान आहे."},
+        {"id": "mr-003", "text": "आपल्या देशात अनेक भाषा बोलल्या जातात."},
+        {"id": "mr-004", "text": "बाजारात भाज्यांचे भाव खूप वाढले आहेत."},
+        {"id": "mr-005", "text": "मुले शाळेतून घरी आली आहेत."},
+    ],
+    "kn": [
+        {"id": "kn-001", "text": "ನನ್ನ ಹೆಸರು ರಾಜು, ನಾನು ಬೆಂಗಳೂರಿನಲ್ಲಿ ವಾಸಿಸುತ್ತೇನೆ."},
+        {"id": "kn-002", "text": "ಇಂದು ಹವಾಮಾನ ತುಂಬಾ ಚೆನ್ನಾಗಿದೆ."},
+        {"id": "kn-003", "text": "ನಮ್ಮ ದೇಶದಲ್ಲಿ ಅನೇಕ ಭಾಷೆಗಳನ್ನು ಮಾತನಾಡಲಾಗುತ್ತದೆ."},
+        {"id": "kn-004", "text": "ಮಕ್ಕಳು ಶಾಲೆಯಿಂದ ಮನೆಗೆ ಬಂದಿದ್ದಾರೆ."},
+        {"id": "kn-005", "text": "ರೈತರು ಹೊಲದಲ್ಲಿ ಕೆಲಸ ಮಾಡುತ್ತಿದ್ದಾರೆ."},
+    ],
+    "ml": [
+        {"id": "ml-001", "text": "എന്റെ പേര് രാജൻ, ഞാൻ തിരുവനന്തപുരത്ത് താമസിക്കുന്നു."},
+        {"id": "ml-002", "text": "ഇന്ന് കാലാവസ്ഥ വളരെ നല്ലതാണ്."},
+        {"id": "ml-003", "text": "നമ്മുടെ രാജ്യത്ത് പലഭാഷകളും സംസാരിക്കപ്പെടുന്നു."},
+        {"id": "ml-004", "text": "കുട്ടികൾ സ്കൂളിൽ നിന്ന് വീട്ടിലേക്ക് വന്നിട്ടുണ്ട്."},
+        {"id": "ml-005", "text": "കർഷകർ പാടത്ത് ജോലി ചെയ്യുന്നു."},
+    ],
+    "pa": [
+        {"id": "pa-001", "text": "ਮੇਰਾ ਨਾਮ ਗੁਰਪ੍ਰੀਤ ਹੈ ਅਤੇ ਮੈਂ ਅੰਮ੍ਰਿਤਸਰ ਵਿੱਚ ਰਹਿੰਦਾ ਹਾਂ।"},
+        {"id": "pa-002", "text": "ਅੱਜ ਮੌਸਮ ਬਹੁਤ ਵਧੀਆ ਹੈ।"},
+        {"id": "pa-003", "text": "ਸਾਡੇ ਦੇਸ਼ ਵਿੱਚ ਬਹੁਤ ਸਾਰੀਆਂ ਭਾਸ਼ਾਵਾਂ ਬੋਲੀਆਂ ਜਾਂਦੀਆਂ ਹਨ।"},
+        {"id": "pa-004", "text": "ਬੱਚੇ ਸਕੂਲ ਤੋਂ ਘਰ ਆ ਗਏ ਹਨ।"},
+        {"id": "pa-005", "text": "ਕਿਸਾਨ ਖੇਤਾਂ ਵਿੱਚ ਕੰਮ ਕਰ ਰਹੇ ਹਨ।"},
+    ],
+    "or": [
+        {"id": "or-001", "text": "ମୋ ନାମ ମୋହନ ଏବଂ ମୁଁ ଭୁବନେଶ୍ୱରରେ ରୁହେ।"},
+        {"id": "or-002", "text": "ଆଜି ପାଣିପାଗ ବହୁତ ଭଲ ଅଛି।"},
+        {"id": "or-003", "text": "ଆମ ଦେଶରେ ଅନେକ ଭାଷା କୁହାଯାଏ।"},
+        {"id": "or-004", "text": "ପିଲାମାନେ ବିଦ୍ୟାଳୟରୁ ଘରକୁ ଫେରି ଆସିଛନ୍ତି।"},
+        {"id": "or-005", "text": "କୃଷକମାନେ ଜମିରେ କାମ କରୁଛନ୍ତି।"},
+    ],
+}
+
+CER_ACCEPT_THRESHOLD = 0.35
+
+
+def _compute_cer(expected: str, actual: str) -> float:
+    if not expected:
+        return 1.0
+    ratio = difflib.SequenceMatcher(None, expected.strip(), actual.strip()).ratio()
+    return round(1.0 - ratio, 4)
+
+
+@router.get("/contribute/prompts")
+@limiter.limit("30/minute")
+async def get_contribute_prompts(
+    request: Request,
+    language: str = Query(..., description="Language code, e.g. hi, ta"),
+    limit: int = Query(default=5, le=10),
+    current_user: User = Depends(get_current_user),
+):
+    if language not in _CONTRIBUTE_PROMPTS:
+        raise HTTPException(status_code=400, detail=f"No prompts available for language '{language}'. Supported: {list(_CONTRIBUTE_PROMPTS.keys())}")
+    prompts = _CONTRIBUTE_PROMPTS[language][:limit]
+    return {"language": language, "prompts": prompts, "total": len(prompts)}
+
+
+@router.post("/contribute/submit", status_code=status.HTTP_201_CREATED)
+@limiter.limit("20/minute")
+async def submit_contribute_recording(
+    request: Request,
+    audio: UploadFile = File(...),
+    prompt_id: str = Form(...),
+    prompt_text: str = Form(...),
+    language: str = Form(...),
+    dialect: Optional[str] = Form(None),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    artist = await _get_artist_for_user(current_user, db)
+
+    if not artist.data_collection_consent:
+        raise HTTPException(status_code=403, detail="You must enable data collection consent in your profile before contributing recordings.")
+
+    audio_bytes = await audio.read()
+    if len(audio_bytes) > 25 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="Audio exceeds 25 MB limit")
+
+    stt = get_stt()
+    try:
+        result = await stt.transcribe(audio_bytes, language=language if language in settings.SUPPORTED_LANGUAGES else None)
+        transcript = result.text
+        duration = result.duration_seconds
+    except Exception:
+        transcript = None
+        duration = None
+
+    cer = _compute_cer(prompt_text, transcript or "") if transcript else 1.0
+    is_accepted = cer <= CER_ACCEPT_THRESHOLD
+
+    s3_key = f"contributions/{artist.id}/{language}/{prompt_id}/{uuid.uuid4()}.wav"
+    try:
+        audio_url = await upload_audio(audio_bytes, s3_key, current_user.tenant_id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to store recording: {e}")
+
+    contribution = DataContribution(
+        voice_artist_id=artist.id,
+        prompt_id=prompt_id,
+        prompt_text=prompt_text,
+        language=language,
+        dialect=dialect or artist.dialect_subtype,
+        audio_url=audio_url,
+        transcript=transcript,
+        cer_score=cer,
+        is_accepted=is_accepted,
+        speaker_age_range=artist.age_range,
+        speaker_district=artist.district,
+        speaker_native_region=artist.native_region,
+        speaker_dialect_subtype=artist.dialect_subtype,
+        duration_seconds=duration,
+    )
+    db.add(contribution)
+    await db.commit()
+    await db.refresh(contribution)
+
+    return {
+        "id": str(contribution.id),
+        "prompt_id": prompt_id,
+        "is_accepted": is_accepted,
+        "cer_score": float(cer),
+        "transcript": transcript,
+        "message": "Recording accepted — thank you!" if is_accepted else f"Recording quality low (error rate {cer:.0%}). Please re-record clearly.",
+    }
+
+
+@router.get("/contribute/my-stats")
+async def get_contribute_stats(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    artist = await _get_artist_for_user(current_user, db)
+
+    result = await db.execute(
+        select(
+            func.count(DataContribution.id).label("total"),
+            func.sum(func.cast(DataContribution.is_accepted, String)).label("accepted"),
+        ).where(DataContribution.voice_artist_id == artist.id)
+    )
+    row = result.one()
+    total = row.total or 0
+    accepted = int(row.accepted or 0)
+
+    by_lang = await db.execute(
+        select(DataContribution.language, func.count(DataContribution.id).label("count"))
+        .where(DataContribution.voice_artist_id == artist.id, DataContribution.is_accepted == True)
+        .group_by(DataContribution.language)
+    )
+
+    return {
+        "total_submissions": total,
+        "accepted_recordings": accepted,
+        "rejection_rate": round(1 - accepted / total, 3) if total else 0,
+        "by_language": [{"language": r.language, "count": r.count} for r in by_lang.all()],
+    }
 
 
 async def _get_artist_for_user(user: User, db: AsyncSession) -> VoiceArtist:
