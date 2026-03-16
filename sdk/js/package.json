@@ -1,9 +1,9 @@
 {
-  "name": "@boloai/js-sdk",
+  "name": "@bolo/js-sdk",
   "version": "0.1.0",
-  "description": "BoloAI JavaScript SDK for Indian language voice conversations",
+  "description": "Bolo JavaScript SDK for Indian language voice conversations",
   "main": "src/index.js",
   "browser": "src/index.js",
-  "keywords": ["boloai", "voice", "speech", "indian-languages"],
+  "keywords": ["bolo", "voice", "speech", "indian-languages"],
   "license": "MIT"
 }

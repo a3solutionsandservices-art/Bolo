@@ -3,7 +3,7 @@ import type { TourStep } from "@/components/ui/product-tour";
 export const DASHBOARD_TOUR: TourStep[] = [
   {
     target: "[data-tour='sidebar-dashboard']",
-    title: "Welcome to BoloAI! 👋",
+    title: "Welcome to Bolo! 👋",
     body: "This is your dashboard — your control centre. Every time you log in you'll land here to see how your voice assistant is performing.",
     placement: "right",
     icon: "🏠",
@@ -46,7 +46,7 @@ export const DASHBOARD_TOUR: TourStep[] = [
   {
     target: "[data-tour='sidebar-api-keys']",
     title: "Share with your developer",
-    body: "If you have a developer, give them an API key from here and they can connect BoloAI to any system you use.",
+    body: "If you have a developer, give them an API key from here and they can connect Bolo to any system you use.",
     placement: "right",
     icon: "🔑",
   },

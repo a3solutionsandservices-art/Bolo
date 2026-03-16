@@ -155,7 +155,7 @@ export default function BillingPage() {
                     {isCurrent ? "Current Plan" : "Upgrade"}
                   </button>
                 ) : (
-                  <a href="mailto:sales@boloai.com" className="block w-full py-2.5 border border-brand-600 text-brand-600 rounded-lg text-sm font-medium hover:bg-brand-50 transition-colors text-center">
+                  <a href="mailto:sales@bolo.com" className="block w-full py-2.5 border border-brand-600 text-brand-600 rounded-lg text-sm font-medium hover:bg-brand-50 transition-colors text-center">
                     Contact Sales
                   </a>
                 )}

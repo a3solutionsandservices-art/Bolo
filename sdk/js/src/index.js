@@ -1,6 +1,6 @@
 "use strict";
 
-const DEFAULT_BASE = "https://api.boloai.com";
+const DEFAULT_BASE = "https://api.bolo.com";
 
 class VaaniClient {
   constructor(config) {

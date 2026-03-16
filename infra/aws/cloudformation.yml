@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: "BoloAI — Multi-tenant AI Voice Translation Platform on AWS ECS Fargate"
+Description: "Bolo — Multi-tenant AI Voice Translation Platform on AWS ECS Fargate"
 
 Parameters:
   Environment:
@@ -9,11 +9,11 @@ Parameters:
 
   AppName:
     Type: String
-    Default: boloai
+    Default: bolo
 
   DomainName:
     Type: String
-    Description: "Root domain (e.g. boloai.com)"
+    Description: "Root domain (e.g. bolo.com)"
 
   DBPassword:
     Type: String
@@ -43,7 +43,7 @@ Parameters:
 
   BackendImage:
     Type: String
-    Description: "ECR image URI for backend (e.g. 123456789.dkr.ecr.us-east-1.amazonaws.com/boloai-backend:latest)"
+    Description: "ECR image URI for backend (e.g. 123456789.dkr.ecr.us-east-1.amazonaws.com/bolo-backend:latest)"
 
   FrontendImage:
     Type: String
@@ -288,7 +288,7 @@ Resources:
   DBSubnetGroup:
     Type: AWS::RDS::DBSubnetGroup
     Properties:
-      DBSubnetGroupDescription: "BoloAI DB subnet group"
+      DBSubnetGroupDescription: "Bolo DB subnet group"
       SubnetIds:
         - !Ref PrivateSubnet1
         - !Ref PrivateSubnet2
@@ -301,9 +301,9 @@ Resources:
       DBInstanceClass: !FindInMap [EnvConfig, !Ref Environment, DBInstanceClass]
       Engine: postgres
       EngineVersion: "16.2"
-      MasterUsername: boloai
+      MasterUsername: bolo
       MasterUserPassword: !Ref DBPassword
-      DBName: boloai
+      DBName: bolo
       AllocatedStorage: 50
       StorageType: gp3
       StorageEncrypted: true
@@ -320,7 +320,7 @@ Resources:
   CacheSubnetGroup:
     Type: AWS::ElastiCache::SubnetGroup
     Properties:
-      Description: "BoloAI Redis subnet group"
+      Description: "Bolo Redis subnet group"
       SubnetIds:
         - !Ref PrivateSubnet1
         - !Ref PrivateSubnet2
@@ -347,14 +347,14 @@ Resources:
     Type: AWS::SecretsManager::Secret
     Properties:
       Name: !Sub "${AppName}/${Environment}/app-secrets"
-      Description: "BoloAI application secrets"
+      Description: "Bolo application secrets"
       SecretString: !Sub |
         {
           "SECRET_KEY": "${SecretKey}",
           "SARVAM_API_KEY": "${SarvamApiKey}",
           "OPENAI_API_KEY": "${OpenAIApiKey}",
           "STRIPE_SECRET_KEY": "${StripeSecretKey}",
-          "DATABASE_URL": "postgresql+asyncpg://boloai:${DBPassword}@${Database.Endpoint.Address}:5432/boloai",
+          "DATABASE_URL": "postgresql+asyncpg://bolo:${DBPassword}@${Database.Endpoint.Address}:5432/bolo",
           "REDIS_URL": "rediss://:@${RedisCluster.PrimaryEndPoint.Address}:${RedisCluster.PrimaryEndPoint.Port}/0"
         }
 

@@ -30,7 +30,7 @@ export interface ConversationResult {
   status: string;
 }
 
-const DEFAULT_BASE = "https://api.boloai.com";
+const DEFAULT_BASE = "https://api.bolo.com";
 
 export class BoloClient {
   private apiKey: string;

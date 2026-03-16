@@ -96,7 +96,7 @@ export function Sidebar() {
             </div>
           </div>
           <div>
-            <span className="text-[15px] font-bold text-white tracking-tight">BoloAI</span>
+            <span className="text-[15px] font-bold text-white tracking-tight">Bolo</span>
             <div className="text-[10px] text-sidebar-text font-medium tracking-wider uppercase leading-none">Platform</div>
           </div>
         </Link>

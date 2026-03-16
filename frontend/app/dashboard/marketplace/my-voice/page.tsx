@@ -198,7 +198,7 @@ function RegistrationForm({ onSuccess }: { onSuccess: () => void }) {
 
       <div className="bg-white rounded-2xl border border-slate-200/70 shadow-card p-6">
         <h2 className="text-[15px] font-semibold text-slate-900 mb-1">Set Your Prices (₹ INR)</h2>
-        <p className="text-xs text-slate-400 mb-5">Set to 0 to disable that tier. BoloAI takes 20% — you keep 80%.</p>
+        <p className="text-xs text-slate-400 mb-5">Set to 0 to disable that tier. Bolo takes 20% — you keep 80%.</p>
         <div className="grid grid-cols-2 gap-4">
           {[
             { name: "price_personal_inr", label: "Personal Use", placeholder: "e.g. 500" },
@@ -227,12 +227,12 @@ function RegistrationForm({ onSuccess }: { onSuccess: () => void }) {
           Consent & Legal Agreement
         </h3>
         <p className="text-xs text-amber-800 leading-relaxed mb-4">
-          By registering, you confirm that this is your own voice, you hold all rights to it, and you agree to BoloAI&apos;s Voice Licensing Terms. BoloAI will verify your identity before making your profile public. Your voice will only be licensed for purposes you explicitly allow. You can revoke any licence at any time.
+          By registering, you confirm that this is your own voice, you hold all rights to it, and you agree to Bolo&apos;s Voice Licensing Terms. Bolo will verify your identity before making your profile public. Your voice will only be licensed for purposes you explicitly allow. You can revoke any licence at any time.
         </p>
         <label className="flex items-start gap-3 cursor-pointer">
           <input type="checkbox" checked={consentChecked} onChange={(e) => setConsentChecked(e.target.checked)} className="mt-0.5" />
           <span className="text-xs text-amber-800 font-medium">
-            I confirm this is my voice, I hold all rights to it, and I consent to BoloAI licensing it under the terms above. I understand that misrepresentation is a violation of Indian IP law.
+            I confirm this is my voice, I hold all rights to it, and I consent to Bolo licensing it under the terms above. I understand that misrepresentation is a violation of Indian IP law.
           </span>
         </label>
       </div>

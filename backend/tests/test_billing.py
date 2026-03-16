@@ -36,8 +36,8 @@ async def test_subscribe_invalid_plan(client: AsyncClient, auth_headers):
     with patch("stripe.checkout.Session.create") as mock_stripe:
         resp = await client.post("/api/v1/billing/subscribe", json={
             "plan_tier": "nonexistent",
-            "success_url": "https://app.boloai.com/billing?success=true",
-            "cancel_url": "https://app.boloai.com/billing",
+            "success_url": "https://app.bolo.com/billing?success=true",
+            "cancel_url": "https://app.bolo.com/billing",
         }, headers=auth_headers)
 
     assert resp.status_code == 400
@@ -46,8 +46,8 @@ async def test_subscribe_invalid_plan(client: AsyncClient, auth_headers):
 async def test_subscribe_enterprise_plan(client: AsyncClient, auth_headers):
     resp = await client.post("/api/v1/billing/subscribe", json={
         "plan_tier": "enterprise",
-        "success_url": "https://app.boloai.com/billing?success=true",
-        "cancel_url": "https://app.boloai.com/billing",
+        "success_url": "https://app.bolo.com/billing?success=true",
+        "cancel_url": "https://app.bolo.com/billing",
     }, headers=auth_headers)
     assert resp.status_code == 400
 
@@ -59,8 +59,8 @@ async def test_subscribe_starter_plan(client: AsyncClient, auth_headers):
     with patch("stripe.checkout.Session.create", return_value=mock_session):
         resp = await client.post("/api/v1/billing/subscribe", json={
             "plan_tier": "starter",
-            "success_url": "https://app.boloai.com/billing?success=true",
-            "cancel_url": "https://app.boloai.com/billing",
+            "success_url": "https://app.bolo.com/billing?success=true",
+            "cancel_url": "https://app.bolo.com/billing",
         }, headers=auth_headers)
 
     assert resp.status_code == 200

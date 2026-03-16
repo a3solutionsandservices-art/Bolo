@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
-# BoloAI AWS Deployment Script
+# Bolo AWS Deployment Script
 # Usage: ./infra/aws/deploy.sh [production|staging] [--init]
 set -euo pipefail
 
 ENVIRONMENT="${1:-staging}"
 INIT="${2:-}"
-APP_NAME="boloai"
+APP_NAME="bolo"
 AWS_REGION="${AWS_REGION:-us-east-1}"
 STACK_NAME="${APP_NAME}-${ENVIRONMENT}"
 ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 ECR_BASE="${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
 
-echo "=== BoloAI Deploy — env=${ENVIRONMENT} region=${AWS_REGION} ==="
+echo "=== Bolo Deploy — env=${ENVIRONMENT} region=${AWS_REGION} ==="
 
 # ── Helper: require env var ──
 require_env() {

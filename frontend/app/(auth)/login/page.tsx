@@ -69,7 +69,7 @@ export default function LoginPage() {
               <Mic className="w-5 h-5 text-white" />
             </div>
             <div>
-              <span className="text-white text-lg font-bold tracking-tight">BoloAI</span>
+              <span className="text-white text-lg font-bold tracking-tight">Bolo</span>
               <div className="text-[10px] text-white/40 font-medium tracking-widest uppercase">Platform</div>
             </div>
           </div>
@@ -120,7 +120,7 @@ export default function LoginPage() {
             <div className="w-8 h-8 bg-brand-gradient rounded-lg flex items-center justify-center">
               <Mic className="w-4 h-4 text-white" />
             </div>
-            <span className="text-lg font-bold text-slate-900">BoloAI</span>
+            <span className="text-lg font-bold text-slate-900">Bolo</span>
           </div>
 
           <div className="mb-8">

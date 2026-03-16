@@ -9,7 +9,7 @@ function vaani(command: VaaniCommand, ...args: unknown[]): void {
   if (command === "init") {
     const config = args[0] as VaaniConfig;
     if (!config?.tenantId) {
-      console.error("[BoloAI] tenantId is required");
+      console.error("[Bolo] tenantId is required");
       return;
     }
     instance = new VaaniWidgetInstance(config);
@@ -24,7 +24,7 @@ function vaani(command: VaaniCommand, ...args: unknown[]): void {
   }
 
   if (!instance) {
-    console.warn("[BoloAI] Widget not initialized. Call vaani('init', config) first.");
+    console.warn("[Bolo] Widget not initialized. Call vaani('init', config) first.");
     return;
   }
 
@@ -43,7 +43,7 @@ function vaani(command: VaaniCommand, ...args: unknown[]): void {
       instance.setLanguage(args[0] as string);
       break;
     default:
-      console.warn(`[BoloAI] Unknown command: ${command}`);
+      console.warn(`[Bolo] Unknown command: ${command}`);
   }
 }
 

@@ -7,7 +7,7 @@ pytestmark = pytest.mark.asyncio
 
 async def test_register_success(client: AsyncClient):
     resp = await client.post("/api/v1/auth/register", json={
-        "email": "newuser@boloai.com",
+        "email": "newuser@bolo.com",
         "password": "NewPass1",
         "full_name": "New User",
         "tenant_name": "New Tenant",
@@ -34,7 +34,7 @@ async def test_register_duplicate_email(client: AsyncClient, registered_user):
 
 async def test_register_duplicate_slug(client: AsyncClient):
     resp = await client.post("/api/v1/auth/register", json={
-        "email": "unique@boloai.com",
+        "email": "unique@bolo.com",
         "password": "TestPass1",
         "full_name": "User",
         "tenant_name": "Another",
@@ -46,7 +46,7 @@ async def test_register_duplicate_slug(client: AsyncClient):
 
 async def test_register_weak_password(client: AsyncClient):
     resp = await client.post("/api/v1/auth/register", json={
-        "email": "weak@boloai.com",
+        "email": "weak@bolo.com",
         "password": "weak",
         "full_name": "User",
         "tenant_name": "Weak Tenant",
@@ -57,7 +57,7 @@ async def test_register_weak_password(client: AsyncClient):
 
 async def test_register_password_no_uppercase(client: AsyncClient):
     resp = await client.post("/api/v1/auth/register", json={
-        "email": "lower@boloai.com",
+        "email": "lower@bolo.com",
         "password": "lowercase1",
         "full_name": "User",
         "tenant_name": "Lower Tenant",
@@ -68,7 +68,7 @@ async def test_register_password_no_uppercase(client: AsyncClient):
 
 async def test_register_password_no_digit(client: AsyncClient):
     resp = await client.post("/api/v1/auth/register", json={
-        "email": "nodigit@boloai.com",
+        "email": "nodigit@bolo.com",
         "password": "NoDigitPass",
         "full_name": "User",
         "tenant_name": "NoDigit Tenant",
@@ -79,7 +79,7 @@ async def test_register_password_no_digit(client: AsyncClient):
 
 async def test_register_invalid_slug(client: AsyncClient):
     resp = await client.post("/api/v1/auth/register", json={
-        "email": "slug@boloai.com",
+        "email": "slug@bolo.com",
         "password": "TestPass1",
         "full_name": "User",
         "tenant_name": "Slug",
@@ -109,7 +109,7 @@ async def test_login_wrong_password(client: AsyncClient, registered_user):
 
 async def test_login_nonexistent_user(client: AsyncClient):
     resp = await client.post("/api/v1/auth/login", json={
-        "email": "nobody@boloai.com",
+        "email": "nobody@bolo.com",
         "password": "TestPass1",
     })
     assert resp.status_code == 401

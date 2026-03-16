@@ -51,7 +51,7 @@ async def test_upload_document(client: AsyncClient, auth_headers):
     }, headers=auth_headers)
     kb_id = create_resp.json()["id"]
 
-    content = b"This is a sample document about BoloAI features."
+    content = b"This is a sample document about Bolo features."
 
     with patch("app.api.knowledge.upload_document", new_callable=AsyncMock) as mock_upload, \
          patch("app.api.knowledge.process_document") as mock_task:
@@ -91,7 +91,7 @@ async def test_query_knowledge_base(client: AsyncClient, auth_headers):
     kb_id = create_resp.json()["id"]
 
     mock_results = [
-        {"content": "BoloAI supports Hindi, Tamil, Telugu.", "metadata": {}, "score": 0.92},
+        {"content": "Bolo supports Hindi, Tamil, Telugu.", "metadata": {}, "score": 0.92},
         {"content": "The platform uses Sarvam AI for TTS.", "metadata": {}, "score": 0.85},
     ]
 

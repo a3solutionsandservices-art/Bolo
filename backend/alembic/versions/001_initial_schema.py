@@ -27,7 +27,7 @@ def upgrade() -> None:
         sa.Column("logo_url", sa.String(500)),
         sa.Column("primary_color", sa.String(7), nullable=False, server_default="#6366f1"),
         sa.Column("secondary_color", sa.String(7), nullable=False, server_default="#8b5cf6"),
-        sa.Column("widget_name", sa.String(100), nullable=False, server_default="BoloAI Assistant"),
+        sa.Column("widget_name", sa.String(100), nullable=False, server_default="Bolo Assistant"),
         sa.Column("widget_allowed_domains", postgresql.JSON, nullable=False, server_default="[]"),
         sa.Column("default_source_language", sa.String(10), nullable=False, server_default="en"),
         sa.Column("default_target_language", sa.String(10), nullable=False, server_default="hi"),

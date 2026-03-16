@@ -74,7 +74,7 @@ async def client(app) -> AsyncGenerator[AsyncClient, None]:
 @pytest_asyncio.fixture(scope="session")
 async def registered_user(client: AsyncClient):
     resp = await client.post("/api/v1/auth/register", json={
-        "email": "test@boloai.com",
+        "email": "test@bolo.com",
         "password": "TestPass1",
         "full_name": "Test User",
         "tenant_name": "Test Tenant",
@@ -83,7 +83,7 @@ async def registered_user(client: AsyncClient):
     assert resp.status_code == 201, resp.text
     data = resp.json()
     return {
-        "email": "test@boloai.com",
+        "email": "test@bolo.com",
         "password": "TestPass1",
         "access_token": data["access_token"],
         "refresh_token": data["refresh_token"],

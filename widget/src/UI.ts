@@ -193,7 +193,7 @@ export class WidgetUI {
     this.btn.className = "bolo-widget-btn";
     this.btn.style.cssText = `${side}; background: ${color};`;
     this.btn.innerHTML = CHAT_SVG;
-    this.btn.title = this.config.widgetName || "BoloAI";
+    this.btn.title = this.config.widgetName || "Bolo";
     this.btn.addEventListener("click", () => this.toggle());
     this.container.appendChild(this.btn);
 
@@ -207,7 +207,7 @@ export class WidgetUI {
       <div class="bolo-header-left">
         ${this.config.logoUrl ? `<img src="${this.config.logoUrl}" alt="" style="width:28px;height:28px;border-radius:6px;object-fit:cover">` : `<div style="width:28px;height:28px;border-radius:6px;background:${color};display:flex;align-items:center;justify-content:center">${CHAT_SVG.replace('24" height="24"', '16" height="16"')}</div>`}
         <div>
-          <h3>${this.config.widgetName || "BoloAI"}</h3>
+          <h3>${this.config.widgetName || "Bolo"}</h3>
           <p class="bolo-header-subtitle">AI Voice Assistant</p>
         </div>
       </div>

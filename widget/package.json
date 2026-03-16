@@ -1,7 +1,7 @@
 {
-  "name": "boloai-widget",
+  "name": "bolo-widget",
   "version": "0.1.0",
-  "description": "BoloAI embeddable voice widget",
+  "description": "Bolo embeddable voice widget",
   "type": "module",
   "main": "dist/bolo.min.js",
   "scripts": {
