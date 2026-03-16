@@ -27,6 +27,10 @@ SARVAM_LANGUAGE_CODES: dict[str, str] = {
     "bn": "bn-IN",
     "gu": "gu-IN",
     "mr": "mr-IN",
+    "kn": "kn-IN",
+    "ml": "ml-IN",
+    "pa": "pa-IN",
+    "or": "or-IN",
     "en": "en-IN",
 }
 

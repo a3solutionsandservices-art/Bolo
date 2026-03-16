@@ -78,7 +78,7 @@ class Settings(BaseSettings):
     CELERY_RESULT_BACKEND: str = "redis://localhost:6379/2"
 
     MAX_AUDIO_SIZE_MB: int = 25
-    SUPPORTED_LANGUAGES: List[str] = ["hi", "ta", "te", "bn", "gu", "mr", "en"]
+    SUPPORTED_LANGUAGES: List[str] = ["hi", "ta", "te", "bn", "gu", "mr", "kn", "ml", "pa", "or", "en"]
     LANGUAGE_NAMES: dict = {
         "hi": "Hindi",
         "ta": "Tamil",
@@ -86,6 +86,10 @@ class Settings(BaseSettings):
         "bn": "Bengali",
         "gu": "Gujarati",
         "mr": "Marathi",
+        "kn": "Kannada",
+        "ml": "Malayalam",
+        "pa": "Punjabi",
+        "or": "Odia",
         "en": "English",
     }
 

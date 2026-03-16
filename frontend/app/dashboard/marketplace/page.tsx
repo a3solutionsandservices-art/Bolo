@@ -31,7 +31,7 @@ const CATEGORIES = [
   { id: "community_speaker", label: "Community Speakers", icon: Users },
 ];
 
-const LANGUAGES = ["All", "Hindi", "Tamil", "Telugu", "Bengali", "Marathi", "Gujarati", "Kannada", "Malayalam", "Punjabi", "Bhojpuri", "Awadhi", "Maithili"];
+const LANGUAGES = ["All", "Hindi", "Tamil", "Telugu", "Bengali", "Marathi", "Gujarati", "Kannada", "Malayalam", "Punjabi", "Odia", "Bhojpuri", "Awadhi", "Maithili"];
 
 const CATEGORY_COLORS: Record<string, string> = {
   celebrity: "bg-amber-100 text-amber-700 border-amber-200",

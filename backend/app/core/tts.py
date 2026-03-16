@@ -14,6 +14,10 @@ SARVAM_DEFAULT_SPEAKERS = {
     "bn": "meera",
     "gu": "meera",
     "mr": "meera",
+    "kn": "anushka",
+    "ml": "anushka",
+    "pa": "meera",
+    "or": "meera",
     "en": "meera",
 }
 

@@ -14,6 +14,10 @@ const LANGUAGES = [
   { code: "bn", name: "Bengali" },
   { code: "gu", name: "Gujarati" },
   { code: "mr", name: "Marathi" },
+  { code: "kn", name: "Kannada" },
+  { code: "ml", name: "Malayalam" },
+  { code: "pa", name: "Punjabi" },
+  { code: "or", name: "Odia" },
   { code: "en", name: "English" },
 ];
 

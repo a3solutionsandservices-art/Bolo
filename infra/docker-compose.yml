@@ -3,9 +3,9 @@ services:
     image: postgres:16-alpine
     container_name: bolo-postgres
     environment:
-      POSTGRES_USER: bolo
-      POSTGRES_PASSWORD: bolo
-      POSTGRES_DB: bolo
+      POSTGRES_USER: vaaniai
+      POSTGRES_PASSWORD: vaaniai
+      POSTGRES_DB: vaaniai
     ports:
       - "5432:5432"
     volumes:
@@ -39,8 +39,8 @@ services:
     env_file:
       - ../backend/.env
     environment:
-      DATABASE_URL: postgresql+asyncpg://bolo:bolo@postgres:5432/bolo
-      DATABASE_SYNC_URL: postgresql://bolo:bolo@postgres:5432/bolo
+      DATABASE_URL: postgresql+asyncpg://vaaniai:vaaniai@postgres:5432/vaaniai
+      DATABASE_SYNC_URL: postgresql://vaaniai:vaaniai@postgres:5432/vaaniai
       REDIS_URL: redis://redis:6379/0
       CELERY_BROKER_URL: redis://redis:6379/1
       CELERY_RESULT_BACKEND: redis://redis:6379/2
@@ -66,8 +66,8 @@ services:
     env_file:
       - ../backend/.env
     environment:
-      DATABASE_URL: postgresql+asyncpg://bolo:bolo@postgres:5432/bolo
-      DATABASE_SYNC_URL: postgresql://bolo:bolo@postgres:5432/bolo
+      DATABASE_URL: postgresql+asyncpg://vaaniai:vaaniai@postgres:5432/vaaniai
+      DATABASE_SYNC_URL: postgresql://vaaniai:vaaniai@postgres:5432/vaaniai
       REDIS_URL: redis://redis:6379/0
       CELERY_BROKER_URL: redis://redis:6379/1
       CELERY_RESULT_BACKEND: redis://redis:6379/2

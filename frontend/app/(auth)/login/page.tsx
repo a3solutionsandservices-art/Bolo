@@ -20,7 +20,7 @@ const loginSchema = z.object({
 type LoginForm = z.infer<typeof loginSchema>;
 
 const FEATURES = [
-  { icon: Globe, title: "22 Indian Languages", desc: "Hindi, Tamil, Telugu, Bengali and more" },
+  { icon: Globe, title: "11 Indian Languages", desc: "Hindi, Tamil, Telugu, Kannada, Malayalam and more" },
   { icon: Zap, title: "Real-time AI Voice", desc: "Sub-500ms response latency" },
   { icon: Shield, title: "Enterprise-grade", desc: "SOC 2 ready, data residency in India" },
 ];

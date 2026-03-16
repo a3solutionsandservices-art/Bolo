@@ -31,6 +31,10 @@ const LANGUAGES = [
   { code: "bn", label: "Bengali" },
   { code: "gu", label: "Gujarati" },
   { code: "mr", label: "Marathi" },
+  { code: "kn", label: "Kannada" },
+  { code: "ml", label: "Malayalam" },
+  { code: "pa", label: "Punjabi" },
+  { code: "or", label: "Odia" },
   { code: "en", label: "English" },
 ];
 
