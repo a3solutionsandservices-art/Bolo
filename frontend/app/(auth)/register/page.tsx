@@ -79,7 +79,7 @@ export default function RegisterPage() {
               <Mic className="w-5 h-5 text-white" />
             </div>
             <div>
-              <span className="text-white text-lg font-bold tracking-tight">VaaniAI</span>
+              <span className="text-white text-lg font-bold tracking-tight">BoloAI</span>
               <div className="text-[10px] text-white/40 font-medium tracking-widest uppercase">Platform</div>
             </div>
           </div>
@@ -92,7 +92,7 @@ export default function RegisterPage() {
               </span>
             </h1>
             <p className="text-white/50 text-base leading-relaxed max-w-sm">
-              Join 500+ businesses using VaaniAI to reach customers in their native language with AI-powered voice.
+              Join 500+ businesses using BoloAI to reach customers in their native language with AI-powered voice.
             </p>
           </div>
 
@@ -109,7 +109,7 @@ export default function RegisterPage() {
         <div className="relative z-10">
           <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
             <p className="text-white/80 text-sm italic leading-relaxed mb-3">
-              &ldquo;VaaniAI helped us reach 3x more rural customers by adding Hindi voice support to our app in a single afternoon.&rdquo;
+              &ldquo;BoloAI helped us reach 3x more rural customers by adding Hindi voice support to our app in a single afternoon.&rdquo;
             </p>
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 bg-brand-gradient rounded-full flex items-center justify-center text-white text-xs font-bold">
@@ -132,7 +132,7 @@ export default function RegisterPage() {
             <div className="w-8 h-8 bg-brand-gradient rounded-lg flex items-center justify-center">
               <Mic className="w-4 h-4 text-white" />
             </div>
-            <span className="text-lg font-bold text-slate-900">VaaniAI</span>
+            <span className="text-lg font-bold text-slate-900">BoloAI</span>
           </div>
 
           <div className="mb-8">

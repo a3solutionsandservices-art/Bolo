@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: "VaaniAI — Multi-tenant AI Voice Translation Platform on AWS ECS Fargate"
+Description: "BoloAI — Multi-tenant AI Voice Translation Platform on AWS ECS Fargate"
 
 Parameters:
   Environment:
@@ -9,11 +9,11 @@ Parameters:
 
   AppName:
     Type: String
-    Default: vaaniai
+    Default: boloai
 
   DomainName:
     Type: String
-    Description: "Root domain (e.g. vaaniai.com)"
+    Description: "Root domain (e.g. boloai.com)"
 
   DBPassword:
     Type: String
@@ -43,7 +43,7 @@ Parameters:
 
   BackendImage:
     Type: String
-    Description: "ECR image URI for backend (e.g. 123456789.dkr.ecr.us-east-1.amazonaws.com/vaaniai-backend:latest)"
+    Description: "ECR image URI for backend (e.g. 123456789.dkr.ecr.us-east-1.amazonaws.com/boloai-backend:latest)"
 
   FrontendImage:
     Type: String
@@ -288,7 +288,7 @@ Resources:
   DBSubnetGroup:
     Type: AWS::RDS::DBSubnetGroup
     Properties:
-      DBSubnetGroupDescription: "VaaniAI DB subnet group"
+      DBSubnetGroupDescription: "BoloAI DB subnet group"
       SubnetIds:
         - !Ref PrivateSubnet1
         - !Ref PrivateSubnet2
@@ -301,9 +301,9 @@ Resources:
       DBInstanceClass: !FindInMap [EnvConfig, !Ref Environment, DBInstanceClass]
       Engine: postgres
       EngineVersion: "16.2"
-      MasterUsername: vaaniai
+      MasterUsername: boloai
       MasterUserPassword: !Ref DBPassword
-      DBName: vaaniai
+      DBName: boloai
       AllocatedStorage: 50
       StorageType: gp3
       StorageEncrypted: true
@@ -320,7 +320,7 @@ Resources:
   CacheSubnetGroup:
     Type: AWS::ElastiCache::SubnetGroup
     Properties:
-      Description: "VaaniAI Redis subnet group"
+      Description: "BoloAI Redis subnet group"
       SubnetIds:
         - !Ref PrivateSubnet1
         - !Ref PrivateSubnet2
@@ -347,14 +347,14 @@ Resources:
     Type: AWS::SecretsManager::Secret
     Properties:
       Name: !Sub "${AppName}/${Environment}/app-secrets"
-      Description: "VaaniAI application secrets"
+      Description: "BoloAI application secrets"
       SecretString: !Sub |
         {
           "SECRET_KEY": "${SecretKey}",
           "SARVAM_API_KEY": "${SarvamApiKey}",
           "OPENAI_API_KEY": "${OpenAIApiKey}",
           "STRIPE_SECRET_KEY": "${StripeSecretKey}",
-          "DATABASE_URL": "postgresql+asyncpg://vaaniai:${DBPassword}@${Database.Endpoint.Address}:5432/vaaniai",
+          "DATABASE_URL": "postgresql+asyncpg://boloai:${DBPassword}@${Database.Endpoint.Address}:5432/boloai",
           "REDIS_URL": "rediss://:@${RedisCluster.PrimaryEndPoint.Address}:${RedisCluster.PrimaryEndPoint.Port}/0"
         }
 

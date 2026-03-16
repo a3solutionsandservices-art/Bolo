@@ -215,7 +215,7 @@ async def test_end_conversation(client: AsyncClient, auth_headers):
 
 async def test_conversations_isolated_between_tenants(client: AsyncClient):
     tenant2_resp = await client.post("/api/v1/auth/register", json={
-        "email": "tenant2@vaaniai.com",
+        "email": "tenant2@boloai.com",
         "password": "Tenant2Pass1",
         "full_name": "Tenant 2",
         "tenant_name": "Tenant Two",
@@ -232,7 +232,7 @@ async def test_conversations_isolated_between_tenants(client: AsyncClient):
     t2_conv_id = t2_start.json()["id"]
 
     t1_resp = await client.post("/api/v1/auth/register", json={
-        "email": "tenant1@vaaniai.com",
+        "email": "tenant1@boloai.com",
         "password": "Tenant1Pass1",
         "full_name": "Tenant 1",
         "tenant_name": "Tenant One",

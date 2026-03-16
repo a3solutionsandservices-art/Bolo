@@ -113,7 +113,7 @@ async def twilio_inbound(
     await db.commit()
     await db.refresh(conv)
 
-    action_url = f"{settings.SARVAM_API_BASE.replace('api.sarvam.ai', 'api.vaaniai.com')}/api/v1/telephony/gather/{conv.id}"
+    action_url = f"{settings.SARVAM_API_BASE.replace('api.sarvam.ai', 'api.boloai.com')}/api/v1/telephony/gather/{conv.id}"
     twiml = _twiml_gather(action_url, language="hi-IN")
     return Response(content=twiml, media_type="application/xml")
 

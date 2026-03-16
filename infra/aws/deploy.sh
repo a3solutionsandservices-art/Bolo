@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
-# VaaniAI AWS Deployment Script
+# BoloAI AWS Deployment Script
 # Usage: ./infra/aws/deploy.sh [production|staging] [--init]
 set -euo pipefail
 
 ENVIRONMENT="${1:-staging}"
 INIT="${2:-}"
-APP_NAME="vaaniai"
+APP_NAME="boloai"
 AWS_REGION="${AWS_REGION:-us-east-1}"
 STACK_NAME="${APP_NAME}-${ENVIRONMENT}"
 ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 ECR_BASE="${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
 
-echo "=== VaaniAI Deploy — env=${ENVIRONMENT} region=${AWS_REGION} ==="
+echo "=== BoloAI Deploy — env=${ENVIRONMENT} region=${AWS_REGION} ==="
 
 # ── Helper: require env var ──
 require_env() {

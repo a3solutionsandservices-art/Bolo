@@ -46,7 +46,7 @@ function StatCard({ title, value, subtitle, icon: Icon, gradient, iconBg }: {
   );
 }
 
-const TOUR_KEY = "vaaniai_tour_done";
+const TOUR_KEY = "boloai_tour_done";
 
 export default function DashboardPage() {
   const [tourActive, setTourActive] = useState(false);

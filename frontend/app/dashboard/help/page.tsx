@@ -85,7 +85,7 @@ const GUIDES = [
       {
         emoji: "4️⃣",
         title: "Wait for processing",
-        body: "VaaniAI reads your documents automatically. Each file usually takes 1–2 minutes. You'll see the status change to 'Ready' when done.",
+        body: "BoloAI reads your documents automatically. Each file usually takes 1–2 minutes. You'll see the status change to 'Ready' when done.",
       },
       {
         emoji: "5️⃣",
@@ -140,7 +140,7 @@ const GUIDES = [
       {
         emoji: "⚡",
         title: "Response latency",
-        body: "The Latency chart shows how fast VaaniAI is responding. Under 2000ms (2 seconds) is excellent. If you see high latency, the Sarvam AI service may be under load.",
+        body: "The Latency chart shows how fast BoloAI is responding. Under 2000ms (2 seconds) is excellent. If you see high latency, the Sarvam AI service may be under load.",
       },
     ],
   },
@@ -182,7 +182,7 @@ const FAQS = [
     a: "No. You just copy one snippet of code (like a YouTube embed) and paste it into your website. If your site runs on Shopify or WordPress, the Platform Connectors tab in Integrations gives you exact step-by-step instructions with no coding required.",
   },
   {
-    q: "Which languages does VaaniAI support?",
+    q: "Which languages does BoloAI support?",
     a: "Hindi, Tamil, Telugu, Bengali, Gujarati, Marathi, and English. You can set any of these as the 'user speaks' language and any as the AI response language.",
   },
   {
@@ -301,7 +301,7 @@ export default function HelpPage() {
           </div>
           <h1 className="text-2xl font-bold text-gray-900">Help Centre</h1>
         </div>
-        <p className="text-gray-500">Step-by-step guides for getting the most out of VaaniAI — no technical knowledge needed.</p>
+        <p className="text-gray-500">Step-by-step guides for getting the most out of BoloAI — no technical knowledge needed.</p>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-10">
@@ -337,7 +337,7 @@ export default function HelpPage() {
         <div className="text-2xl mb-2">Still stuck? 🤝</div>
         <p className="text-brand-100 text-sm mb-4">
           If you have a question that isn&apos;t answered here, email us at{" "}
-          <a href="mailto:support@vaaniai.com" className="underline font-medium">support@vaaniai.com</a>
+          <a href="mailto:support@boloai.com" className="underline font-medium">support@boloai.com</a>
           {" "}and we&apos;ll get back to you within 24 hours.
         </p>
         <Link

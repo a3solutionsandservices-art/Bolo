@@ -134,7 +134,7 @@ const CONNECTORS: Connector[] = [
       {
         label: "theme.liquid",
         lang: "liquid",
-        code: (ctx) => `{% comment %} VaaniAI Multilingual Voice Widget {% endcomment %}
+        code: (ctx) => `{% comment %} BoloAI Multilingual Voice Widget {% endcomment %}
 <script>
   window.VaaniConfig = {
     tenantId: "${ctx.tenantId}",
@@ -197,10 +197,10 @@ const CONNECTORS: Connector[] = [
         lang: "php",
         code: (ctx) => `<?php
 /**
- * VaaniAI Voice Widget Integration
+ * BoloAI Voice Widget Integration
  * Add this to your theme's functions.php
  */
-function vaaniai_enqueue_widget() {
+function boloai_enqueue_widget() {
     $config = array(
         'tenantId'       => '${ctx.tenantId}',
         'apiEndpoint'    => '${ctx.apiEndpoint}',
@@ -213,29 +213,29 @@ function vaaniai_enqueue_widget() {
     );
 
     wp_register_script(
-        'vaaniai-widget',
+        'boloai-widget',
         '${ctx.apiEndpoint}/widget/vaani.min.js',
         array(),
         null,
         true
     );
-    wp_enqueue_script('vaaniai-widget');
+    wp_enqueue_script('boloai-widget');
     wp_add_inline_script(
-        'vaaniai-widget',
+        'boloai-widget',
         'window.VaaniConfig = ' . json_encode($config) . '; vaani("init", window.VaaniConfig);',
         'before'
     );
 }
-add_action('wp_enqueue_scripts', 'vaaniai_enqueue_widget');`,
+add_action('wp_enqueue_scripts', 'boloai_enqueue_widget');`,
       },
       {
         label: "Shortcode widget",
         lang: "php",
         code: (ctx) => `<?php
 /**
- * [vaaniai_button] shortcode — renders a voice search button anywhere in content
+ * [boloai_button] shortcode — renders a voice search button anywhere in content
  */
-function vaaniai_button_shortcode($atts) {
+function boloai_button_shortcode($atts) {
     $a = shortcode_atts(array(
         'label'    => 'Search in your language',
         'language' => '${ctx.sourceLanguage}',
@@ -247,7 +247,7 @@ function vaaniai_button_shortcode($atts) {
         esc_html($a['label'])
     );
 }
-add_shortcode('vaaniai_button', 'vaaniai_button_shortcode');`,
+add_shortcode('boloai_button', 'boloai_button_shortcode');`,
       },
     ],
   },
@@ -266,7 +266,7 @@ add_shortcode('vaaniai_button', 'vaaniai_button_shortcode');`,
       {
         label: "Portal script",
         lang: "javascript",
-        code: (ctx) => `// VaaniAI Freshdesk Integration
+        code: (ctx) => `// BoloAI Freshdesk Integration
 // Paste this in: Admin → Portals → Portal Customization → Header Scripts
 
 window.VaaniConfig = {
@@ -313,7 +313,7 @@ document.addEventListener('DOMContentLoaded', function() {
     steps: [
       "Deploy the Python webhook to your server",
       "Set the Twilio WhatsApp webhook URL to `https://yourserver.com/webhook/whatsapp`",
-      "Messages are auto-translated and answered by VaaniAI",
+      "Messages are auto-translated and answered by BoloAI",
     ],
     docsUrl: "https://www.twilio.com/docs/whatsapp",
     templateTabs: [
@@ -321,7 +321,7 @@ document.addEventListener('DOMContentLoaded', function() {
         label: "webhook.py",
         lang: "python",
         code: (ctx) => `"""
-VaaniAI × WhatsApp Business via Twilio
+BoloAI × WhatsApp Business via Twilio
 Deploy with: uvicorn webhook:app --host 0.0.0.0 --port 8080
 Set Twilio webhook to: https://yourserver.com/webhook/whatsapp
 """
@@ -331,11 +331,11 @@ from fastapi import FastAPI, Form, Response
 
 app = FastAPI()
 
-VAANIAI_API = "${ctx.apiEndpoint}/api/v1"
-VAANIAI_API_KEY = "YOUR_VAANIAI_API_KEY"  # create one in API Keys page
+BOLOAI_API = "${ctx.apiEndpoint}/api/v1"
+BOLOAI_API_KEY = "YOUR_BOLOAI_API_KEY"  # create one in API Keys page
 SESSIONS: dict[str, str] = {}             # phone → conversation_id
 
-HEADERS = {"X-API-Key": VAANIAI_API_KEY}
+HEADERS = {"X-API-Key": BOLOAI_API_KEY}
 
 
 @app.post("/webhook/whatsapp")
@@ -348,7 +348,7 @@ async def handle_whatsapp(
 
         if not conv_id:
             resp = await client.post(
-                f"{VAANIAI_API}/conversations",
+                f"{BOLOAI_API}/conversations",
                 headers=HEADERS,
                 json={
                     "mode": "agent",
@@ -361,7 +361,7 @@ async def handle_whatsapp(
             SESSIONS[From] = conv_id
 
         msg_resp = await client.post(
-            f"{VAANIAI_API}/conversations/{conv_id}/message",
+            f"{BOLOAI_API}/conversations/{conv_id}/message",
             headers=HEADERS,
             json={"content": Body},
         )
@@ -435,17 +435,17 @@ export function VaaniWidget({
       apiKey,
     };
 
-    if (document.getElementById("vaaniai-widget-script")) return;
+    if (document.getElementById("boloai-widget-script")) return;
 
     const script = document.createElement("script");
-    script.id = "vaaniai-widget-script";
+    script.id = "boloai-widget-script";
     script.src = "${ctx.apiEndpoint}/widget/vaani.min.js";
     script.async = true;
     script.onload = () => window.vaani?.("init", window.VaaniConfig);
     document.body.appendChild(script);
 
     return () => {
-      document.getElementById("vaaniai-widget-script")?.remove();
+      document.getElementById("boloai-widget-script")?.remove();
     };
   }, [apiKey, language, targetLanguage, mode, position]);
 
@@ -463,7 +463,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         {children}
         <VaaniWidget
-          apiKey={process.env.NEXT_PUBLIC_VAANIAI_API_KEY!}
+          apiKey={process.env.NEXT_PUBLIC_BOLOAI_API_KEY!}
           language="${ctx.sourceLanguage}"
           targetLanguage="${ctx.targetLanguage}"
           mode="agent"
@@ -516,7 +516,7 @@ curl -X POST ${ctx.apiEndpoint}/api/v1/voice/transcribe \\
       {
         label: "Python",
         lang: "python",
-        code: (ctx) => `"""VaaniAI Python integration example"""
+        code: (ctx) => `"""BoloAI Python integration example"""
 import httpx
 
 API = "${ctx.apiEndpoint}/api/v1"
@@ -554,7 +554,7 @@ if __name__ == "__main__":
       {
         label: "Node.js",
         lang: "javascript",
-        code: (ctx) => `// VaaniAI Node.js integration
+        code: (ctx) => `// BoloAI Node.js integration
 const API = "${ctx.apiEndpoint}/api/v1";
 const HEADERS = {
   "X-API-Key": "YOUR_API_KEY",
@@ -629,7 +629,7 @@ const DEFAULT_CONFIG: WizardConfig = {
   sourceLanguage: "hi",
   targetLanguage: "en",
   knowledgeBaseId: "",
-  widgetName: "VaaniAI Assistant",
+  widgetName: "BoloAI Assistant",
   primaryColor: "#6366f1",
   position: "bottom-right",
 };
@@ -689,7 +689,7 @@ function EmbedCode({ config, tenantId }: { config: WizardConfig; tenantId: strin
   const snippet = `<script>
   window.VaaniConfig = {
     tenantId: "${tenantId}",
-    apiEndpoint: "${typeof window !== "undefined" ? window.location.origin : "https://app.vaaniai.com"}",
+    apiEndpoint: "${typeof window !== "undefined" ? window.location.origin : "https://app.boloai.com"}",
     language: "${config.sourceLanguage}",
     targetLanguage: "${config.targetLanguage}",
     widgetName: "${config.widgetName}",
@@ -701,7 +701,7 @@ function EmbedCode({ config, tenantId }: { config: WizardConfig; tenantId: strin
     w['VaaniWidget']=o;w[o]=w[o]||function(){(w[o].q=w[o].q||[]).push(arguments)};
     js=d.createElement(s),fjs=d.getElementsByTagName(s)[0];
     js.id=o;js.src=f;js.async=1;fjs.parentNode.insertBefore(js,fjs);
-  }(window,document,'script','vaani','https://cdn.vaaniai.com/widget/vaani.min.js'));
+  }(window,document,'script','vaani','https://cdn.boloai.com/widget/vaani.min.js'));
   vaani('init', window.VaaniConfig);
 </script>`;
 
@@ -863,8 +863,8 @@ export default function IntegrationsPage() {
 
   const templateCtx: TemplateContext = {
     tenantId: tenant?.id ?? "YOUR_TENANT_ID",
-    apiEndpoint: typeof window !== "undefined" ? window.location.origin : "https://app.vaaniai.com",
-    widgetName: config.widgetName || tenant?.widget_name || "VaaniAI Assistant",
+    apiEndpoint: typeof window !== "undefined" ? window.location.origin : "https://app.boloai.com",
+    widgetName: config.widgetName || tenant?.widget_name || "BoloAI Assistant",
     primaryColor: config.primaryColor || tenant?.primary_color || "#6366f1",
     sourceLanguage: config.sourceLanguage || tenant?.default_source_language || "hi",
     targetLanguage: config.targetLanguage || tenant?.default_target_language || "en",
@@ -1045,7 +1045,7 @@ export default function IntegrationsPage() {
                           value={config.widgetName}
                           onChange={(e) => update({ widgetName: e.target.value })}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-                          placeholder="VaaniAI Assistant"
+                          placeholder="BoloAI Assistant"
                         />
                       </div>
                       <div>

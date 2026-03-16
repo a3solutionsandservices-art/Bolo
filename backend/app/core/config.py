@@ -5,15 +5,15 @@ from typing import List
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-    APP_NAME: str = "VaaniAI"
+    APP_NAME: str = "BoloAI"
     APP_VERSION: str = "0.1.0"
     DEBUG: bool = False
     SECRET_KEY: str = "change-me-in-production"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     REFRESH_TOKEN_EXPIRE_DAYS: int = 30
 
-    DATABASE_URL: str = "postgresql+asyncpg://vaaniai:vaaniai@localhost:5432/vaaniai"
-    DATABASE_SYNC_URL: str = "postgresql://vaaniai:vaaniai@localhost:5432/vaaniai"
+    DATABASE_URL: str = "postgresql+asyncpg://boloai:boloai@localhost:5432/boloai"
+    DATABASE_SYNC_URL: str = "postgresql://boloai:boloai@localhost:5432/boloai"
 
     REDIS_URL: str = "redis://localhost:6379/0"
 
@@ -28,7 +28,7 @@ class Settings(BaseSettings):
 
     PINECONE_API_KEY: str = ""
     PINECONE_ENVIRONMENT: str = "us-east-1-aws"
-    PINECONE_INDEX_NAME: str = "vaaniai-knowledge"
+    PINECONE_INDEX_NAME: str = "boloai-knowledge"
 
     STRIPE_SECRET_KEY: str = ""
     STRIPE_WEBHOOK_SECRET: str = ""
@@ -38,7 +38,7 @@ class Settings(BaseSettings):
     AWS_ACCESS_KEY_ID: str = ""
     AWS_SECRET_ACCESS_KEY: str = ""
     AWS_REGION: str = "us-east-1"
-    AWS_S3_BUCKET: str = "vaaniai-audio"
+    AWS_S3_BUCKET: str = "boloai-audio"
 
     STT_PROVIDER: str = "sarvam"
     STT_FALLBACK_PROVIDER: str = "whisper"
@@ -61,14 +61,14 @@ class Settings(BaseSettings):
 
     INDICTRANS_DEVICE: str = "cpu"
 
-    API_BASE_URL: str = "https://api.vaaniai.com"
+    API_BASE_URL: str = "https://api.boloai.com"
 
     CORS_ORIGINS: List[str] = [
         "http://localhost",
         "http://localhost:80",
         "http://localhost:3000",
         "http://localhost:8000",
-        "https://app.vaaniai.com",
+        "https://app.boloai.com",
     ]
 
     RATE_LIMIT_DEFAULT: str = "100/minute"

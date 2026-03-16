@@ -1,9 +1,9 @@
 {
-  "name": "vaaniai-widget",
+  "name": "boloai-widget",
   "version": "0.1.0",
-  "description": "VaaniAI embeddable voice widget",
+  "description": "BoloAI embeddable voice widget",
   "type": "module",
-  "main": "dist/vaani.min.js",
+  "main": "dist/bolo.min.js",
   "scripts": {
     "build": "rollup -c",
     "dev": "rollup -c --watch",

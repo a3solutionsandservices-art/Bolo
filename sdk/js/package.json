@@ -1,9 +1,9 @@
 {
-  "name": "@vaaniai/js-sdk",
+  "name": "@boloai/js-sdk",
   "version": "0.1.0",
-  "description": "VaaniAI JavaScript SDK for Indian language voice conversations",
+  "description": "BoloAI JavaScript SDK for Indian language voice conversations",
   "main": "src/index.js",
   "browser": "src/index.js",
-  "keywords": ["vaaniai", "voice", "speech", "indian-languages"],
+  "keywords": ["boloai", "voice", "speech", "indian-languages"],
   "license": "MIT"
 }

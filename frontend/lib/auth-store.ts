@@ -27,6 +27,6 @@ export const useAuthStore = create<AuthState>()(
         set({ user: null, tenantId: null, isAuthenticated: false });
       },
     }),
-    { name: "vaaniai-auth" }
+    { name: "boloai-auth" }
   )
 );

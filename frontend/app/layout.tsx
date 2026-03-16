@@ -7,7 +7,7 @@ import { Toaster } from "sonner";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "VaaniAI — Indian Language Voice Platform",
+  title: "BoloAI — Indian Language Voice Platform",
   description: "Real-time AI voice translation and conversation in Indian languages",
 };
 

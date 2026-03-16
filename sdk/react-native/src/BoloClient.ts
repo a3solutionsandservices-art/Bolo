@@ -30,9 +30,9 @@ export interface ConversationResult {
   status: string;
 }
 
-const DEFAULT_BASE = "https://api.vaaniai.com";
+const DEFAULT_BASE = "https://api.boloai.com";
 
-export class VaaniClient {
+export class BoloClient {
   private apiKey: string;
   private apiBase: string;
   private language: string;

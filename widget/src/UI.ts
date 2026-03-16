@@ -1,7 +1,7 @@
 import { VaaniConfig, VaaniMessage } from "./types";
 
 const WIDGET_CSS = `
-.vaani-widget-btn {
+.bolo-widget-btn {
   position: fixed;
   bottom: 24px;
   width: 56px;
@@ -17,13 +17,13 @@ const WIDGET_CSS = `
   z-index: 999999;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
-.vaani-widget-btn:hover { transform: scale(1.08); box-shadow: 0 8px 32px rgba(0,0,0,0.24); }
-.vaani-widget-btn.vaani-recording { animation: vaani-pulse 1.2s ease-in-out infinite; }
-@keyframes vaani-pulse {
+.bolo-widget-btn:hover { transform: scale(1.08); box-shadow: 0 8px 32px rgba(0,0,0,0.24); }
+.bolo-widget-btn.bolo-recording { animation: bolo-pulse 1.2s ease-in-out infinite; }
+@keyframes bolo-pulse {
   0%, 100% { box-shadow: 0 0 0 0 rgba(99,102,241,0.4); }
   50% { box-shadow: 0 0 0 12px rgba(99,102,241,0); }
 }
-.vaani-panel {
+.bolo-panel {
   position: fixed;
   bottom: 90px;
   width: 360px;
@@ -39,20 +39,20 @@ const WIDGET_CSS = `
   transform-origin: bottom right;
   transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1), opacity 0.2s;
 }
-.vaani-panel.vaani-hidden { transform: scale(0.85); opacity: 0; pointer-events: none; }
-.vaani-header {
+.bolo-panel.bolo-hidden { transform: scale(0.85); opacity: 0; pointer-events: none; }
+.bolo-header {
   padding: 14px 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   border-bottom: 1px solid #f0f0f0;
 }
-.vaani-header-left { display: flex; align-items: center; gap: 8px; }
-.vaani-header h3 { margin: 0; font-size: 14px; font-weight: 600; color: #111; }
-.vaani-header-subtitle { font-size: 11px; color: #888; margin: 0; }
-.vaani-close-btn { background: none; border: none; cursor: pointer; color: #888; padding: 4px; border-radius: 6px; font-size: 16px; line-height: 1; }
-.vaani-close-btn:hover { background: #f0f0f0; color: #333; }
-.vaani-messages {
+.bolo-header-left { display: flex; align-items: center; gap: 8px; }
+.bolo-header h3 { margin: 0; font-size: 14px; font-weight: 600; color: #111; }
+.bolo-header-subtitle { font-size: 11px; color: #888; margin: 0; }
+.bolo-close-btn { background: none; border: none; cursor: pointer; color: #888; padding: 4px; border-radius: 6px; font-size: 16px; line-height: 1; }
+.bolo-close-btn:hover { background: #f0f0f0; color: #333; }
+.bolo-messages {
   flex: 1;
   overflow-y: auto;
   padding: 12px;
@@ -62,10 +62,10 @@ const WIDGET_CSS = `
   min-height: 200px;
   max-height: 380px;
 }
-.vaani-message { display: flex; flex-direction: column; max-width: 82%; }
-.vaani-message.user { align-self: flex-end; align-items: flex-end; }
-.vaani-message.assistant { align-self: flex-start; align-items: flex-start; }
-.vaani-bubble {
+.bolo-message { display: flex; flex-direction: column; max-width: 82%; }
+.bolo-message.user { align-self: flex-end; align-items: flex-end; }
+.bolo-message.assistant { align-self: flex-start; align-items: flex-start; }
+.bolo-bubble {
   padding: 9px 13px;
   border-radius: 14px;
   font-size: 13px;
@@ -74,19 +74,19 @@ const WIDGET_CSS = `
   max-width: 100%;
   word-break: break-word;
 }
-.vaani-message.user .vaani-bubble { color: #fff; border-bottom-right-radius: 4px; }
-.vaani-message.assistant .vaani-bubble { background: #f4f4f6; border-bottom-left-radius: 4px; }
-.vaani-time { font-size: 10px; color: #aaa; margin-top: 3px; }
-.vaani-audio-btn { background: none; border: none; cursor: pointer; color: inherit; padding: 2px 0 0 6px; opacity: 0.7; }
-.vaani-audio-btn:hover { opacity: 1; }
-.vaani-footer {
+.bolo-message.user .bolo-bubble { color: #fff; border-bottom-right-radius: 4px; }
+.bolo-message.assistant .bolo-bubble { background: #f4f4f6; border-bottom-left-radius: 4px; }
+.bolo-time { font-size: 10px; color: #aaa; margin-top: 3px; }
+.bolo-audio-btn { background: none; border: none; cursor: pointer; color: inherit; padding: 2px 0 0 6px; opacity: 0.7; }
+.bolo-audio-btn:hover { opacity: 1; }
+.bolo-footer {
   padding: 10px 12px;
   border-top: 1px solid #f0f0f0;
   display: flex;
   gap: 8px;
   align-items: flex-end;
 }
-.vaani-text-input {
+.bolo-text-input {
   flex: 1;
   border: 1px solid #e0e0e0;
   border-radius: 20px;
@@ -99,8 +99,8 @@ const WIDGET_CSS = `
   overflow-y: auto;
   line-height: 1.4;
 }
-.vaani-text-input:focus { border-color: #6366f1; }
-.vaani-mic-btn, .vaani-send-btn {
+.bolo-text-input:focus { border-color: #6366f1; }
+.bolo-mic-btn, .bolo-send-btn {
   width: 36px;
   height: 36px;
   border-radius: 50%;
@@ -112,12 +112,12 @@ const WIDGET_CSS = `
   flex-shrink: 0;
   transition: background 0.15s;
 }
-.vaani-mic-btn { background: #f0f0f0; color: #555; }
-.vaani-mic-btn:hover { background: #e0e0e0; }
-.vaani-mic-btn.recording { background: #fee2e2; color: #ef4444; animation: vaani-pulse 1.2s infinite; }
-.vaani-send-btn { color: #fff; }
-.vaani-send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-.vaani-lang-bar {
+.bolo-mic-btn { background: #f0f0f0; color: #555; }
+.bolo-mic-btn:hover { background: #e0e0e0; }
+.bolo-mic-btn.recording { background: #fee2e2; color: #ef4444; animation: bolo-pulse 1.2s infinite; }
+.bolo-send-btn { color: #fff; }
+.bolo-send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.bolo-lang-bar {
   padding: 6px 12px;
   border-bottom: 1px solid #f0f0f0;
   display: flex;
@@ -126,7 +126,7 @@ const WIDGET_CSS = `
   font-size: 11px;
   color: #888;
 }
-.vaani-lang-bar select {
+.bolo-lang-bar select {
   font-size: 11px;
   border: 1px solid #e0e0e0;
   border-radius: 6px;
@@ -135,7 +135,7 @@ const WIDGET_CSS = `
   cursor: pointer;
   color: #333;
 }
-.vaani-status { font-size: 11px; color: #999; padding: 4px 12px; text-align: center; min-height: 22px; }
+.bolo-status { font-size: 11px; color: #999; padding: 4px 12px; text-align: center; min-height: 22px; }
 `;
 
 const LANGUAGES: [string, string][] = [
@@ -177,9 +177,9 @@ export class WidgetUI {
   }
 
   private injectStyles() {
-    if (document.getElementById("vaani-styles")) return;
+    if (document.getElementById("bolo-styles")) return;
     const style = document.createElement("style");
-    style.id = "vaani-styles";
+    style.id = "bolo-styles";
     style.textContent = WIDGET_CSS;
     document.head.appendChild(style);
   }
@@ -190,33 +190,33 @@ export class WidgetUI {
     const side = position === "bottom-left" ? "left: 24px" : "right: 24px";
 
     this.btn = document.createElement("button");
-    this.btn.className = "vaani-widget-btn";
+    this.btn.className = "bolo-widget-btn";
     this.btn.style.cssText = `${side}; background: ${color};`;
     this.btn.innerHTML = CHAT_SVG;
-    this.btn.title = this.config.widgetName || "VaaniAI";
+    this.btn.title = this.config.widgetName || "BoloAI";
     this.btn.addEventListener("click", () => this.toggle());
     this.container.appendChild(this.btn);
 
     this.panel = document.createElement("div");
-    this.panel.className = "vaani-panel vaani-hidden";
+    this.panel.className = "bolo-panel bolo-hidden";
     this.panel.style.cssText = `${side};`;
 
     const header = document.createElement("div");
-    header.className = "vaani-header";
+    header.className = "bolo-header";
     header.innerHTML = `
-      <div class="vaani-header-left">
+      <div class="bolo-header-left">
         ${this.config.logoUrl ? `<img src="${this.config.logoUrl}" alt="" style="width:28px;height:28px;border-radius:6px;object-fit:cover">` : `<div style="width:28px;height:28px;border-radius:6px;background:${color};display:flex;align-items:center;justify-content:center">${CHAT_SVG.replace('24" height="24"', '16" height="16"')}</div>`}
         <div>
-          <h3>${this.config.widgetName || "VaaniAI"}</h3>
-          <p class="vaani-header-subtitle">AI Voice Assistant</p>
+          <h3>${this.config.widgetName || "BoloAI"}</h3>
+          <p class="bolo-header-subtitle">AI Voice Assistant</p>
         </div>
       </div>
-      <button class="vaani-close-btn">${CLOSE_SVG}</button>
+      <button class="bolo-close-btn">${CLOSE_SVG}</button>
     `;
-    header.querySelector(".vaani-close-btn")!.addEventListener("click", () => this.close());
+    header.querySelector(".bolo-close-btn")!.addEventListener("click", () => this.close());
 
     const langBar = document.createElement("div");
-    langBar.className = "vaani-lang-bar";
+    langBar.className = "bolo-lang-bar";
     this.langFromSelect = document.createElement("select");
     this.langToSelect = document.createElement("select");
     LANGUAGES.forEach(([code, name]) => {
@@ -234,16 +234,16 @@ export class WidgetUI {
     langBar.appendChild(this.langToSelect);
 
     this.messagesEl = document.createElement("div");
-    this.messagesEl.className = "vaani-messages";
+    this.messagesEl.className = "bolo-messages";
 
     this.statusEl = document.createElement("div");
-    this.statusEl.className = "vaani-status";
+    this.statusEl.className = "bolo-status";
 
     const footer = document.createElement("div");
-    footer.className = "vaani-footer";
+    footer.className = "bolo-footer";
 
     this.textInput = document.createElement("textarea");
-    this.textInput.className = "vaani-text-input";
+    this.textInput.className = "bolo-text-input";
     this.textInput.placeholder = "Type a message...";
     this.textInput.rows = 1;
     this.textInput.addEventListener("keydown", (e) => {
@@ -258,13 +258,13 @@ export class WidgetUI {
     });
 
     this.micBtn = document.createElement("button");
-    this.micBtn.className = "vaani-mic-btn";
+    this.micBtn.className = "bolo-mic-btn";
     this.micBtn.innerHTML = MIC_SVG;
     this.micBtn.title = "Hold to speak";
     this.micBtn.addEventListener("click", () => this.onToggleMic?.());
 
     this.sendBtn = document.createElement("button");
-    this.sendBtn.className = "vaani-send-btn";
+    this.sendBtn.className = "bolo-send-btn";
     this.sendBtn.style.background = color;
     this.sendBtn.innerHTML = SEND_SVG;
     this.sendBtn.addEventListener("click", () => this.handleSend());
@@ -288,20 +288,20 @@ export class WidgetUI {
 
   open() {
     this.isOpen = true;
-    this.panel.classList.remove("vaani-hidden");
+    this.panel.classList.remove("bolo-hidden");
   }
 
   close() {
     this.isOpen = false;
-    this.panel.classList.add("vaani-hidden");
+    this.panel.classList.add("bolo-hidden");
   }
 
   addMessage(msg: { role: "user" | "assistant"; text: string; audioUrl?: string }) {
     const wrapper = document.createElement("div");
-    wrapper.className = `vaani-message ${msg.role}`;
+    wrapper.className = `bolo-message ${msg.role}`;
 
     const bubble = document.createElement("div");
-    bubble.className = "vaani-bubble";
+    bubble.className = "bolo-bubble";
     if (msg.role === "user") {
       bubble.style.background = this.config.primaryColor || "#6366f1";
     }
@@ -309,7 +309,7 @@ export class WidgetUI {
 
     if (msg.audioUrl) {
       const playBtn = document.createElement("button");
-      playBtn.className = "vaani-audio-btn";
+      playBtn.className = "bolo-audio-btn";
       playBtn.innerHTML = PLAY_SVG;
       playBtn.title = "Play audio";
       playBtn.addEventListener("click", () => {
@@ -320,7 +320,7 @@ export class WidgetUI {
     }
 
     const time = document.createElement("span");
-    time.className = "vaani-time";
+    time.className = "bolo-time";
     time.textContent = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
     wrapper.append(bubble, time);
