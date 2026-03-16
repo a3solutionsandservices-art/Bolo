@@ -301,7 +301,7 @@ async def voice_stream(
                     continue
                 chunk, audio_buffer = bytes(audio_buffer), bytearray()
                 try:
-                    await _handle_audio_chunk(websocket, chunk, user, conversation_history, session)
+                    await _handle_audio_chunk(websocket, chunk, user, conversation_history, session, db)
                 except Exception as e:
                     await websocket.send_json({"type": "error", "message": str(e)})
 
@@ -327,14 +327,14 @@ async def _handle_audio_chunk(
     user: User,
     conversation_history: list[dict],
     session: dict,
+    db: AsyncSession,
 ) -> None:
     source_language = session["source_language"]
     target_language = session["target_language"]
     mode = session["mode"]
     knowledge_base_id = session.get("knowledge_base_id")
 
-    stt = get_stt()
-    transcript = await stt.transcribe(chunk, language=None if source_language == "auto" else source_language)
+    transcript = await ai_ops.transcribe(chunk, db, user.tenant_id, language=None if source_language == "auto" else source_language)
     detected_lang = transcript.language
 
     await websocket.send_json({
@@ -347,15 +347,15 @@ async def _handle_audio_chunk(
 
     if mode == "translation":
         if detected_lang != target_language:
-            trans = await get_translation_service().translate(transcript.text, detected_lang, target_language)
+            trans = await ai_ops.translate(transcript.text, detected_lang, target_language, db, user.tenant_id)
             await websocket.send_json({"type": "translation", "text": trans.translated_text, "source_language": detected_lang, "target_language": target_language})
-            synth = await get_tts().synthesize(trans.translated_text, target_language)
+            synth = await ai_ops.synthesize(trans.translated_text, target_language, db, user.tenant_id)
             await websocket.send_json({"type": "audio", "data": base64.b64encode(synth.audio_bytes).decode(), "format": "wav", "language": target_language})
 
     elif mode in ("conversation", "agent"):
         question = transcript.text
         if detected_lang != "en":
-            trans = await get_translation_service().translate(question, detected_lang, "en")
+            trans = await ai_ops.translate(question, detected_lang, "en", db, user.tenant_id)
             question = trans.translated_text
 
         conversation_history.append({"role": "user", "content": question})
@@ -372,5 +372,5 @@ async def _handle_audio_chunk(
         conversation_history.append({"role": "assistant", "content": response_text})
 
         await websocket.send_json({"type": "response", "text": response_text, "sources": sources[:3]})
-        synth = await get_tts().synthesize(response_text, reply_lang)
+        synth = await ai_ops.synthesize(response_text, reply_lang, db, user.tenant_id)
         await websocket.send_json({"type": "audio", "data": base64.b64encode(synth.audio_bytes).decode(), "format": "wav", "language": reply_lang})

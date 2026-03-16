@@ -3,7 +3,6 @@ import uuid
 from pathlib import Path
 
 import boto3
-from botocore.exceptions import ClientError
 
 from app.core.config import settings
 

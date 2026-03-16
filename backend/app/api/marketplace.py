@@ -2,11 +2,13 @@ import uuid
 from datetime import datetime, timezone
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from pydantic import BaseModel
-from sqlalchemy import select, update, func, or_
+from sqlalchemy import select, update, func, or_, cast, String
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.limiter import limiter
 from app.db.base import get_db
 from app.middleware.auth import get_current_user
 from app.models.user import User, UserRole
@@ -118,7 +120,9 @@ class EarningsSummary(BaseModel):
 
 
 @router.get("", response_model=list[ArtistResponse])
+@limiter.limit("60/minute")
 async def browse_marketplace(
+    request: Request,
     category: Optional[str] = None,
     language: Optional[str] = None,
     dialect: Optional[str] = None,
@@ -146,22 +150,21 @@ async def browse_marketplace(
             )
         )
 
+    if language:
+        stmt = stmt.where(VoiceArtist.languages.cast(JSONB).contains(cast([language], JSONB)))
+    if dialect:
+        stmt = stmt.where(VoiceArtist.dialects.cast(JSONB).contains(cast([dialect], JSONB)))
+
     stmt = stmt.order_by(VoiceArtist.is_featured.desc(), VoiceArtist.total_licenses.desc())
     stmt = stmt.offset(offset).limit(limit)
 
     result = await db.execute(stmt)
-    artists = result.scalars().all()
-
-    if language:
-        artists = [a for a in artists if language in (a.languages or [])]
-    if dialect:
-        artists = [a for a in artists if dialect in (a.dialects or [])]
-
-    return [_to_artist_response(a) for a in artists]
+    return [_to_artist_response(a) for a in result.scalars().all()]
 
 
 @router.get("/featured", response_model=list[ArtistResponse])
-async def get_featured_artists(db: AsyncSession = Depends(get_db)):
+@limiter.limit("60/minute")
+async def get_featured_artists(request: Request, db: AsyncSession = Depends(get_db)):
     result = await db.execute(
         select(VoiceArtist)
         .where(
@@ -176,7 +179,8 @@ async def get_featured_artists(db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/artist/{slug}", response_model=ArtistResponse)
-async def get_artist_by_slug(slug: str, db: AsyncSession = Depends(get_db)):
+@limiter.limit("60/minute")
+async def get_artist_by_slug(request: Request, slug: str, db: AsyncSession = Depends(get_db)):
     result = await db.execute(
         select(VoiceArtist).where(
             VoiceArtist.slug == slug,
@@ -214,6 +218,7 @@ async def register_as_artist(
         price_broadcast_inr=body.price_broadcast_inr,
         price_exclusive_inr=body.price_exclusive_inr,
         content_restrictions=body.content_restrictions,
+        user_id=current_user.id,
         email=body.email or current_user.email,
         phone=body.phone,
         upi_id=body.upi_id,
@@ -310,6 +315,17 @@ async def request_license(
     if not artist:
         raise HTTPException(status_code=404, detail="Artist not found")
 
+    existing_license = await db.execute(
+        select(VoiceLicense).where(
+            VoiceLicense.voice_artist_id == artist_id,
+            VoiceLicense.licensee_tenant_id == current_user.tenant_id,
+            VoiceLicense.tier == body.tier,
+            VoiceLicense.status.in_([LicenseStatus.ACTIVE, LicenseStatus.PENDING]),
+        )
+    )
+    if existing_license.scalar_one_or_none():
+        raise HTTPException(status_code=409, detail="An active or pending license already exists for this tier")
+
     price = _tier_price(artist, body.tier)
     if price == 0 and body.tier != LicenseTier.PERSONAL:
         raise HTTPException(status_code=400, detail="This license tier is not available for this artist")
@@ -337,6 +353,8 @@ async def request_license(
 
 @router.get("/my-licenses", response_model=list[LicenseResponse])
 async def get_my_licenses(
+    limit: int = Query(default=50, le=100),
+    offset: int = 0,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -344,6 +362,8 @@ async def get_my_licenses(
         select(VoiceLicense)
         .where(VoiceLicense.licensee_tenant_id == current_user.tenant_id)
         .order_by(VoiceLicense.created_at.desc())
+        .offset(offset)
+        .limit(limit)
     )
     return [_to_license_response(l) for l in result.scalars().all()]
 
@@ -404,10 +424,22 @@ async def revoke_license(
     license = result.scalar_one_or_none()
     if not license:
         raise HTTPException(status_code=404, detail="License not found")
+    if license.status == LicenseStatus.REVOKED:
+        raise HTTPException(status_code=400, detail="License is already revoked")
 
+    was_active = license.status == LicenseStatus.ACTIVE
     await db.execute(
         update(VoiceLicense).where(VoiceLicense.id == license_id).values(status=LicenseStatus.REVOKED)
     )
+    if was_active:
+        await db.execute(
+            update(VoiceArtist)
+            .where(VoiceArtist.id == artist.id)
+            .values(
+                total_earnings_inr=VoiceArtist.total_earnings_inr - license.artist_earnings_inr,
+                total_licenses=VoiceArtist.total_licenses - 1,
+            )
+        )
     await db.commit()
     await db.refresh(license)
     return _to_license_response(license)
@@ -415,7 +447,7 @@ async def revoke_license(
 
 async def _get_artist_for_user(user: User, db: AsyncSession) -> VoiceArtist:
     result = await db.execute(
-        select(VoiceArtist).where(VoiceArtist.email == user.email)
+        select(VoiceArtist).where(VoiceArtist.user_id == user.id)
     )
     artist = result.scalar_one_or_none()
     if not artist:
