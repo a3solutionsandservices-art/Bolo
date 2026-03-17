@@ -21,7 +21,8 @@ apiClient.interceptors.request.use((config) => {
 apiClient.interceptors.response.use(
   (res) => res,
   async (error) => {
-    if (error.response?.status === 401) {
+    const isAuthEndpoint = error.config?.url?.includes("/api/v1/auth/");
+    if (error.response?.status === 401 && !isAuthEndpoint) {
       const refreshToken = Cookies.get("refresh_token");
       if (refreshToken) {
         try {
