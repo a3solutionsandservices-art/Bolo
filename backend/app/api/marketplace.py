@@ -5,7 +5,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile, status
 from pydantic import BaseModel
-from sqlalchemy import select, update, func, or_, cast, String
+from sqlalchemy import Integer, select, update, func, or_, type_coerce
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -161,9 +161,9 @@ async def browse_marketplace(
         )
 
     if language:
-        stmt = stmt.where(VoiceArtist.languages.cast(JSONB).contains(cast([language], JSONB)))
+        stmt = stmt.where(VoiceArtist.languages.cast(JSONB).contains(type_coerce([language], JSONB)))
     if dialect:
-        stmt = stmt.where(VoiceArtist.dialects.cast(JSONB).contains(cast([dialect], JSONB)))
+        stmt = stmt.where(VoiceArtist.dialects.cast(JSONB).contains(type_coerce([dialect], JSONB)))
 
     stmt = stmt.order_by(VoiceArtist.is_featured.desc(), VoiceArtist.total_licenses.desc())
     stmt = stmt.offset(offset).limit(limit)
@@ -634,7 +634,9 @@ async def submit_contribute_recording(
 
 
 @router.get("/contribute/my-stats")
+@limiter.limit("30/minute")
 async def get_contribute_stats(
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -643,7 +645,7 @@ async def get_contribute_stats(
     result = await db.execute(
         select(
             func.count(DataContribution.id).label("total"),
-            func.sum(func.cast(DataContribution.is_accepted, String)).label("accepted"),
+            func.sum(func.cast(DataContribution.is_accepted, Integer)).label("accepted"),
         ).where(DataContribution.voice_artist_id == artist.id)
     )
     row = result.one()

@@ -36,9 +36,14 @@ def _local_url(key: str) -> str:
     return f"/media/{key}"
 
 
+def _write_file(dest: Path, data: bytes) -> None:
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_bytes(data)
+
+
 async def _save_local(audio_bytes: bytes, key: str) -> str:
     dest = _LOCAL_MEDIA_DIR / key
-    await asyncio.to_thread(lambda: (dest.parent.mkdir(parents=True, exist_ok=True), dest.write_bytes(audio_bytes)))
+    await asyncio.to_thread(_write_file, dest, audio_bytes)
     return _local_url(key)
 
 
@@ -70,7 +75,7 @@ async def upload_audio(audio_bytes: bytes, key: str, tenant_id: uuid.UUID) -> st
 async def upload_document(content: bytes, key: str, content_type: str) -> str:
     if not s3_configured():
         dest = _LOCAL_MEDIA_DIR / key
-        await asyncio.to_thread(lambda: (dest.parent.mkdir(parents=True, exist_ok=True), dest.write_bytes(content)))
+        await asyncio.to_thread(_write_file, dest, content)
         return f"local://{key}"
 
     s3 = _get_s3()

@@ -7,7 +7,6 @@ Create Date: 2024-01-02 00:00:00.000000
 from typing import Sequence, Union
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
 
 revision: str = "002"
 down_revision: Union[str, None] = "001"
@@ -18,7 +17,7 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     op.create_table(
         "voice_artists",
-        sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, server_default=sa.text("uuid_generate_v4()")),
+        sa.Column("id", sa.Uuid(as_uuid=True), primary_key=True, server_default=sa.text("uuid_generate_v4()")),
         sa.Column("display_name", sa.String(255), nullable=False),
         sa.Column("slug", sa.String(255), nullable=False, unique=True),
         sa.Column("bio", sa.Text),
@@ -29,7 +28,7 @@ def upgrade() -> None:
         sa.Column("specialties", sa.JSON, nullable=False, server_default="[]"),
         sa.Column("avatar_url", sa.String(500)),
         sa.Column("sample_audio_urls", sa.JSON, nullable=False, server_default="[]"),
-        sa.Column("voice_clone_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("voice_clones.id", ondelete="SET NULL"), nullable=True),
+        sa.Column("voice_clone_id", sa.Uuid(as_uuid=True), sa.ForeignKey("voice_clones.id", ondelete="SET NULL"), nullable=True),
         sa.Column("verification_status", sa.String(50), nullable=False, server_default="pending"),
         sa.Column("consent_signed_at", sa.DateTime(timezone=True)),
         sa.Column("consent_document_url", sa.String(500)),
@@ -57,9 +56,9 @@ def upgrade() -> None:
 
     op.create_table(
         "voice_licenses",
-        sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, server_default=sa.text("uuid_generate_v4()")),
-        sa.Column("voice_artist_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("voice_artists.id", ondelete="CASCADE"), nullable=False),
-        sa.Column("licensee_tenant_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False),
+        sa.Column("id", sa.Uuid(as_uuid=True), primary_key=True, server_default=sa.text("uuid_generate_v4()")),
+        sa.Column("voice_artist_id", sa.Uuid(as_uuid=True), sa.ForeignKey("voice_artists.id", ondelete="CASCADE"), nullable=False),
+        sa.Column("licensee_tenant_id", sa.Uuid(as_uuid=True), sa.ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False),
         sa.Column("tier", sa.String(50), nullable=False),
         sa.Column("status", sa.String(50), nullable=False, server_default="pending"),
         sa.Column("price_inr", sa.Integer, nullable=False),

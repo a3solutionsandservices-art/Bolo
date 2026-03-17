@@ -10,7 +10,7 @@ from app.core.stt import get_stt
 from app.db.base import get_db
 from app.middleware.auth import get_current_user
 from app.models.voice_clone import VoiceClone, VoiceCloneStatus
-from app.models.user import User
+from app.models.user import User, UserRole
 from app.services.storage import upload_audio
 
 MIN_STT_CONFIDENCE = 0.4
@@ -96,6 +96,9 @@ async def upload_sample_audio(
     audio_bytes = await audio.read()
     if len(audio_bytes) > MAX_SAMPLE_BYTES:
         raise HTTPException(status_code=413, detail="Sample audio exceeds 50 MB limit")
+
+    if skip_validation and current_user.role not in (UserRole.SUPER_ADMIN, UserRole.TENANT_ADMIN):
+        raise HTTPException(status_code=403, detail="Only admins may skip validation")
 
     if not skip_validation:
         stt = get_stt()
