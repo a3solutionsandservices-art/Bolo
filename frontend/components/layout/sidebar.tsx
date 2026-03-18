@@ -30,6 +30,7 @@ import {
   HelpCircle,
   ChevronRight,
   Store,
+  TrendingUp,
 } from "lucide-react";
 import { clsx } from "clsx";
 import { useAuthStore } from "@/lib/auth-store";
@@ -60,6 +61,7 @@ const NAV_GROUPS: NavGroup[] = [
       { href: "/dashboard/settings", icon: Settings, label: "Settings", tour: "sidebar-settings" },
       { href: "/dashboard/settings/billing", icon: CreditCard, label: "Billing", tour: undefined },
       { href: "/dashboard/help", icon: HelpCircle, label: "Help & Guides", tour: undefined },
+      { href: "/dashboard/help/features", icon: TrendingUp, label: "Feature Guide", tour: undefined },
     ],
   },
 ];

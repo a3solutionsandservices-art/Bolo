@@ -408,6 +408,20 @@ export default function HelpPage() {
         <p className="text-slate-500 text-sm">Step-by-step guides for getting the most out of Bolo — no technical knowledge needed.</p>
       </div>
 
+      {/* Feature Guide banner */}
+      <Link href="/dashboard/help/features" className="flex items-center justify-between gap-4 bg-gradient-to-r from-brand-600 to-violet-600 rounded-2xl p-4 mb-6 hover:opacity-95 transition-opacity group">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center shrink-0">
+            <TrendingUp className="w-4 h-4 text-white" />
+          </div>
+          <div>
+            <p className="text-sm font-bold text-white">Feature Guide — Input → Process → Output</p>
+            <p className="text-xs text-white/70 mt-0.5">Every monetizable feature explained with exactly what goes in and what comes out</p>
+          </div>
+        </div>
+        <ArrowRight className="w-4 h-4 text-white/80 shrink-0 group-hover:translate-x-0.5 transition-transform" />
+      </Link>
+
       {/* Search */}
       <div className="relative mb-6">
         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
