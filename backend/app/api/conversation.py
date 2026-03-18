@@ -31,6 +31,7 @@ class StartConversationRequest(BaseModel):
     knowledge_base_id: Optional[str] = None
     caller_id: Optional[str] = None
     caller_metadata: dict = {}
+    system_prompt: Optional[str] = None
 
 
 class MessageRequest(BaseModel):
@@ -123,6 +124,10 @@ async def start_conversation(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    metadata = dict(body.caller_metadata)
+    if body.system_prompt:
+        metadata["_system_prompt"] = body.system_prompt
+
     conv = Conversation(
         tenant_id=current_user.tenant_id,
         knowledge_base_id=uuid.UUID(body.knowledge_base_id) if body.knowledge_base_id else None,
@@ -130,7 +135,7 @@ async def start_conversation(
         source_language=body.source_language,
         target_language=body.target_language,
         caller_id=body.caller_id,
-        caller_metadata=body.caller_metadata,
+        caller_metadata=metadata,
     )
     db.add(conv)
     await db.flush()
@@ -250,7 +255,7 @@ async def send_message(
     db.add(user_msg)
     await db.flush()
 
-    response_text, rag_sources = await _generate_response(conv, content, detected_lang, current_user.tenant_id, db)
+    response_text, rag_sources = await _generate_response(conv, content, detected_lang, current_user.tenant_id, db, system_prompt_override=(conv.caller_metadata or {}).get("_system_prompt"))
 
     synth = await ai_ops.synthesize(
         text=response_text,
@@ -323,6 +328,7 @@ async def _generate_response(
     detected_lang: str,
     tenant_id: uuid.UUID,
     db: AsyncSession,
+    system_prompt_override: Optional[str] = None,
 ) -> tuple[str, list[dict]]:
     """Generate a response based on conversation mode. Returns (response_text, rag_sources)."""
     if conv.mode in (ConversationMode.CONVERSATION, ConversationMode.AGENT):
@@ -330,7 +336,7 @@ async def _generate_response(
         history = [{"role": m.role, "content": m.content_original} for m in reversed(prev)]
 
         question = content
-        if detected_lang != "en":
+        if detected_lang != "en" and not system_prompt_override:
             trans = await ai_ops.translate(content, detected_lang, "en", db, tenant_id, conv.id)
             question = trans.translated_text
 
@@ -342,6 +348,7 @@ async def _generate_response(
             conversation_history=history,
             tenant_name=str(conv.tenant_id),
             response_language=conv.source_language,
+            system_prompt_override=system_prompt_override,
         )
 
     elif conv.mode == ConversationMode.TRANSLATION:

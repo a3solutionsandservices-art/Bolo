@@ -123,22 +123,26 @@ class RAGAgent:
         conversation_history: list[dict],
         tenant_name: str,
         response_language: str,
+        system_prompt_override: Optional[str] = None,
     ) -> tuple[list[dict], list[dict]]:
         """Shared logic: retrieve context and build the OpenAI messages list."""
         sources: list[dict] = []
-        if settings.PINECONE_API_KEY and settings.OPENAI_API_KEY:
+        if settings.PINECONE_API_KEY and settings.OPENAI_API_KEY and not system_prompt_override:
             try:
                 sources = await self.query(question, namespace)
             except Exception:
                 pass
         context = "\n\n".join([s["content"] for s in sources[:3]])
 
-        lang_display = settings.LANGUAGE_NAMES.get(response_language, response_language)
-        system_msg = SYSTEM_PROMPT_TEMPLATE.format(
-            tenant_name=tenant_name,
-            response_language=lang_display,
-            context=context if context else "No relevant context found.",
-        )
+        if system_prompt_override:
+            system_msg = system_prompt_override
+        else:
+            lang_display = settings.LANGUAGE_NAMES.get(response_language, response_language)
+            system_msg = SYSTEM_PROMPT_TEMPLATE.format(
+                tenant_name=tenant_name,
+                response_language=lang_display,
+                context=context if context else "No relevant context found.",
+            )
 
         messages: list[dict] = [{"role": "system", "content": system_msg}]
         messages.extend(conversation_history[-10:])
@@ -152,6 +156,7 @@ class RAGAgent:
         conversation_history: list[dict],
         tenant_name: str,
         response_language: str = "en",
+        system_prompt_override: Optional[str] = None,
     ) -> tuple[str, list[dict]]:
         if not settings.OPENAI_API_KEY:
             return (
@@ -161,7 +166,7 @@ class RAGAgent:
 
         client = self._get_openai_client()
         messages, sources = await self._build_messages(
-            question, namespace, conversation_history, tenant_name, response_language
+            question, namespace, conversation_history, tenant_name, response_language, system_prompt_override
         )
 
         response = await client.chat.completions.create(

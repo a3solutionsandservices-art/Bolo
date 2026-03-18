@@ -4,6 +4,7 @@ import { useAuthStore } from "@/lib/auth-store";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Sidebar } from "@/components/layout/sidebar";
+import { SupportChat } from "@/components/support/SupportChat";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuthStore();
@@ -36,6 +37,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <main className="flex-1 overflow-y-auto">
         {children}
       </main>
+      <SupportChat />
     </div>
   );
 }
