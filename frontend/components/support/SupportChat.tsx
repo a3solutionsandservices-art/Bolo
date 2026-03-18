@@ -34,6 +34,59 @@ interface Message {
   ts: number;
 }
 
+const FAQ: { patterns: string[]; answer: string }[] = [
+  {
+    patterns: ["embed", "widget", "script", "website", "shopify", "wordpress", "install"],
+    answer: "**Embedding the widget:**\n1. Go to **Integrations** in the sidebar\n2. Complete the Widget Builder (pick language, link Knowledge Base, set colours)\n3. Copy the `<script>` tag from Step 5\n4. Paste it before `</body>` in your site's HTML\n\nOn Shopify: Online Store → Themes → Edit Code → theme.liquid → paste before `</body>`.",
+  },
+  {
+    patterns: ["knowledge base", "document", "upload", "faq", "pdf", "teach", "train"],
+    answer: "**Setting up a Knowledge Base:**\n1. Go to **Knowledge Bases** in the sidebar → New Knowledge Base\n2. Upload PDF, DOCX, or TXT files (up to 10 MB each)\n3. Wait 1–3 min for status to show **Ready**\n4. In Widget Builder → Step 3, link your Knowledge Base\n\nThe AI will answer customer questions from your documents automatically.",
+  },
+  {
+    patterns: ["voice clone", "cloning", "my voice", "record", "sample"],
+    answer: "**Voice Cloning** requires the **Growth plan (₹199/mo)** or above.\n\n1. Go to **Voice Clones** → Create Clone\n2. Record or upload 3–10 minutes of clear speech samples (WAV/MP3)\n3. Each sample must be at least 3 seconds and clearly audible\n4. Click **Train** — takes a few minutes\n5. Set as Default — your widget will now speak in your voice.",
+  },
+  {
+    patterns: ["plan", "billing", "price", "cost", "upgrade", "subscription", "₹", "rupee"],
+    answer: "**Bolo Plans:**\n- **Starter** — ₹49/mo: 1,000 conversations, 3 Knowledge Bases\n- **Growth** — ₹199/mo: 10,000 conversations, Voice Cloning, 20 KBs\n- **Enterprise** — Custom: unlimited, SLA, dedicated support\n\nGo to **Settings → Billing** to upgrade. Payments via Stripe (cards accepted).",
+  },
+  {
+    patterns: ["api key", "api access", "programmatic", "rest", "developer", "integrate"],
+    answer: "**API Access:**\n1. Go to **API Keys** in the sidebar → Create API Key\n2. Copy the key immediately (shown only once)\n3. Use as `Authorization: Bearer <key>` header\n4. Full API docs at **`/docs`** (Swagger UI)\n\nAll endpoints are under `/api/v1/*`. Rate limits: 60 req/min (Starter), 300/min (Growth).",
+  },
+  {
+    patterns: ["language", "hindi", "tamil", "telugu", "bengali", "gujarati", "marathi", "kannada", "malayalam", "punjabi", "odia", "support"],
+    answer: "Bolo supports **11 Indian languages**:\nHindi · Tamil · Telugu · Bengali · Gujarati · Marathi · Kannada · Malayalam · Punjabi · Odia · English\n\nSet the language in Widget Builder → Step 2. You can have the user speak one language and the AI respond in another.",
+  },
+  {
+    patterns: ["failing", "error", "broken", "not working", "voice", "translation", "sarvam", "500", "issue"],
+    answer: "**Common troubleshooting steps:**\n1. Check your **Sarvam API key** is valid at app.sarvam.ai\n2. Check the **OpenAI API key** has credits at platform.openai.com/account/billing\n3. Make sure your browser allows **microphone access**\n4. Try refreshing the page\n\nIf the issue persists, email **support@bolo.ai** with your workspace ID.",
+  },
+  {
+    patterns: ["marketplace", "artist", "license", "voice artist", "celebrity"],
+    answer: "**Voice Marketplace:**\n- **Browse artists** → Marketplace in sidebar\n- **License a voice**: select tier (Personal ₹999 / Commercial ₹4,999 / Broadcast ₹14,999)\n- **Become an artist**: Marketplace → My Voice → Register as Artist\n- **Earn by recording**: enable Language Preservation consent → Contribute tab → read prompts → earn ₹2–5 per accepted recording",
+  },
+  {
+    patterns: ["analytics", "stats", "conversations", "metrics", "dashboard"],
+    answer: "**Analytics Dashboard** shows:\n- Total conversations & messages\n- Language breakdown (which languages customers use)\n- Response latency\n- Sentiment trends\n\nGo to **Analytics** in the sidebar. Use the date range selector (7 / 14 / 30 / 90 days).",
+  },
+  {
+    patterns: ["password", "login", "sign in", "forgot", "reset", "account"],
+    answer: "**Login issues:**\n- Make sure you're using the email and password you registered with\n- Password must be at least 8 characters\n\nIf you've forgotten your password, email **support@bolo.ai** with your account email and we'll reset it manually.",
+  },
+];
+
+function localFallback(text: string): string | null {
+  const lower = text.toLowerCase();
+  for (const faq of FAQ) {
+    if (faq.patterns.some((p) => lower.includes(p))) {
+      return faq.answer;
+    }
+  }
+  return null;
+}
+
 const QUICK_ACTIONS = [
   { icon: Zap, label: "How do I embed the widget?", color: "text-brand-600 bg-brand-50" },
   { icon: BookOpen, label: "How do I set up a Knowledge Base?", color: "text-emerald-600 bg-emerald-50" },
@@ -92,9 +145,10 @@ export function SupportChat() {
       setMessages((m) => [...m, assistantMsg]);
       if (!open) setUnread((n) => n + 1);
     } catch {
+      const faqAnswer = localFallback(text);
       setMessages((m) => [...m, {
         role: "assistant",
-        text: "Sorry, I couldn't process that. Please try again or email support@bolo.ai.",
+        text: faqAnswer ?? "I'm having trouble connecting to the AI right now. For immediate help:\n\n• Browse the **Help Centre** in the sidebar\n• Email **support@bolo.ai**\n\nTip: Try asking about a specific topic like \"widget\", \"billing\", \"knowledge base\", or \"voice clone\" — I can answer those offline.",
         ts: Date.now(),
       }]);
     } finally {
@@ -157,13 +211,17 @@ export function SupportChat() {
                 {messages.map((m, i) => (
                   <div key={i} className={clsx("flex", m.role === "user" ? "justify-end" : "justify-start")}>
                     <div className={clsx(
-                      "max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed",
+                      "max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap",
                       m.role === "user"
                         ? "bg-brand-600 text-white rounded-br-sm"
                         : "bg-slate-100 text-slate-800 rounded-bl-sm"
-                    )}>
-                      {m.text}
-                    </div>
+                    )}
+                      dangerouslySetInnerHTML={{
+                        __html: m.text
+                          .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+                          .replace(/`(.+?)`/g, "<code class='bg-slate-200 px-1 rounded text-xs'>$1</code>"),
+                      }}
+                    />
                   </div>
                 ))}
                 {loading && (
