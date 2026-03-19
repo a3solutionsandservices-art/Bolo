@@ -9,6 +9,7 @@ interface NavItem {
   label: string;
   tour?: string;
   exact?: boolean;
+  requiresPaid?: boolean;
 }
 
 interface NavGroup {
@@ -31,10 +32,12 @@ import {
   ChevronRight,
   Store,
   TrendingUp,
+  Lock,
 } from "lucide-react";
 import { clsx } from "clsx";
 import { useAuthStore } from "@/lib/auth-store";
 import { useRouter } from "next/navigation";
+import { usePlan } from "@/lib/use-plan";
 
 const NAV_GROUPS: NavGroup[] = [
   {
@@ -43,14 +46,14 @@ const NAV_GROUPS: NavGroup[] = [
       { href: "/dashboard", icon: LayoutDashboard, label: "Overview", tour: "sidebar-dashboard", exact: true },
       { href: "/dashboard/conversations", icon: MessageSquare, label: "Conversations", tour: "sidebar-conversations" },
       { href: "/dashboard/knowledge", icon: BookOpen, label: "Knowledge Bases", tour: "sidebar-knowledge" },
-      { href: "/dashboard/voice-clones", icon: Mic, label: "Voice Clones", tour: "sidebar-voice-clones" },
+      { href: "/dashboard/voice-clones", icon: Mic, label: "Voice Clones", tour: "sidebar-voice-clones", requiresPaid: true },
     ],
   },
   {
     label: "Deploy",
     items: [
       { href: "/dashboard/integrations", icon: Puzzle, label: "Integrations", tour: "sidebar-integrations" },
-      { href: "/dashboard/marketplace", icon: Store, label: "Voice Marketplace", tour: "sidebar-marketplace" },
+      { href: "/dashboard/marketplace", icon: Store, label: "Voice Marketplace", tour: "sidebar-marketplace", requiresPaid: true },
       { href: "/dashboard/analytics", icon: BarChart3, label: "Analytics", tour: "sidebar-analytics" },
     ],
   },
@@ -70,6 +73,7 @@ export function Sidebar() {
   const pathname = usePathname();
   const { user, logout } = useAuthStore();
   const router = useRouter();
+  const { isStarter } = usePlan();
 
   const handleLogout = () => {
     logout();
@@ -112,28 +116,36 @@ export function Sidebar() {
               {group.label}
             </div>
             <div className="space-y-0.5">
-              {group.items.map(({ href, icon: Icon, label, tour, exact }) => {
+              {group.items.map(({ href, icon: Icon, label, tour, exact, requiresPaid }) => {
                 const active = isActive(href, exact);
+                const locked = requiresPaid && isStarter;
+                const linkHref = locked ? "/dashboard/settings/billing" : href;
                 return (
                   <Link
                     key={href}
-                    href={href}
+                    href={linkHref}
                     data-tour={tour}
+                    title={locked ? `${label} requires Growth plan` : undefined}
                     className={clsx(
                       "group flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium transition-all duration-150",
-                      active
+                      active && !locked
                         ? "bg-sidebar-active-bg text-sidebar-text-active"
-                        : "text-sidebar-text hover:bg-white/[0.04] hover:text-sidebar-text-hover"
+                        : "text-sidebar-text hover:bg-white/[0.04] hover:text-sidebar-text-hover",
+                      locked && "opacity-60"
                     )}
                   >
                     <Icon
                       className={clsx(
                         "w-4 h-4 shrink-0 transition-colors",
-                        active ? "text-brand-400" : "text-sidebar-text group-hover:text-sidebar-text-hover"
+                        active && !locked ? "text-brand-400" : "text-sidebar-text group-hover:text-sidebar-text-hover"
                       )}
                     />
                     <span className="flex-1 truncate">{label}</span>
-                    {active && <ChevronRight className="w-3.5 h-3.5 text-brand-400/60 shrink-0" />}
+                    {locked ? (
+                      <Lock className="w-3 h-3 text-sidebar-text shrink-0" />
+                    ) : active ? (
+                      <ChevronRight className="w-3.5 h-3.5 text-brand-400/60 shrink-0" />
+                    ) : null}
                   </Link>
                 );
               })}

@@ -3,8 +3,41 @@
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useState } from "react";
-import { MessageSquare, Clock, Globe } from "lucide-react";
+import { MessageSquare, Clock, Globe, ShoppingCart, BookOpen, Building2, Zap } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+
+const DEMO_TEMPLATES = [
+  {
+    id: "ecommerce",
+    icon: ShoppingCart,
+    color: "from-brand-500 to-violet-500",
+    label: "D2C / E-commerce",
+    desc: "Order status, returns, refunds & FAQs in Hindi, Tamil, Telugu",
+    mode: "agent",
+    sourceLang: "hi",
+    targetLang: "hi",
+  },
+  {
+    id: "edtech",
+    icon: BookOpen,
+    color: "from-emerald-500 to-teal-500",
+    label: "EdTech Support",
+    desc: "Student doubt resolution and course queries in regional languages",
+    mode: "agent",
+    sourceLang: "hi",
+    targetLang: "hi",
+  },
+  {
+    id: "bfsi",
+    icon: Building2,
+    color: "from-amber-500 to-orange-500",
+    label: "BFSI / Banking",
+    desc: "KYC queries, EMI reminders, balance checks via conversational AI",
+    mode: "agent",
+    sourceLang: "hi",
+    targetLang: "hi",
+  },
+];
 
 interface Conversation {
   id: string;
@@ -57,16 +90,42 @@ export default function ConversationsPage() {
         </a>
       </div>
 
+      {/* Demo Templates */}
+      <div className="mb-8">
+        <div className="flex items-center gap-2 mb-3">
+          <Zap className="w-4 h-4 text-brand-600" />
+          <span className="text-sm font-semibold text-gray-700">Quick-start templates</span>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {DEMO_TEMPLATES.map(({ id, icon: Icon, color, label, desc }) => (
+            <a
+              key={id}
+              href={`/dashboard/conversations/new?template=${id}`}
+              className="group flex items-start gap-3 p-4 bg-white border border-gray-100 rounded-xl shadow-sm hover:border-brand-200 hover:shadow-md transition-all"
+            >
+              <div className={`w-9 h-9 rounded-lg bg-gradient-to-br ${color} flex items-center justify-center shrink-0`}>
+                <Icon className="w-4 h-4 text-white" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-900 group-hover:text-brand-700 transition-colors">{label}</p>
+                <p className="text-xs text-gray-500 mt-0.5 leading-snug">{desc}</p>
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
+
       {isLoading ? (
         <div className="space-y-3">
           {[...Array(8)].map((_, i) => <div key={i} className="h-16 bg-gray-100 rounded-xl animate-pulse" />)}
         </div>
       ) : conversations.length === 0 ? (
-        <div className="text-center py-24">
+        <div className="text-center py-20">
           <MessageSquare className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-500">No conversations yet</p>
-          <a href="/dashboard/conversations/new" className="mt-4 inline-block px-4 py-2 bg-brand-600 text-white rounded-lg text-sm font-medium">
-            Start your first conversation
+          <p className="text-gray-500 mb-1 font-medium">No conversations yet</p>
+          <p className="text-gray-400 text-sm mb-4">Start with a template above or create a blank conversation</p>
+          <a href="/dashboard/conversations/new" className="inline-block px-4 py-2 bg-brand-600 text-white rounded-lg text-sm font-medium">
+            Start blank conversation
           </a>
         </div>
       ) : (

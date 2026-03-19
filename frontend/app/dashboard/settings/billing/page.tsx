@@ -112,6 +112,44 @@ export default function BillingPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {(plans || []).map((plan) => {
             const isCurrent = usage?.plan_tier === plan.tier;
+            const PLAN_META: Record<string, { outcome: string; tagline: string; features: string[] }> = {
+              starter: {
+                outcome: "Handle up to 1,000 customer queries / month",
+                tagline: "Perfect for getting started",
+                features: [
+                  `${plan.limits.conversations < 0 ? "Unlimited" : plan.limits.conversations.toLocaleString()} conversations / month`,
+                  `${plan.limits.stt_minutes < 0 ? "Unlimited" : plan.limits.stt_minutes.toLocaleString()} transcription minutes`,
+                  "3 Knowledge Bases",
+                  "11 Indian languages",
+                  "Website widget embed",
+                ],
+              },
+              growth: {
+                outcome: "Handle up to 10,000+ customer queries / month",
+                tagline: "For growing businesses",
+                features: [
+                  `${plan.limits.conversations < 0 ? "Unlimited" : plan.limits.conversations.toLocaleString()} conversations / month`,
+                  `${plan.limits.stt_minutes < 0 ? "Unlimited" : plan.limits.stt_minutes.toLocaleString()} transcription minutes`,
+                  "20 Knowledge Bases",
+                  "Voice Cloning — your brand voice",
+                  "Voice Marketplace access",
+                  "Priority support",
+                ],
+              },
+              enterprise: {
+                outcome: "Unlimited queries — zero cap, SLA guaranteed",
+                tagline: "Unlimited scale, dedicated support",
+                features: [
+                  "Unlimited conversations",
+                  "Unlimited transcription",
+                  "Unlimited Knowledge Bases",
+                  "Dialect fine-tuning",
+                  "Dedicated account manager",
+                  "Custom SLA & uptime guarantee",
+                ],
+              },
+            };
+            const meta = PLAN_META[plan.tier] || PLAN_META.starter;
             return (
               <div
                 key={plan.tier}
@@ -123,21 +161,19 @@ export default function BillingPage() {
                   </div>
                 )}
                 <h3 className="text-xl font-bold text-gray-900">{plan.name}</h3>
-                <div className="mt-2 mb-4">
+                <p className="text-xs text-gray-500 mt-0.5 mb-3">{meta.tagline}</p>
+                <div className="mb-1">
                   {plan.price_monthly ? (
-                    <span className="text-3xl font-bold text-gray-900">${plan.price_monthly}<span className="text-base font-normal text-gray-500">/mo</span></span>
+                    <span className="text-3xl font-bold text-gray-900">₹{plan.price_monthly}<span className="text-base font-normal text-gray-500">/mo</span></span>
                   ) : (
                     <span className="text-2xl font-bold text-gray-900">Custom</span>
                   )}
                 </div>
+                <p className="text-xs font-semibold text-brand-600 mb-5">{meta.outcome}</p>
                 <ul className="space-y-2 mb-6 text-sm text-gray-600">
-                  {[
-                    `${plan.limits.stt_minutes < 0 ? "Unlimited" : plan.limits.stt_minutes.toLocaleString()} STT minutes`,
-                    `${plan.limits.tts_characters < 0 ? "Unlimited" : plan.limits.tts_characters.toLocaleString()} TTS chars`,
-                    `${plan.limits.conversations < 0 ? "Unlimited" : plan.limits.conversations.toLocaleString()} conversations`,
-                  ].map((feature) => (
-                    <li key={feature} className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                  {meta.features.map((feature) => (
+                    <li key={feature} className="flex items-start gap-2">
+                      <Check className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
                       {feature}
                     </li>
                   ))}
@@ -155,8 +191,8 @@ export default function BillingPage() {
                     {isCurrent ? "Current Plan" : "Upgrade"}
                   </button>
                 ) : (
-                  <a href="mailto:sales@bolo.com" className="block w-full py-2.5 border border-brand-600 text-brand-600 rounded-lg text-sm font-medium hover:bg-brand-50 transition-colors text-center">
-                    Contact Sales
+                  <a href="mailto:sales@bolo.ai" className="block w-full py-2.5 border border-brand-600 text-brand-600 rounded-lg text-sm font-medium hover:bg-brand-50 transition-colors text-center">
+                    Talk to sales
                   </a>
                 )}
               </div>

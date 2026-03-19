@@ -78,7 +78,7 @@ export const api = {
   },
 
   conversations: {
-    start: (data: { mode?: string; source_language?: string; target_language?: string; knowledge_base_id?: string }) =>
+    start: (data: { mode?: string; source_language?: string; target_language?: string; knowledge_base_id?: string; system_prompt?: string }) =>
       apiClient.post("/api/v1/conversations", data),
     list: (skip?: number, limit?: number) =>
       apiClient.get("/api/v1/conversations", { params: { skip, limit } }),

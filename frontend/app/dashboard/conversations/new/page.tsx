@@ -1,11 +1,35 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
 import { Mic, MicOff, Send, Globe, Zap, X, Volume2 } from "lucide-react";
+
+const TEMPLATE_CONFIGS: Record<string, { mode: string; sourceLang: string; targetLang: string; systemPrompt: string; label: string }> = {
+  ecommerce: {
+    mode: "agent",
+    sourceLang: "hi",
+    targetLang: "hi",
+    label: "D2C / E-commerce Bot",
+    systemPrompt: `You are a helpful customer support agent for an Indian D2C / e-commerce brand. Answer customer queries about orders, shipping, returns, and refunds clearly and politely. Always respond in the same language the customer uses. If you don't know the answer, say "Please contact our support team at support@yourstore.com". Keep responses short and actionable.`,
+  },
+  edtech: {
+    mode: "agent",
+    sourceLang: "hi",
+    targetLang: "hi",
+    label: "EdTech Support Bot",
+    systemPrompt: `You are a helpful academic support assistant for an Indian edtech platform. Help students with course doubts, enrollment queries, technical issues with the platform, and study guidance. Respond in the same language the student uses (Hindi, English, or other Indian languages). Be encouraging, clear, and concise.`,
+  },
+  bfsi: {
+    mode: "agent",
+    sourceLang: "hi",
+    targetLang: "hi",
+    label: "BFSI / Banking Assistant",
+    systemPrompt: `You are a helpful banking assistant for an Indian NBFC / bank. Help customers with general queries about EMI schedules, loan applications, account balance enquiries, KYC status, and branch locations. NEVER share actual account numbers or confidential information. Always verify the customer's identity by asking for their registered mobile number before sharing any account-related information. Respond in the language the customer uses. Direct complex issues to branch staff or the customer care number 1800-XXX-XXXX.`,
+  },
+};
 
 const LANGUAGES = [
   { code: "hi", name: "Hindi" },
@@ -36,9 +60,13 @@ interface Message {
 
 export default function NewConversationPage() {
   const router = useRouter();
-  const [mode, setMode] = useState("conversation");
-  const [sourceLang, setSourceLang] = useState("en");
-  const [targetLang, setTargetLang] = useState("hi");
+  const searchParams = useSearchParams();
+  const templateId = searchParams.get("template") ?? "";
+  const template = TEMPLATE_CONFIGS[templateId] ?? null;
+
+  const [mode, setMode] = useState(template?.mode ?? "conversation");
+  const [sourceLang, setSourceLang] = useState(template?.sourceLang ?? "en");
+  const [targetLang, setTargetLang] = useState(template?.targetLang ?? "hi");
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [textInput, setTextInput] = useState("");
@@ -60,11 +88,16 @@ export default function NewConversationPage() {
   const startConversationMutation = useMutation({
     mutationFn: () =>
       api.conversations
-        .start({ mode, source_language: sourceLang, target_language: targetLang })
+        .start({
+          mode,
+          source_language: sourceLang,
+          target_language: targetLang,
+          ...(template ? { system_prompt: template.systemPrompt } : {}),
+        })
         .then((r) => r.data),
     onSuccess: (data) => {
       setConversationId(data.id);
-      toast.success("Conversation started");
+      toast.success(template ? `${template.label} started` : "Conversation started");
     },
     onError: () => toast.error("Failed to start conversation"),
   });
@@ -180,8 +213,12 @@ export default function NewConversationPage() {
     <div className="flex flex-col h-full p-8">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">New Conversation</h1>
-          <p className="text-gray-500 mt-1">Voice-powered AI interaction</p>
+          <h1 className="text-2xl font-bold text-gray-900">
+            {template ? template.label : "New Conversation"}
+          </h1>
+          <p className="text-gray-500 mt-1">
+            {template ? "Pre-configured template — ready to start" : "Voice-powered AI interaction"}
+          </p>
         </div>
         <button
           onClick={endConversation}
