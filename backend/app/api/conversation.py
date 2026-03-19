@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -31,7 +31,7 @@ class StartConversationRequest(BaseModel):
     knowledge_base_id: Optional[str] = None
     caller_id: Optional[str] = None
     caller_metadata: dict = {}
-    system_prompt: Optional[str] = None
+    system_prompt: Optional[str] = Field(None, max_length=4000)
 
 
 class MessageRequest(BaseModel):

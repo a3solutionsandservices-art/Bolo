@@ -218,6 +218,7 @@ export function SupportChat() {
                     )}
                       dangerouslySetInnerHTML={{
                         __html: m.text
+                          .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
                           .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
                           .replace(/`(.+?)`/g, "<code class='bg-slate-200 px-1 rounded text-xs'>$1</code>"),
                       }}

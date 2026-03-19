@@ -186,6 +186,7 @@ class RAGAgent:
         conversation_history: list[dict],
         tenant_name: str,
         response_language: str = "en",
+        system_prompt_override: Optional[str] = None,
     ) -> AsyncGenerator[str, None]:
         if not settings.OPENAI_API_KEY:
             yield "I'm sorry, the AI assistant is not configured yet. Please set up an OpenAI API key."
@@ -193,7 +194,7 @@ class RAGAgent:
 
         client = self._get_openai_client()
         messages, _ = await self._build_messages(
-            question, namespace, conversation_history, tenant_name, response_language
+            question, namespace, conversation_history, tenant_name, response_language, system_prompt_override
         )
 
         stream = await client.chat.completions.create(
