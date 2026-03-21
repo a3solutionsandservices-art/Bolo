@@ -1,0 +1,71 @@
+services:
+  - type: web
+    name: bolo-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: APP_NAME
+        value: Bolo
+      - key: DEBUG
+        value: "false"
+      - key: UVICORN_WORKERS
+        value: "1"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: bolo-db
+          property: connectionString
+      - key: DATABASE_SYNC_URL
+        fromDatabase:
+          name: bolo-db
+          property: connectionString
+      - key: REDIS_URL
+        sync: false
+      - key: CELERY_BROKER_URL
+        sync: false
+      - key: CELERY_RESULT_BACKEND
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        value: gpt-4o
+      - key: SENTIMENT_MODEL
+        value: gpt-4o-mini
+      - key: SARVAM_API_KEY
+        sync: false
+      - key: SARVAM_API_BASE
+        value: https://api.sarvam.ai
+      - key: SARVAM_STT_MODEL
+        value: saaras:v2
+      - key: SARVAM_TTS_MODEL
+        value: bulbul:v1
+      - key: SARVAM_STT_WITH_DIARIZATION
+        value: "false"
+      - key: PINECONE_API_KEY
+        sync: false
+      - key: PINECONE_ENVIRONMENT
+        value: us-east-1-aws
+      - key: PINECONE_INDEX_NAME
+        value: bolo-knowledge
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: STRIPE_STARTER_PRICE_ID
+        sync: false
+      - key: STRIPE_GROWTH_PRICE_ID
+        sync: false
+      - key: STT_PROVIDER
+        value: sarvam
+      - key: CORS_ORIGINS
+        sync: false
+
+databases:
+  - name: bolo-db
+    plan: free
+    databaseName: bolo
+    user: bolo
