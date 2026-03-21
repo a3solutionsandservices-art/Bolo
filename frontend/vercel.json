@@ -1,0 +1,16 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://bolo-backend.up.railway.app/api/:path*"
+    },
+    {
+      "source": "/media/:path*",
+      "destination": "https://bolo-backend.up.railway.app/media/:path*"
+    },
+    {
+      "source": "/ws/:path*",
+      "destination": "https://bolo-backend.up.railway.app/ws/:path*"
+    }
+  ]
+}
