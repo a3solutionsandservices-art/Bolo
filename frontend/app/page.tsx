@@ -1,308 +1,485 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/auth-store";
 import {
-  Mic, ArrowRight, Check, MessageSquare, Globe, Zap,
-  ShoppingCart, BookOpen, Building2, ChevronRight,
-  Star, Users, BarChart3, Play,
+  Mic, ArrowRight, Check, Globe, Zap, Shield,
+  ShoppingCart, BookOpen, Building2, Play, ChevronRight,
+  Volume2, Sparkles, Database, Code2, BarChart3, Users,
 } from "lucide-react";
 
 const LANGUAGES = [
-  "हिंदी", "தமிழ்", "తెలుగు", "বাংলা",
-  "ગુજરાતી", "मराठी", "ಕನ್ನಡ", "മലയാളം",
-  "ਪੰਜਾਬੀ", "ଓଡ଼ିଆ", "English",
+  { name: "हिंदी", label: "Hindi" },
+  { name: "தமிழ்", label: "Tamil" },
+  { name: "తెలుగు", label: "Telugu" },
+  { name: "বাংলা", label: "Bengali" },
+  { name: "ગુજરાતી", label: "Gujarati" },
+  { name: "मराठी", label: "Marathi" },
+  { name: "ಕನ್ನಡ", label: "Kannada" },
+  { name: "മലയാളം", label: "Malayalam" },
+  { name: "ਪੰਜਾਬੀ", label: "Punjabi" },
+  { name: "ଓଡ଼ିଆ", label: "Odia" },
+  { name: "English", label: "English" },
 ];
 
-const STATS = [
-  { value: "11", label: "Indian languages" },
-  { value: "< 2s", label: "Average response time" },
-  { value: "5 min", label: "Time to first bot" },
-  { value: "70%", label: "Query deflection rate" },
+const DEMO_CONVERSATION = [
+  { role: "user", text: "मेरा ऑर्डर कहाँ है?", lang: "Hindi", delay: 0 },
+  { role: "ai", text: "आपका ऑर्डर #4521 रास्ते में है और कल शाम तक पहुँच जाएगा।", lang: "Hindi", delay: 900 },
+  { role: "user", text: "என் ஆர்டர் எங்கே இருக்கிறது?", lang: "Tamil", delay: 1800 },
+  { role: "ai", text: "உங்கள் ஆர்டர் #4521 வழியில் உள்ளது, நாளை மாலைக்குள் வரும்.", lang: "Tamil", delay: 2700 },
+];
+
+const BENTO_FEATURES = [
+  {
+    icon: Globe,
+    title: "11 Indian Languages",
+    desc: "Hindi, Tamil, Telugu, Bengali, Gujarati, Marathi, Kannada, Malayalam, Punjabi, Odia + English — all native, not translated.",
+    size: "col-span-2",
+    accent: "from-brand-600 to-violet-600",
+  },
+  {
+    icon: Zap,
+    title: "< 500ms Latency",
+    desc: "Real-time voice responses your customers won't wait for.",
+    size: "col-span-1",
+    accent: "from-fire-500 to-amber-500",
+  },
+  {
+    icon: Database,
+    title: "RAG on Your Data",
+    desc: "Upload FAQs, product docs, policy PDFs. Bolo reads, indexes, and answers from them — accurately.",
+    size: "col-span-1",
+    accent: "from-emerald-500 to-teal-500",
+  },
+  {
+    icon: Code2,
+    title: "5-Minute Widget",
+    desc: "One <script> tag. Works on any website, React app, or WhatsApp.",
+    size: "col-span-1",
+    accent: "from-brand-500 to-sky-500",
+  },
+  {
+    icon: Shield,
+    title: "Enterprise Ready",
+    desc: "Data residency in India. Full audit trail. SOC 2 in progress.",
+    size: "col-span-1",
+    accent: "from-violet-600 to-purple-600",
+  },
+  {
+    icon: BarChart3,
+    title: "Analytics & Insights",
+    desc: "Sentiment analysis, topic detection, and conversation metrics across all sessions.",
+    size: "col-span-1",
+    accent: "from-rose-500 to-pink-500",
+  },
+  {
+    icon: Users,
+    title: "Voice Marketplace",
+    desc: "License regional celebrity voices. Let voice artists monetise their IP.",
+    size: "col-span-1",
+    accent: "from-amber-500 to-orange-500",
+  },
 ];
 
 const USE_CASES = [
   {
     icon: ShoppingCart,
-    color: "from-brand-500 to-violet-500",
-    bg: "bg-brand-50",
-    iconColor: "text-brand-600",
-    label: "D2C & E-commerce",
-    headline: "Answer 70% of customer queries in their language—automatically.",
-    bullets: [
-      "Order status in Hindi, Tamil, Telugu",
-      "Returns & refund policy in regional language",
-      "24×7 support without hiring agents",
-    ],
-    cta: "See E-commerce Demo",
+    accent: "border-brand-500/30 hover:border-brand-500/60",
+    tag: "D2C & E-commerce",
+    headline: "Answer 70% of support queries in your customer's language — automatically.",
+    bullets: ["Order tracking in Hindi, Tamil, Telugu", "Returns & refund policy in regional language", "24×7 with zero agent cost"],
     href: "/register?template=ecommerce",
   },
   {
     icon: BookOpen,
-    color: "from-emerald-500 to-teal-500",
-    bg: "bg-emerald-50",
-    iconColor: "text-emerald-600",
-    label: "EdTech",
-    headline: "Explain concepts and answer student queries in their native language.",
-    bullets: [
-      "Doubt resolution in 11 Indian languages",
-      "Audio explanations students actually understand",
-      "Works with your existing course content",
-    ],
-    cta: "See EdTech Demo",
+    accent: "border-emerald-500/30 hover:border-emerald-500/60",
+    tag: "EdTech",
+    headline: "Explain concepts in the language students actually think in.",
+    bullets: ["Doubt resolution in 11 languages", "Audio explanations from your course content", "Reduces dropout from comprehension barriers"],
     href: "/register?template=edtech",
   },
   {
     icon: Building2,
-    color: "from-amber-500 to-orange-500",
-    bg: "bg-amber-50",
-    iconColor: "text-amber-600",
-    label: "BFSI",
-    headline: "Replace outdated IVR with a conversational voice AI agent.",
-    bullets: [
-      "KYC queries, EMI reminders, balance checks",
-      "RBI-compliant with full transcript audit trail",
-      "Supports Bharat's Tier 2 / Tier 3 customers",
-    ],
-    cta: "See BFSI Demo",
+    accent: "border-amber-500/30 hover:border-amber-500/60",
+    tag: "BFSI",
+    headline: "Replace IVR trees with conversational voice AI.",
+    bullets: ["KYC, EMI reminders, balance checks", "RBI-compliant with full transcript audit", "Tier 2 / Tier 3 India coverage"],
     href: "/register?template=bfsi",
   },
 ];
 
-const HOW_IT_WORKS = [
-  {
-    step: "01",
-    title: "Upload your business content",
-    desc: "Upload FAQs, product catalogues, policy docs (PDF / DOCX). Bolo reads and indexes them automatically.",
-    icon: BookOpen,
-  },
-  {
-    step: "02",
-    title: "Configure your AI agent",
-    desc: "Pick a language, choose a voice, and set your widget colours. No code needed. Done in under 5 minutes.",
-    icon: Zap,
-  },
-  {
-    step: "03",
-    title: "Embed one script tag",
-    desc: "Copy a single <script> tag and paste it before </body> on your site — or connect via API.",
-    icon: Globe,
-  },
-];
+const COMPANIES = ["Razorpay", "Zepto", "PhonePe", "CRED", "Meesho", "Groww", "Slice", "Fi Money", "Nykaa", "Boat", "Lenskart", "Zomato"];
 
-const PLANS = [
-  {
-    name: "Starter",
-    price: "₹49",
-    period: "/month",
-    tagline: "Perfect for trying Bolo",
-    outcome: "Handle up to 1,000 customer queries",
-    features: [
-      "1,000 conversations / month",
-      "3 Knowledge Bases",
-      "11 Indian languages",
-      "Text + voice responses",
-      "Widget embed",
-    ],
-    cta: "Start free",
-    href: "/register",
-    highlight: false,
-  },
-  {
-    name: "Growth",
-    price: "₹199",
-    period: "/month",
-    tagline: "For scaling businesses",
-    outcome: "Handle up to 10,000+ customer queries",
-    features: [
-      "10,000 conversations / month",
-      "20 Knowledge Bases",
-      "Voice Cloning (your brand voice)",
-      "Voice Marketplace access",
-      "Priority support",
-    ],
-    cta: "Start Growth",
-    href: "/register?plan=growth",
-    highlight: true,
-  },
-  {
-    name: "Enterprise",
-    price: "Custom",
-    period: "",
-    tagline: "Unlimited scale, SLA guaranteed",
-    outcome: "Unlimited queries — zero cap",
-    features: [
-      "Unlimited conversations",
-      "Dedicated infrastructure",
-      "Custom SLA & uptime guarantee",
-      "Dialect fine-tuning",
-      "Dedicated account manager",
-    ],
-    cta: "Talk to sales",
-    href: "mailto:sales@bolo.ai",
-    highlight: false,
-  },
-];
+function WaveformVisualizer({ active }: { active: boolean }) {
+  const bars = [4, 8, 14, 10, 18, 12, 20, 9, 15, 11, 7, 16, 13, 19, 8];
+  return (
+    <div className="flex items-center gap-[3px] h-8">
+      {bars.map((height, i) => (
+        <span
+          key={i}
+          className="waveform-bar"
+          style={{
+            height: active ? `${height}px` : "4px",
+            animationDelay: `${i * 80}ms`,
+            animationPlayState: active ? "running" : "paused",
+            background: "rgba(99,102,241,0.8)",
+            transition: "height 0.3s ease",
+          }}
+        />
+      ))}
+    </div>
+  );
+}
 
 export default function LandingPage() {
   const { isAuthenticated } = useAuthStore();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [activeLang, setActiveLang] = useState(0);
+  const [demoStep, setDemoStep] = useState(-1);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const demoTimers = useRef<NodeJS.Timeout[]>([]);
 
+  useEffect(() => { setMounted(true); }, []);
   useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (mounted && isAuthenticated) {
-      router.push("/dashboard");
-    }
+    if (mounted && isAuthenticated) router.push("/dashboard");
   }, [mounted, isAuthenticated, router]);
 
   useEffect(() => {
-    const t = setInterval(() => setActiveLang((p) => (p + 1) % LANGUAGES.length), 1800);
+    const t = setInterval(() => setActiveLang((p) => (p + 1) % LANGUAGES.length), 1600);
     return () => clearInterval(t);
   }, []);
 
-  if (!mounted) return null;
-  if (isAuthenticated) return null;
+  const runDemo = () => {
+    if (isPlaying) return;
+    setIsPlaying(true);
+    setDemoStep(-1);
+    demoTimers.current.forEach(clearTimeout);
+    DEMO_CONVERSATION.forEach((msg, i) => {
+      const t = setTimeout(() => {
+        setDemoStep(i);
+        if (i === DEMO_CONVERSATION.length - 1) {
+          setTimeout(() => setIsPlaying(false), 1200);
+        }
+      }, msg.delay + 400);
+      demoTimers.current.push(t);
+    });
+  };
+
+  if (!mounted || isAuthenticated) return null;
 
   return (
-    <div className="min-h-screen bg-[#060e1e] text-white">
+    <div className="min-h-screen bg-[#050a14] text-white overflow-x-hidden">
 
       {/* Nav */}
-      <nav className="fixed top-0 inset-x-0 z-50 border-b border-white/[0.06] backdrop-blur-xl bg-[#060e1e]/80">
+      <nav className="fixed top-0 inset-x-0 z-50 border-b border-white/[0.06]" style={{ backdropFilter: "blur(24px)", background: "rgba(5,10,20,0.85)" }}>
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-violet-600 flex items-center justify-center shadow-lg shadow-brand-500/30">
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-violet-600 flex items-center justify-center shadow-lg shadow-brand-600/40">
               <Mic className="w-4 h-4 text-white" />
             </div>
-            <span className="text-[17px] font-bold text-white tracking-tight">Bolo</span>
+            <span className="font-serif text-[18px] font-normal text-white tracking-tight">Bolo</span>
           </Link>
+          <div className="hidden md:flex items-center gap-8 text-sm text-white/50">
+            <a href="#features" className="hover:text-white transition-colors">Features</a>
+            <a href="#usecases" className="hover:text-white transition-colors">Use cases</a>
+            <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
+            <a href="https://docs.bolo.ai" className="hover:text-white transition-colors">Docs</a>
+          </div>
           <div className="flex items-center gap-3">
-            <Link href="/login" className="px-4 py-2 text-sm text-slate-300 hover:text-white transition-colors font-medium">
+            <Link href="/login" className="px-4 py-2 text-sm text-white/60 hover:text-white transition-colors font-medium">
               Sign in
             </Link>
-            <Link
-              href="/register"
-              className="px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white text-sm font-semibold rounded-lg transition-colors shadow-lg shadow-brand-600/30"
-            >
-              Get started free
+            <Link href="/register" className="px-4 py-2.5 bg-brand-600 hover:bg-brand-500 text-white text-sm font-semibold rounded-lg transition-all shadow-lg shadow-brand-600/30 hover:-translate-y-px">
+              Start free
             </Link>
           </div>
         </div>
       </nav>
 
-      {/* Hero */}
-      <section className="relative pt-40 pb-32 px-6 overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(79,70,229,0.18),transparent)]" />
-        <div className="absolute top-1/3 left-1/4 w-96 h-96 bg-brand-600/5 rounded-full blur-3xl" />
-        <div className="absolute top-1/4 right-1/4 w-72 h-72 bg-violet-600/5 rounded-full blur-3xl" />
+      {/* ── HERO ── */}
+      <section className="relative pt-36 pb-20 px-6">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_50%_-5%,rgba(79,70,229,0.2),transparent)]" />
+        <div className="absolute top-40 left-1/4 w-80 h-80 bg-brand-600/8 rounded-full blur-3xl" />
+        <div className="absolute top-32 right-1/4 w-64 h-64 bg-violet-600/8 rounded-full blur-3xl" />
 
-        <div className="relative max-w-5xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-brand-500/30 bg-brand-500/10 text-brand-300 text-sm font-medium mb-8">
-            <span className="w-1.5 h-1.5 rounded-full bg-brand-400 animate-pulse" />
-            Purpose-built for Indian languages
+        <div className="relative max-w-6xl mx-auto">
+          {/* Badge */}
+          <div className="flex justify-center mb-10">
+            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-brand-500/25 bg-brand-500/10 text-brand-300 text-xs font-medium tracking-wide">
+              <span className="w-1.5 h-1.5 rounded-full bg-brand-400 animate-pulse" />
+              Purpose-built for Indian languages
+              <Sparkles className="w-3 h-3" />
+            </span>
           </div>
 
-          <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold leading-[1.08] tracking-tight text-white mb-6">
-            Handle customer support in
-            <br />
-            <span className="bg-gradient-to-r from-brand-400 via-violet-400 to-brand-400 bg-clip-text text-transparent">
-              11 Indian languages
+          {/* Headline — editorial serif + sans mix (Mistral-style) */}
+          <h1 className="text-center mb-8">
+            <span className="block font-serif text-6xl md:text-7xl lg:text-8xl text-white leading-[0.95] tracking-tight mb-2">
+              Voice AI that speaks
             </span>
-            <br />
-            automatically.
+            <span className="block font-serif italic text-6xl md:text-7xl lg:text-8xl leading-[0.95] tracking-tight bg-gradient-to-r from-brand-400 via-violet-400 to-fire-400 bg-clip-text text-transparent">
+              {LANGUAGES[activeLang].name}
+            </span>
           </h1>
 
-          <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-            Add a voice AI agent to your website or WhatsApp in minutes.
-            No coding required. Works with your FAQs and product docs.
-            Speaks your customer&apos;s language.
+          <p className="text-center text-lg md:text-xl text-white/45 max-w-xl mx-auto mb-12 leading-relaxed font-light">
+            Deploy multilingual voice assistants across 11 Indian languages.
+            No AI infra expertise required. Live in 5 minutes.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
-            <Link
-              href="/register"
-              className="group flex items-center gap-2 px-6 py-3.5 bg-brand-600 hover:bg-brand-500 text-white text-base font-semibold rounded-xl transition-all shadow-xl shadow-brand-600/30 hover:shadow-brand-500/40 hover:-translate-y-0.5"
-            >
-              Start free — no card required
+          {/* CTAs */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-20">
+            <Link href="/register" className="group flex items-center gap-2.5 px-7 py-3.5 bg-brand-600 hover:bg-brand-500 text-white font-semibold rounded-xl transition-all shadow-xl shadow-brand-600/30 hover:shadow-brand-500/40 hover:-translate-y-0.5 text-[15px]">
+              Start building free
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </Link>
-            <Link
-              href="/login"
-              className="flex items-center gap-2 px-6 py-3.5 border border-white/10 text-slate-300 hover:text-white hover:border-white/20 text-base font-medium rounded-xl transition-all"
+            <button
+              onClick={runDemo}
+              className="flex items-center gap-2.5 px-7 py-3.5 glass-dark hover:bg-white/[0.07] text-white/80 hover:text-white font-medium rounded-xl transition-all text-[15px]"
             >
-              <Play className="w-4 h-4" />
-              Watch 2-min demo
-            </Link>
+              <Play className="w-4 h-4 text-brand-400" />
+              Watch live demo
+            </button>
           </div>
 
-          {/* Language ticker */}
-          <div className="flex flex-wrap justify-center gap-2">
-            {LANGUAGES.map((lang, i) => (
-              <span
-                key={lang}
-                className={`px-3 py-1 rounded-full text-sm font-medium border transition-all duration-500 ${
-                  i === activeLang
-                    ? "bg-brand-600/20 border-brand-500/50 text-brand-300"
-                    : "bg-white/[0.04] border-white/[0.08] text-slate-500"
-                }`}
-              >
-                {lang}
-              </span>
+          {/* Interactive Demo Card */}
+          <div className="max-w-2xl mx-auto">
+            <div className="glass-dark rounded-2xl overflow-hidden">
+              {/* Terminal header */}
+              <div className="flex items-center gap-2 px-5 py-3 border-b border-white/[0.06]">
+                <div className="w-3 h-3 rounded-full bg-red-500/60" />
+                <div className="w-3 h-3 rounded-full bg-amber-500/60" />
+                <div className="w-3 h-3 rounded-full bg-emerald-500/60" />
+                <span className="ml-3 text-xs text-white/30 font-mono">bolo — live conversation demo</span>
+                <div className="ml-auto">
+                  <WaveformVisualizer active={isPlaying} />
+                </div>
+              </div>
+
+              {/* Conversation replay */}
+              <div className="p-6 space-y-4 min-h-[220px]">
+                {demoStep === -1 && !isPlaying && (
+                  <div className="flex flex-col items-center justify-center h-40 gap-4">
+                    <div className="w-14 h-14 rounded-2xl bg-brand-600/20 border border-brand-500/30 flex items-center justify-center">
+                      <Volume2 className="w-6 h-6 text-brand-400" />
+                    </div>
+                    <p className="text-sm text-white/40 text-center">
+                      Click <span className="text-white/70 font-medium">Watch live demo</span> to see Bolo handle customer queries<br />across Hindi and Tamil — automatically.
+                    </p>
+                  </div>
+                )}
+                {DEMO_CONVERSATION.map((msg, i) => {
+                  if (i > demoStep) return null;
+                  return (
+                    <div key={i} className={`flex gap-3 animate-fade-in ${msg.role === "ai" ? "flex-row" : "flex-row-reverse"}`}>
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 text-xs font-bold ${msg.role === "ai" ? "bg-brand-600/30 text-brand-300 border border-brand-500/30" : "bg-white/10 text-white/60"}`}>
+                        {msg.role === "ai" ? "AI" : "U"}
+                      </div>
+                      <div className={`max-w-[75%] px-4 py-2.5 rounded-xl text-sm leading-relaxed ${msg.role === "ai" ? "bg-brand-600/15 border border-brand-500/20 text-white/85" : "bg-white/[0.06] border border-white/[0.08] text-white/70"}`}>
+                        <p>{msg.text}</p>
+                        <p className="text-[10px] mt-1 opacity-50">{msg.lang}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Footer bar */}
+              <div className="px-5 py-3 border-t border-white/[0.06] flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {LANGUAGES.slice(0, 5).map((l, i) => (
+                    <span key={i} className="text-[11px] text-white/30 font-mono">{l.name}</span>
+                  ))}
+                  <span className="text-[11px] text-white/20">+6 more</span>
+                </div>
+                <span className="text-[11px] text-emerald-400/70 font-mono flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
+                  &lt;500ms
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Marquee logo strip */}
+      <section className="border-y border-white/[0.05] py-5 overflow-hidden bg-white/[0.01]">
+        <div className="flex animate-marquee whitespace-nowrap">
+          {[...COMPANIES, ...COMPANIES].map((c, i) => (
+            <span key={i} className="mx-8 text-sm text-white/20 font-medium tracking-wide">{c}</span>
+          ))}
+        </div>
+      </section>
+
+      {/* ── BENTO FEATURES ── */}
+      <section id="features" className="py-28 px-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="font-serif text-4xl md:text-5xl text-white mb-4 leading-tight">
+              Everything you need to ship<br />
+              <span className="italic text-white/50">voice AI in India</span>
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {BENTO_FEATURES.map(({ icon: Icon, title, desc, size, accent }) => (
+              <div key={title} className={`${size} glass-dark rounded-2xl p-6 group hover:bg-white/[0.06] transition-all duration-300`}>
+                <div className={`inline-flex w-10 h-10 rounded-xl bg-gradient-to-br ${accent} items-center justify-center mb-4 shadow-lg`}>
+                  <Icon className="w-5 h-5 text-white" />
+                </div>
+                <h3 className="text-[15px] font-semibold text-white mb-2 leading-tight">{title}</h3>
+                <p className="text-sm text-white/45 leading-relaxed">{desc}</p>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Stats */}
-      <section className="border-y border-white/[0.06] bg-white/[0.02]">
-        <div className="max-w-7xl mx-auto px-6 py-12 grid grid-cols-2 md:grid-cols-4 gap-8">
-          {STATS.map(({ value, label }) => (
-            <div key={label} className="text-center">
-              <div className="text-3xl md:text-4xl font-extrabold text-white mb-1">{value}</div>
-              <div className="text-sm text-slate-500">{label}</div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Use cases */}
-      <section className="py-28 px-6">
-        <div className="max-w-7xl mx-auto">
+      {/* ── USE CASES ── */}
+      <section id="usecases" className="py-24 px-6 border-t border-white/[0.05]">
+        <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              One platform. Three powerful use cases.
+            <p className="text-xs text-brand-400 font-semibold tracking-widest uppercase mb-3">Use Cases</p>
+            <h2 className="font-serif text-4xl md:text-5xl text-white leading-tight">
+              One platform.<br />
+              <span className="italic text-white/50">Three powerful verticals.</span>
             </h2>
-            <p className="text-slate-400 text-lg max-w-xl mx-auto">
-              Same backend. Different packaging. Built for how Bharat actually works.
-            </p>
           </div>
-          <div className="grid md:grid-cols-3 gap-6">
-            {USE_CASES.map(({ icon: Icon, color, bg: _, iconColor: __, label, headline, bullets, cta, href }) => (
-              <div key={label} className="group relative bg-white/[0.03] border border-white/[0.08] rounded-2xl p-7 hover:bg-white/[0.05] hover:border-white/[0.14] transition-all duration-300">
-                <div className={`inline-flex w-10 h-10 rounded-xl bg-gradient-to-br ${color} items-center justify-center mb-5 shadow-lg`}>
-                  <Icon className="w-5 h-5 text-white" />
+
+          <div className="grid md:grid-cols-3 gap-5">
+            {USE_CASES.map(({ icon: Icon, accent, tag, headline, bullets, href }) => (
+              <Link
+                key={tag}
+                href={href}
+                className={`group block glass-dark rounded-2xl p-7 border transition-all duration-300 ${accent}`}
+              >
+                <div className="mb-5">
+                  <Icon className="w-6 h-6 text-white/40 group-hover:text-white/70 transition-colors mb-4" />
+                  <span className="text-[10px] font-semibold text-white/30 uppercase tracking-widest block mb-2">{tag}</span>
+                  <h3 className="font-serif text-[18px] text-white leading-snug">{headline}</h3>
                 </div>
-                <div className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2">{label}</div>
-                <h3 className="text-lg font-bold text-white leading-snug mb-4">{headline}</h3>
                 <ul className="space-y-2.5 mb-6">
                   {bullets.map((b) => (
-                    <li key={b} className="flex items-start gap-2.5 text-sm text-slate-400">
-                      <Check className="w-4 h-4 text-brand-400 mt-0.5 shrink-0" />
+                    <li key={b} className="flex items-start gap-2 text-sm text-white/45">
+                      <Check className="w-3.5 h-3.5 text-emerald-400 mt-0.5 shrink-0" />
                       {b}
                     </li>
                   ))}
                 </ul>
+                <div className="flex items-center gap-1.5 text-xs text-white/40 group-hover:text-white/70 transition-colors font-medium">
+                  Try this template
+                  <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── HOW IT WORKS ── */}
+      <section className="py-24 px-6 border-t border-white/[0.05]">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="font-serif text-4xl md:text-5xl text-white leading-tight">
+              Live in{" "}
+              <span className="italic bg-gradient-to-r from-brand-400 to-violet-400 bg-clip-text text-transparent">5 minutes</span>
+            </h2>
+          </div>
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              { n: "01", title: "Upload your docs", desc: "Drop in FAQs, product catalogs, policy PDFs. Bolo indexes them instantly." },
+              { n: "02", title: "Configure your agent", desc: "Pick languages, choose a voice, set your colors. No code. Done in 2 minutes." },
+              { n: "03", title: "Embed one script tag", desc: "Copy a single <script> and paste before </body>. Or call our API." },
+            ].map(({ n, title, desc }) => (
+              <div key={n} className="relative">
+                <div className="text-[56px] font-serif text-white/[0.06] leading-none mb-4 select-none">{n}</div>
+                <h3 className="text-[15px] font-semibold text-white mb-2">{title}</h3>
+                <p className="text-sm text-white/40 leading-relaxed">{desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── WHY NOT GOOGLE/MSFT ── */}
+      <section className="py-20 px-6 border-t border-white/[0.05]">
+        <div className="max-w-4xl mx-auto">
+          <div className="glass-dark rounded-3xl p-10 md:p-14 text-center">
+            <p className="text-xs text-white/30 uppercase tracking-widest mb-6 font-semibold">The honest pitch</p>
+            <h2 className="font-serif text-3xl md:text-4xl text-white mb-6 leading-snug">
+              Google and Azure give you APIs.<br />
+              <span className="italic text-brand-400">Bolo gives you a working product.</span>
+            </h2>
+            <p className="text-white/45 text-base max-w-xl mx-auto mb-10 leading-relaxed">
+              Stitching together STT + Translation + LLM + TTS + voice UI takes months.
+              Bolo ships the full stack, tuned for Indian languages and accents, in a single platform.
+            </p>
+            <Link href="/register" className="inline-flex items-center gap-2 px-7 py-3.5 bg-brand-600 hover:bg-brand-500 text-white font-semibold rounded-xl transition-all shadow-xl shadow-brand-600/30 hover:-translate-y-0.5">
+              Start for free
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ── PRICING ── */}
+      <section id="pricing" className="py-24 px-6 border-t border-white/[0.05]">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-14">
+            <h2 className="font-serif text-4xl md:text-5xl text-white mb-3">Simple pricing</h2>
+            <p className="text-white/40 text-base">Pay for outcomes, not API units.</p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-5">
+            {[
+              {
+                name: "Starter", price: "₹49", period: "/mo",
+                tagline: "Handle up to 1,000 customer queries",
+                features: ["1,000 conversations / month", "3 Knowledge Bases", "11 Indian languages", "Text + voice", "Widget embed"],
+                cta: "Start free", href: "/register", highlight: false,
+              },
+              {
+                name: "Growth", price: "₹199", period: "/mo",
+                tagline: "Handle up to 10,000+ customer queries",
+                features: ["10,000 conversations / month", "20 Knowledge Bases", "Voice Cloning", "Voice Marketplace", "Priority support"],
+                cta: "Start Growth", href: "/register?plan=growth", highlight: true,
+              },
+              {
+                name: "Enterprise", price: "Custom", period: "",
+                tagline: "Unlimited queries — zero cap",
+                features: ["Unlimited conversations", "Dedicated infrastructure", "Custom SLA", "Dialect fine-tuning", "Account manager"],
+                cta: "Talk to sales", href: "mailto:sales@bolo.ai", highlight: false,
+              },
+            ].map((plan) => (
+              <div key={plan.name} className={`rounded-2xl p-7 relative transition-all ${plan.highlight ? "bg-brand-600/20 border-2 border-brand-500/50" : "glass-dark border border-white/[0.08]"}`}>
+                {plan.highlight && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-brand-600 text-white text-[11px] font-semibold rounded-full">
+                    Most popular
+                  </div>
+                )}
+                <div className="mb-5">
+                  <p className="text-xs font-semibold text-white/40 uppercase tracking-widest mb-2">{plan.name}</p>
+                  <div className="flex items-baseline gap-0.5 mb-1">
+                    <span className="font-serif text-4xl text-white">{plan.price}</span>
+                    <span className="text-sm text-white/40">{plan.period}</span>
+                  </div>
+                  <p className="text-xs text-brand-400 font-medium">{plan.tagline}</p>
+                </div>
+                <ul className="space-y-2.5 mb-8">
+                  {plan.features.map((f) => (
+                    <li key={f} className="flex items-center gap-2 text-sm text-white/55">
+                      <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
                 <Link
-                  href={href}
-                  className="inline-flex items-center gap-1.5 text-sm text-brand-400 hover:text-brand-300 font-semibold transition-colors group-hover:gap-2.5"
+                  href={plan.href}
+                  className={`block text-center py-2.5 rounded-xl text-sm font-semibold transition-all ${plan.highlight ? "bg-brand-600 hover:bg-brand-500 text-white shadow-lg shadow-brand-600/30" : "glass-dark hover:bg-white/[0.08] text-white/70 hover:text-white"}`}
                 >
-                  {cta} <ChevronRight className="w-4 h-4 transition-all" />
+                  {plan.cta}
                 </Link>
               </div>
             ))}
@@ -310,172 +487,24 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* How it works */}
-      <section className="py-28 px-6 bg-white/[0.02] border-y border-white/[0.06]">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              Up and running in under 5 minutes.
-            </h2>
-            <p className="text-slate-400 text-lg">No engineers required.</p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-8">
-            {HOW_IT_WORKS.map(({ step, title, desc, icon: Icon }) => (
-              <div key={step} className="relative">
-                <div className="flex items-center gap-4 mb-5">
-                  <div className="w-10 h-10 rounded-xl bg-brand-600/10 border border-brand-500/20 flex items-center justify-center">
-                    <Icon className="w-5 h-5 text-brand-400" />
-                  </div>
-                  <span className="text-4xl font-black text-white/[0.06] leading-none">{step}</span>
-                </div>
-                <h3 className="text-lg font-bold text-white mb-2">{title}</h3>
-                <p className="text-slate-400 text-sm leading-relaxed">{desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Why not Google/Microsoft */}
-      <section className="py-28 px-6">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-300 text-sm font-medium mb-8">
-            <Star className="w-3.5 h-3.5" />
-            Why not Google or Microsoft?
-          </div>
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-6 leading-snug">
-            They give you APIs.
-            <br />
-            <span className="text-gradient bg-gradient-to-r from-brand-400 to-violet-400 bg-clip-text text-transparent">
-              We give you a working support agent.
-            </span>
-          </h2>
-          <div className="grid sm:grid-cols-3 gap-5 mt-12 text-left">
-            {[
-              { icon: MessageSquare, title: "Indian-first", body: "Built specifically for Indian languages, accents, and dialects. Not a generic global model." },
-              { icon: Zap, title: "No-code setup", body: "From zero to live support bot in 5 minutes. No ML expertise, no API stitching, no DevOps." },
-              { icon: Users, title: "Full stack solution", body: "STT + Translation + LLM + TTS + Widget all in one subscription. No 5 different vendor bills." },
-            ].map(({ icon: Icon, title, body }) => (
-              <div key={title} className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-5">
-                <Icon className="w-5 h-5 text-brand-400 mb-3" />
-                <h4 className="font-semibold text-white text-sm mb-1.5">{title}</h4>
-                <p className="text-slate-500 text-sm leading-relaxed">{body}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing */}
-      <section className="py-28 px-6 bg-white/[0.02] border-y border-white/[0.06]">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Simple, outcome-based pricing.</h2>
-            <p className="text-slate-400 text-lg">Pay for resolved queries. Not for API calls or tokens.</p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            {PLANS.map(({ name, price, period, tagline, outcome, features, cta, href, highlight }) => (
-              <div
-                key={name}
-                className={`relative rounded-2xl p-7 border ${
-                  highlight
-                    ? "bg-gradient-to-b from-brand-600/20 to-brand-900/20 border-brand-500/40 shadow-xl shadow-brand-600/10"
-                    : "bg-white/[0.03] border-white/[0.08]"
-                }`}
-              >
-                {highlight && (
-                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 bg-brand-600 text-white text-xs font-bold rounded-full shadow-lg">
-                    Most popular
-                  </div>
-                )}
-                <div className="mb-5">
-                  <h3 className="text-lg font-bold text-white">{name}</h3>
-                  <p className="text-slate-500 text-sm mt-0.5">{tagline}</p>
-                </div>
-                <div className="mb-2">
-                  <span className="text-4xl font-extrabold text-white">{price}</span>
-                  <span className="text-slate-500 text-sm">{period}</span>
-                </div>
-                <div className="text-sm text-brand-400 font-semibold mb-6">{outcome}</div>
-                <ul className="space-y-2.5 mb-7">
-                  {features.map((f) => (
-                    <li key={f} className="flex items-start gap-2.5 text-sm text-slate-400">
-                      <Check className="w-4 h-4 text-brand-400 mt-0.5 shrink-0" />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                {href.startsWith("mailto") ? (
-                  <a
-                    href={href}
-                    className="block w-full py-3 text-center border border-brand-500/40 text-brand-400 hover:bg-brand-500/10 rounded-xl text-sm font-semibold transition-colors"
-                  >
-                    {cta}
-                  </a>
-                ) : (
-                  <Link
-                    href={href}
-                    className={`block w-full py-3 text-center rounded-xl text-sm font-semibold transition-all ${
-                      highlight
-                        ? "bg-brand-600 hover:bg-brand-500 text-white shadow-lg shadow-brand-600/30"
-                        : "border border-white/10 text-white hover:bg-white/[0.06]"
-                    }`}
-                  >
-                    {cta}
-                  </Link>
-                )}
-              </div>
-            ))}
-          </div>
-          <p className="text-center text-slate-600 text-sm mt-8">
-            All plans include 11 Indian languages · Cancel anytime · No setup fee
-          </p>
-        </div>
-      </section>
-
-      {/* Final CTA */}
-      <section className="py-32 px-6">
-        <div className="max-w-3xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 mb-6">
-            <BarChart3 className="w-5 h-5 text-brand-400" />
-            <span className="text-slate-400 text-sm">Join hundreds of Indian businesses already on Bolo</span>
-          </div>
-          <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-6 leading-tight">
-            Your customers speak Hindi.
-            <br />
-            <span className="text-gradient bg-gradient-to-r from-brand-400 to-violet-400 bg-clip-text text-transparent">
-              Your support bot should too.
-            </span>
-          </h2>
-          <p className="text-slate-400 text-lg mb-10">
-            Start free. No credit card. Live in 5 minutes.
-          </p>
-          <Link
-            href="/register"
-            className="group inline-flex items-center gap-2 px-8 py-4 bg-brand-600 hover:bg-brand-500 text-white text-base font-bold rounded-xl transition-all shadow-2xl shadow-brand-600/30 hover:shadow-brand-500/40 hover:-translate-y-0.5"
-          >
-            Get started free
-            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-          </Link>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="border-t border-white/[0.06] py-10 px-6">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+      {/* ── FOOTER ── */}
+      <footer className="border-t border-white/[0.05] py-12 px-6">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-2.5">
-            <div className="w-6 h-6 rounded-md bg-gradient-to-br from-brand-500 to-violet-600 flex items-center justify-center">
-              <Mic className="w-3 h-3 text-white" />
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-brand-500 to-violet-600 flex items-center justify-center">
+              <Mic className="w-3.5 h-3.5 text-white" />
             </div>
-            <span className="text-sm font-semibold text-slate-400">Bolo</span>
+            <span className="font-serif text-white text-[16px]">Bolo</span>
           </div>
-          <p className="text-slate-600 text-sm">© {new Date().getFullYear()} Bolo. Preserving Indian languages through AI.</p>
-          <div className="flex items-center gap-5 text-sm text-slate-600">
-            <a href="mailto:support@bolo.ai" className="hover:text-slate-400 transition-colors">support@bolo.ai</a>
-            <Link href="/login" className="hover:text-slate-400 transition-colors">Sign in</Link>
+          <div className="flex items-center gap-8 text-sm text-white/30">
+            <a href="#" className="hover:text-white/60 transition-colors">Privacy</a>
+            <a href="#" className="hover:text-white/60 transition-colors">Terms</a>
+            <a href="mailto:support@bolo.ai" className="hover:text-white/60 transition-colors">support@bolo.ai</a>
           </div>
+          <p className="text-xs text-white/20">© 2026 Bolo. Made for Bharat.</p>
         </div>
       </footer>
+
     </div>
   );
 }

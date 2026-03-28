@@ -51,6 +51,13 @@ const config: Config = {
           950: "#1e1b4b",
         },
 
+        /* Warm accent — fire orange (Mistral-inspired) */
+        fire: {
+          400: "#fb923c",
+          500: "#f97316",
+          600: "#ea580c",
+        },
+
         /* Dark sidebar palette */
         sidebar: {
           bg: "#0c1525",
@@ -73,6 +80,8 @@ const config: Config = {
 
       fontFamily: {
         sans: ["Inter", "system-ui", "-apple-system", "sans-serif"],
+        serif: ["Instrument Serif", "Georgia", "serif"],
+        mono: ["ui-monospace", "SFMono-Regular", "Menlo", "monospace"],
       },
 
       fontSize: {
@@ -117,11 +126,21 @@ const config: Config = {
           "0%": { backgroundPosition: "-200% 0" },
           "100%": { backgroundPosition: "200% 0" },
         },
+        marquee: {
+          "0%": { transform: "translateX(0)" },
+          "100%": { transform: "translateX(-50%)" },
+        },
+        float: {
+          "0%, 100%": { transform: "translateY(0px)" },
+          "50%": { transform: "translateY(-8px)" },
+        },
       },
       animation: {
         "fade-in": "fade-in 0.2s ease-out",
         "slide-in-right": "slide-in-right 0.25s ease-out",
         shimmer: "shimmer 2s linear infinite",
+        marquee: "marquee 28s linear infinite",
+        float: "float 4s ease-in-out infinite",
       },
     },
   },
