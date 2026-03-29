@@ -227,7 +227,7 @@ export default function LandingPage() {
 
           <p className="text-center text-lg md:text-xl text-white/45 max-w-xl mx-auto mb-12 leading-relaxed font-light">
             The hyper-personalized voice platform that converts every interaction
-            into exponential growth — across 11 Indian languages.
+            into exponential growth.
           </p>
 
           {/* CTAs */}
