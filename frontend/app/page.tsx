@@ -218,16 +218,16 @@ export default function LandingPage() {
           {/* Headline */}
           <h1 className="text-center mb-8">
             <span className="block font-serif text-6xl md:text-7xl lg:text-8xl text-white leading-[0.95] tracking-tight mb-2">
-              Every connection deepens
+              Speak the Heart of Bharat
             </span>
             <span className="block font-serif italic text-6xl md:text-7xl lg:text-8xl leading-[0.95] tracking-tight bg-gradient-to-r from-saffron-400 via-turmeric-400 to-fire-400 bg-clip-text text-transparent">
-              when you speak {LANGUAGES[activeLang].name}
+              in {LANGUAGES[activeLang].name}
             </span>
           </h1>
 
           <p className="text-center text-lg md:text-xl text-white/45 max-w-xl mx-auto mb-12 leading-relaxed font-light">
-            Give every Indian customer an experience that feels made just for them —
-            in the language they grew up speaking.
+            The hyper-personalized voice platform that converts every interaction
+            into exponential growth — across 11 Indian languages.
           </p>
 
           {/* CTAs */}
