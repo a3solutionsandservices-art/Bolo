@@ -7,7 +7,7 @@ import { useAuthStore } from "@/lib/auth-store";
 import {
   Mic, ArrowRight, Check, Globe, Zap, Shield,
   ShoppingCart, BookOpen, Building2, Play, ChevronRight,
-  Volume2, Sparkles, Database, Code2, BarChart3, Users,
+  Volume2, Sparkles, Database, Code2, BarChart3,
 } from "lucide-react";
 
 const LANGUAGES = [
@@ -34,50 +34,50 @@ const DEMO_CONVERSATION = [
 const BENTO_FEATURES = [
   {
     icon: Globe,
-    title: "11 Indian Languages",
-    desc: "Hindi, Tamil, Telugu, Bengali, Gujarati, Marathi, Kannada, Malayalam, Punjabi, Odia + English — all native, not translated.",
+    title: "11 Indian Languages — Natively",
+    desc: "Hindi, Tamil, Telugu, Bengali, Gujarati, Marathi, Kannada, Malayalam, Punjabi, Odia + English. Not translated. Understood.",
     size: "col-span-2",
     accent: "from-brand-600 to-violet-600",
   },
   {
     icon: Zap,
-    title: "< 500ms Latency",
-    desc: "Real-time voice responses your customers won't wait for.",
+    title: "< 500ms Response",
+    desc: "Sub-half-second voice replies. Fast enough to feel like a real conversation.",
     size: "col-span-1",
     accent: "from-fire-500 to-amber-500",
   },
   {
     icon: Database,
-    title: "RAG on Your Data",
-    desc: "Upload FAQs, product docs, policy PDFs. Bolo reads, indexes, and answers from them — accurately.",
+    title: "Trained on Your Data",
+    desc: "Upload FAQs, PDFs, product docs. Your assistant answers from your knowledge — not the internet.",
     size: "col-span-1",
     accent: "from-emerald-500 to-teal-500",
   },
   {
     icon: Code2,
-    title: "5-Minute Widget",
-    desc: "One <script> tag. Works on any website, React app, or WhatsApp.",
+    title: "One Script Tag",
+    desc: "Copy. Paste before </body>. Done. No engineering team needed.",
     size: "col-span-1",
     accent: "from-brand-500 to-sky-500",
   },
   {
     icon: Shield,
-    title: "Enterprise Ready",
-    desc: "Data residency in India. Full audit trail. SOC 2 in progress.",
+    title: "Data Stays in India",
+    desc: "Full data residency. Audit trail for every conversation. SOC 2 in progress.",
     size: "col-span-1",
     accent: "from-violet-600 to-purple-600",
   },
   {
     icon: BarChart3,
-    title: "Analytics & Insights",
-    desc: "Sentiment analysis, topic detection, and conversation metrics across all sessions.",
+    title: "Conversation Intelligence",
+    desc: "Sentiment scoring, topic clustering, drop-off detection — across every session, every language.",
     size: "col-span-1",
     accent: "from-rose-500 to-pink-500",
   },
   {
-    icon: Users,
-    title: "Voice Marketplace",
-    desc: "License regional celebrity voices. Let voice artists monetise their IP.",
+    icon: Mic,
+    title: "Your Brand's Voice",
+    desc: "Clone a voice. License a regional celebrity. Or choose from 10+ built-in personas.",
     size: "col-span-1",
     accent: "from-amber-500 to-orange-500",
   },
@@ -88,24 +88,24 @@ const USE_CASES = [
     icon: ShoppingCart,
     accent: "border-brand-500/30 hover:border-brand-500/60",
     tag: "D2C & E-commerce",
-    headline: "Answer 70% of support queries in your customer's language — automatically.",
-    bullets: ["Order tracking in Hindi, Tamil, Telugu", "Returns & refund policy in regional language", "24×7 with zero agent cost"],
+    headline: "Cut support costs by 70% without losing your customer's trust.",
+    bullets: ["Handle returns, orders & refunds — zero wait time", "Customers feel heard in their own language", "Scale to 10,000 queries with no extra headcount"],
     href: "/register?template=ecommerce",
   },
   {
     icon: BookOpen,
     accent: "border-emerald-500/30 hover:border-emerald-500/60",
     tag: "EdTech",
-    headline: "Explain concepts in the language students actually think in.",
-    bullets: ["Doubt resolution in 11 languages", "Audio explanations from your course content", "Reduces dropout from comprehension barriers"],
+    headline: "Turn comprehension barriers into your biggest growth lever.",
+    bullets: ["Students learn faster in their mother tongue", "24×7 doubt resolution — no tutor burnout", "Measurable drop in course drop-off rates"],
     href: "/register?template=edtech",
   },
   {
     icon: Building2,
     accent: "border-amber-500/30 hover:border-amber-500/60",
     tag: "BFSI",
-    headline: "Replace IVR trees with conversational voice AI.",
-    bullets: ["KYC, EMI reminders, balance checks", "RBI-compliant with full transcript audit", "Tier 2 / Tier 3 India coverage"],
+    headline: "Win Tier 2 & Tier 3 India — where no IVR has gone before.",
+    bullets: ["Customers explain issues in their own words", "Full transcript audit trail — regulator ready", "Reach millions who never used digital banking"],
     href: "/register?template=bfsi",
   },
 ];
@@ -318,9 +318,10 @@ export default function LandingPage() {
       <section id="features" className="py-28 px-6">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
+            <p className="text-xs text-saffron-400 font-semibold tracking-widest uppercase mb-3">Platform</p>
             <h2 className="font-serif text-4xl md:text-5xl text-white mb-4 leading-tight">
-              Everything you need to ship<br />
-              <span className="italic text-white/50">voice AI in India</span>
+              Built for Bharat.<br />
+              <span className="italic text-white/50">Ready for the world.</span>
             </h2>
           </div>
 
