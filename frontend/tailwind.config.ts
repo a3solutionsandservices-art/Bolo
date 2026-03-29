@@ -51,22 +51,59 @@ const config: Config = {
           950: "#1e1b4b",
         },
 
-        /* Warm accent — fire orange (Mistral-inspired) */
+        /* 🇮🇳 Saffron — Indian identity accent */
+        saffron: {
+          50: "#fff7ed",
+          100: "#ffedd5",
+          200: "#fed7aa",
+          300: "#fdba74",
+          400: "#fb923c",
+          500: "#FF6B00",
+          600: "#ea580c",
+          700: "#c2410c",
+          800: "#9a3412",
+          900: "#7c2d12",
+        },
+
+        /* 🦚 Peacock — South Indian teal-blue */
+        peacock: {
+          50: "#ecfdf5",
+          100: "#d1fae5",
+          200: "#a7f3d0",
+          300: "#6ee7b7",
+          400: "#34d399",
+          500: "#10b981",
+          600: "#059669",
+          700: "#047857",
+          800: "#065f46",
+          900: "#064e3b",
+        },
+
+        /* 🌙 Turmeric — gold/marigold accent */
+        turmeric: {
+          300: "#fcd34d",
+          400: "#fbbf24",
+          500: "#f59e0b",
+          600: "#d97706",
+          700: "#b45309",
+        },
+
+        /* Warm accent — fire orange */
         fire: {
           400: "#fb923c",
           500: "#f97316",
           600: "#ea580c",
         },
 
-        /* Dark sidebar palette */
+        /* Warm dark sidebar palette */
         sidebar: {
-          bg: "#0c1525",
-          "bg-hover": "#142035",
-          border: "#1e2d47",
-          text: "#64748b",
-          "text-hover": "#cbd5e1",
-          "text-active": "#f1f5f9",
-          "active-bg": "#1a2d4a",
+          bg: "#0f0c08",
+          "bg-hover": "#1a1510",
+          border: "#2a2218",
+          text: "#78716c",
+          "text-hover": "#d6d3d1",
+          "text-active": "#fafaf9",
+          "active-bg": "#1f1a14",
         },
 
         /* Content surface */
@@ -82,6 +119,7 @@ const config: Config = {
         sans: ["Inter", "system-ui", "-apple-system", "sans-serif"],
         serif: ["Instrument Serif", "Georgia", "serif"],
         mono: ["ui-monospace", "SFMono-Regular", "Menlo", "monospace"],
+        devanagari: ["Noto Sans Devanagari", "Inter", "sans-serif"],
       },
 
       fontSize: {
@@ -103,14 +141,20 @@ const config: Config = {
         "card-xl": "0 8px 16px rgba(15,23,42,0.06), 0 24px 48px rgba(15,23,42,0.16)",
         glow: "0 0 0 3px rgba(99,102,241,0.25)",
         "glow-brand": "0 0 24px rgba(79,70,229,0.35)",
+        "glow-saffron": "0 0 24px rgba(255,107,0,0.4)",
+        "glow-peacock": "0 0 20px rgba(16,185,129,0.35)",
       },
 
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
-        "sidebar-gradient": "linear-gradient(180deg, #0c1525 0%, #0a1020 100%)",
+        "sidebar-gradient": "linear-gradient(180deg, #0f0c08 0%, #0d0a05 100%)",
         "brand-gradient": "linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)",
-        "hero-gradient": "linear-gradient(135deg, #0c1525 0%, #0f1f3d 50%, #1a1040 100%)",
-        "mesh-gradient": "radial-gradient(at 40% 20%, rgba(79,70,229,0.15) 0, transparent 50%), radial-gradient(at 80% 0%, rgba(124,58,237,0.1) 0, transparent 50%), radial-gradient(at 0% 50%, rgba(79,70,229,0.08) 0, transparent 50%)",
+        "saffron-gradient": "linear-gradient(135deg, #FF6B00 0%, #fbbf24 100%)",
+        "peacock-gradient": "linear-gradient(135deg, #059669 0%, #0891b2 100%)",
+        "india-gradient": "linear-gradient(135deg, #FF6B00 0%, #ffffff 50%, #138808 100%)",
+        "hero-gradient": "linear-gradient(135deg, #0f0c08 0%, #1a0f00 50%, #0a0a14 100%)",
+        "mesh-gradient": "radial-gradient(at 40% 20%, rgba(255,107,0,0.12) 0, transparent 50%), radial-gradient(at 80% 0%, rgba(79,70,229,0.10) 0, transparent 50%), radial-gradient(at 0% 50%, rgba(16,185,129,0.08) 0, transparent 50%)",
+        "rangoli-radial": "radial-gradient(circle at center, rgba(255,107,0,0.15) 0%, rgba(251,191,36,0.08) 30%, transparent 65%)",
       },
 
       keyframes: {
@@ -134,6 +178,15 @@ const config: Config = {
           "0%, 100%": { transform: "translateY(0px)" },
           "50%": { transform: "translateY(-8px)" },
         },
+        "rangoli-spin": {
+          "0%": { transform: "rotate(0deg) scale(1)" },
+          "50%": { transform: "rotate(180deg) scale(1.05)" },
+          "100%": { transform: "rotate(360deg) scale(1)" },
+        },
+        "pulse-saffron": {
+          "0%, 100%": { opacity: "0.6", transform: "scale(1)" },
+          "50%": { opacity: "1", transform: "scale(1.02)" },
+        },
       },
       animation: {
         "fade-in": "fade-in 0.2s ease-out",
@@ -141,6 +194,8 @@ const config: Config = {
         shimmer: "shimmer 2s linear infinite",
         marquee: "marquee 28s linear infinite",
         float: "float 4s ease-in-out infinite",
+        "rangoli-spin": "rangoli-spin 20s linear infinite",
+        "pulse-saffron": "pulse-saffron 3s ease-in-out infinite",
       },
     },
   },

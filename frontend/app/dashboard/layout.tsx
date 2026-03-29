@@ -23,8 +23,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   if (!mounted) {
     return (
-      <div className="flex h-screen items-center justify-center bg-gray-50">
-        <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+      <div className="flex h-screen items-center justify-center" style={{ background: "#0a0700" }}>
+        <div className="w-8 h-8 rounded-full animate-spin" style={{ border: "2px solid rgba(255,107,0,0.2)", borderTopColor: "#FF6B00" }} />
       </div>
     );
   }
