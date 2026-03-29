@@ -5,10 +5,8 @@ import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/auth-store";
 import {
-  Mic, ArrowRight, Check, Globe, Zap, Shield,
-  ShoppingCart, BookOpen, Building2, Play, ChevronRight,
-  Volume2, Sparkles, Database, Code2, BarChart3,
-  Heart, GraduationCap, Landmark, Truck, Leaf, Radio, Film, Users,
+  Mic, ArrowRight, Check, Play, ChevronRight,
+  Volume2, Sparkles,
 } from "lucide-react";
 
 const LANGUAGES = [
@@ -30,165 +28,6 @@ const DEMO_CONVERSATION = [
   { role: "ai", text: "आपका ऑर्डर #4521 रास्ते में है और कल शाम तक पहुँच जाएगा।", lang: "Hindi", delay: 900 },
   { role: "user", text: "என் ஆர்டர் எங்கே இருக்கிறது?", lang: "Tamil", delay: 1800 },
   { role: "ai", text: "உங்கள் ஆர்டர் #4521 வழியில் உள்ளது, நாளை மாலைக்குள் வரும்.", lang: "Tamil", delay: 2700 },
-];
-
-const BENTO_FEATURES = [
-  {
-    icon: Globe,
-    title: "11 Indian Languages — Natively",
-    desc: "Hindi, Tamil, Telugu, Bengali, Gujarati, Marathi, Kannada, Malayalam, Punjabi, Odia + English. Not translated. Understood.",
-    size: "col-span-2",
-    accent: "from-brand-600 to-violet-600",
-  },
-  {
-    icon: Zap,
-    title: "< 500ms Response",
-    desc: "Sub-half-second voice replies. Fast enough to feel like a real conversation.",
-    size: "col-span-1",
-    accent: "from-fire-500 to-amber-500",
-  },
-  {
-    icon: Database,
-    title: "Trained on Your Data",
-    desc: "Upload FAQs, PDFs, product docs. Your assistant answers from your knowledge — not the internet.",
-    size: "col-span-1",
-    accent: "from-emerald-500 to-teal-500",
-  },
-  {
-    icon: Code2,
-    title: "One Script Tag",
-    desc: "Copy. Paste before </body>. Done. No engineering team needed.",
-    size: "col-span-1",
-    accent: "from-brand-500 to-sky-500",
-  },
-  {
-    icon: Shield,
-    title: "Data Stays in India",
-    desc: "Full data residency. Audit trail for every conversation. SOC 2 in progress.",
-    size: "col-span-1",
-    accent: "from-violet-600 to-purple-600",
-  },
-  {
-    icon: BarChart3,
-    title: "Conversation Intelligence",
-    desc: "Sentiment scoring, topic clustering, drop-off detection — across every session, every language.",
-    size: "col-span-1",
-    accent: "from-rose-500 to-pink-500",
-  },
-  {
-    icon: Mic,
-    title: "Your Brand's Voice",
-    desc: "Clone a voice. License a regional celebrity. Or choose from 10+ built-in personas.",
-    size: "col-span-1",
-    accent: "from-amber-500 to-orange-500",
-  },
-];
-
-const USE_CASE_VERTICALS = [
-  {
-    icon: ShoppingCart,
-    color: "#6366f1",
-    tag: "D2C & E-Commerce",
-    headline: "Cut support costs by 70%",
-    subhead: "without losing your customer's trust",
-    examples: [
-      { title: "Order Status Bot", desc: "Customer asks \"मेरा पार्सल कहाँ है?\" — agent replies in Hindi with live tracking." },
-      { title: "Returns & Refunds", desc: "Voice-guided return flow in Tamil or Telugu — zero agent involvement." },
-      { title: "Product Discovery", desc: "\"Saree under ₹500 for wedding\" — multilingual catalogue search by voice." },
-    ],
-    href: "/register?template=ecommerce",
-  },
-  {
-    icon: GraduationCap,
-    color: "#10b981",
-    tag: "EdTech & Learning",
-    headline: "Remove the language barrier from learning",
-    subhead: "so every student can reach their potential",
-    examples: [
-      { title: "Doubt Resolution", desc: "Students ask questions in Bhojpuri or Odia — AI explains in their mother tongue, 24×7." },
-      { title: "Voice Assessments", desc: "Spoken language tests for regional schools — auto-scored with accent awareness." },
-      { title: "Parent Engagement", desc: "Progress updates delivered in the language parents actually read and hear." },
-    ],
-    href: "/register?template=edtech",
-  },
-  {
-    icon: Landmark,
-    color: "#f59e0b",
-    tag: "BFSI & Fintech",
-    headline: "Replace IVR with real conversations",
-    subhead: "in the language your customer thinks in",
-    examples: [
-      { title: "Loan Onboarding", desc: "Walk first-time borrowers through applications in Marathi or Gujarati — drop-off eliminated." },
-      { title: "KYC & Compliance", desc: "Voice-collected declarations with full audit trail — regulator ready." },
-      { title: "Fraud Alerts", desc: "Instant outbound calls in the customer's language — faster response than SMS." },
-    ],
-    href: "/register?template=bfsi",
-  },
-  {
-    icon: Heart,
-    color: "#ec4899",
-    tag: "Healthcare",
-    headline: "Bridge the last mile in rural healthcare",
-    subhead: "where English is not the patient's language",
-    examples: [
-      { title: "Symptom Triage", desc: "Patient describes symptoms in Kannada — AI categorises severity and books appointment." },
-      { title: "Medication Reminders", desc: "Outbound voice reminders in the patient's dialect — higher adherence than text." },
-      { title: "Post-Discharge Follow-up", desc: "Automated care check-ins in Telugu or Malayalam — reducing readmissions." },
-    ],
-    href: "/register?template=healthcare",
-  },
-  {
-    icon: Truck,
-    color: "#FF6B00",
-    tag: "Logistics & Supply Chain",
-    headline: "Keep delivery agents informed in their own language",
-    subhead: "not yours",
-    examples: [
-      { title: "Driver Dispatch", desc: "Route instructions delivered by voice in Punjabi or Hindi — no app reading required." },
-      { title: "Customer Delivery Updates", desc: "\"Aapka package 30 minute mein aayega\" — localised proactive notifications." },
-      { title: "Warehouse Query Bot", desc: "Ground-level staff ask inventory questions by voice — answers in seconds." },
-    ],
-    href: "/register?template=logistics",
-  },
-  {
-    icon: Leaf,
-    color: "#22c55e",
-    tag: "AgriTech & Rural India",
-    headline: "Reach the farmer in the field",
-    subhead: "not just the farmer with a smartphone",
-    examples: [
-      { title: "Crop Advisory", desc: "Farmer calls in Bhojpuri about pest outbreak — AI responds with actionable advice." },
-      { title: "Mandi Price Updates", desc: "Daily commodity prices read out in the local boli — no literacy required." },
-      { title: "Government Scheme Guidance", desc: "PM-KISAN eligibility explained by voice — farmers get what they're owed." },
-    ],
-    href: "/register?template=agritech",
-  },
-  {
-    icon: Radio,
-    color: "#8b5cf6",
-    tag: "Media & Entertainment",
-    headline: "Create content at the speed of Bharat",
-    subhead: "in every language, every dialect",
-    examples: [
-      { title: "Regional Dubbing", desc: "License authentic celebrity voices for OTT dubbing — faster and cheaper than studios." },
-      { title: "Podcast Localisation", desc: "Auto-translate and re-voice national podcasts into 11 regional languages." },
-      { title: "Voice Character Cloning", desc: "Game studios create consistent voice personas across Hindi, Tamil, and Bengali." },
-    ],
-    href: "/register?template=media",
-  },
-  {
-    icon: Building2,
-    color: "#06b6d4",
-    tag: "Government & Public Services",
-    headline: "Make citizen services accessible to every citizen",
-    subhead: "not just those who speak English",
-    examples: [
-      { title: "Grievance Redressal", desc: "Citizens file complaints by voice in their mother tongue — no form-filling." },
-      { title: "Scheme Awareness", desc: "IVR replacement that actually answers questions about Aadhaar, ration cards, pensions." },
-      { title: "Emergency Response", desc: "Multilingual helplines that understand regional accents under stress." },
-    ],
-    href: "/register?template=government",
-  },
 ];
 
 const COMPANIES = ["Razorpay", "Zepto", "PhonePe", "CRED", "Meesho", "Groww", "Slice", "Fi Money", "Nykaa", "Boat", "Lenskart", "Zomato"];
@@ -264,8 +103,8 @@ export default function LandingPage() {
             <span className="font-serif text-[18px] font-normal text-white tracking-tight">Bolo</span>
           </Link>
           <div className="hidden md:flex items-center gap-8 text-sm text-white/50">
-            <a href="#features" className="hover:text-white transition-colors">Features</a>
-            <a href="#usecases" className="hover:text-white transition-colors">Use cases</a>
+            <Link href="/features" className="hover:text-white transition-colors">Features</Link>
+            <Link href="/use-cases" className="hover:text-white transition-colors">Use cases</Link>
             <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
             <Link href="/about" className="hover:text-white transition-colors">About</Link>
           </div>
@@ -395,89 +234,30 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── BENTO FEATURES ── */}
-      <section id="features" className="py-28 px-6">
+      {/* ── PLATFORM TEASER ── */}
+      <section className="py-20 px-6 border-t border-white/[0.05]">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <p className="text-xs text-saffron-400 font-semibold tracking-widest uppercase mb-3">Platform</p>
-            <h2 className="font-serif text-4xl md:text-5xl text-white mb-4 leading-tight">
-              Built for Bharat.<br />
-              <span className="italic text-white/50">Ready for the world.</span>
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {BENTO_FEATURES.map(({ icon: Icon, title, desc, size, accent }) => (
-              <div key={title} className={`${size} glass-dark rounded-2xl p-6 group hover:bg-white/[0.06] transition-all duration-300`}>
-                <div className={`inline-flex w-10 h-10 rounded-xl bg-gradient-to-br ${accent} items-center justify-center mb-4 shadow-lg`}>
-                  <Icon className="w-5 h-5 text-white" />
-                </div>
-                <h3 className="text-[15px] font-semibold text-white mb-2 leading-tight">{title}</h3>
-                <p className="text-sm text-white/45 leading-relaxed">{desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── USE CASES ── */}
-      <section id="usecases" className="py-24 px-6 border-t border-white/[0.05]">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <p className="text-xs text-brand-400 font-semibold tracking-widest uppercase mb-3">Who It&apos;s For</p>
-            <h2 className="font-serif text-4xl md:text-5xl text-white leading-tight">
-              Every industry.<br />
-              <span className="italic text-white/50">Every Indian language.</span>
-            </h2>
-            <p className="text-white/40 text-base mt-5 max-w-xl mx-auto">
-              Bolo is not a generic chatbot. Here&apos;s exactly how each sector uses it — with real examples.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-5">
-            {USE_CASE_VERTICALS.map(({ icon: Icon, color, tag, headline, subhead, examples, href }) => (
-              <Link
-                key={tag}
-                href={href}
-                className="group block glass-dark rounded-2xl p-6 border border-white/[0.07] hover:border-white/[0.14] transition-all duration-300"
-              >
-                <div className="flex items-start gap-4 mb-5">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${color}20`, border: `1px solid ${color}35` }}>
-                    <Icon className="w-5 h-5" style={{ color }} />
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-bold uppercase tracking-widest block mb-1" style={{ color: `${color}cc` }}>{tag}</span>
-                    <h3 className="font-serif text-[17px] text-white leading-snug">{headline}</h3>
-                    <p className="text-sm italic text-white/35 leading-snug">{subhead}</p>
-                  </div>
-                </div>
-
-                <div className="space-y-3 mb-5">
-                  {examples.map(({ title, desc }) => (
-                    <div key={title} className="flex gap-3">
-                      <div className="w-1.5 h-1.5 rounded-full mt-2 shrink-0" style={{ background: color }} />
-                      <div>
-                        <p className="text-[13px] font-semibold text-white/80 leading-tight">{title}</p>
-                        <p className="text-xs text-white/40 leading-relaxed mt-0.5">{desc}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="flex items-center gap-1.5 text-xs font-medium transition-colors" style={{ color: `${color}99` }}>
-                  Get started with this template
-                  <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-                </div>
+          <div className="flex flex-col md:flex-row items-center justify-between gap-8 glass-dark rounded-3xl p-10">
+            <div>
+              <p className="text-xs text-saffron-400 font-semibold tracking-widest uppercase mb-3">Platform</p>
+              <h2 className="font-serif text-3xl md:text-4xl text-white mb-3 leading-tight">
+                Built for Bharat.<br />
+                <span className="italic text-white/50">Ready for the world.</span>
+              </h2>
+              <p className="text-white/40 text-sm max-w-sm leading-relaxed">
+                11 languages natively. Sub-500ms response. RAG on your data. One script tag to go live.
+              </p>
+            </div>
+            <div className="flex flex-col gap-3 shrink-0">
+              <Link href="/features" className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold text-white transition-all hover:-translate-y-px" style={{ background: "linear-gradient(135deg, #FF6B00, #f97316)", boxShadow: "0 4px 16px rgba(255,107,0,0.3)" }}>
+                Explore all features
+                <ArrowRight className="w-4 h-4" />
               </Link>
-            ))}
-          </div>
-
-          <div className="mt-10 text-center">
-            <p className="text-white/30 text-sm mb-4">Don&apos;t see your industry?</p>
-            <Link href="/register" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold text-white transition-all hover:-translate-y-px" style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)" }}>
-              Talk to us — we&apos;ll build it together
-              <ArrowRight className="w-4 h-4" />
-            </Link>
+              <Link href="/use-cases" className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-medium text-white/60 hover:text-white transition-all" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}>
+                See use cases by industry
+                <ChevronRight className="w-4 h-4" />
+              </Link>
+            </div>
           </div>
         </div>
       </section>
