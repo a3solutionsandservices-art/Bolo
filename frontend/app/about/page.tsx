@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Mic, ArrowRight, Shield, Users, Globe, Zap, Heart, BookOpen } from "lucide-react";
+import { ArrowRight, Shield, Users, Globe, Heart, BookOpen, Zap, Mic } from "lucide-react";
+import PublicNav from "@/components/layout/PublicNav";
 
 const PRINCIPLES = [
   {
@@ -35,30 +36,7 @@ export default function AboutPage() {
   return (
     <div className="min-h-screen text-white" style={{ background: "#050a14" }}>
 
-      {/* Nav */}
-      <nav className="fixed top-0 inset-x-0 z-50 border-b border-white/[0.06]" style={{ backdropFilter: "blur(24px)", background: "rgba(5,10,20,0.88)" }}>
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, #FF6B00, #fbbf24)", boxShadow: "0 0 16px rgba(255,107,0,0.35)" }}>
-              <Mic className="w-4 h-4 text-white" />
-            </div>
-            <span className="font-serif text-[18px] text-white tracking-tight">Bolo</span>
-          </Link>
-          <div className="hidden md:flex items-center gap-8 text-sm text-white/50">
-            <Link href="/" className="hover:text-white transition-colors">Home</Link>
-            <Link href="/features" className="hover:text-white transition-colors">Features</Link>
-            <Link href="/use-cases" className="hover:text-white transition-colors">Use Cases</Link>
-            <Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link>
-            <Link href="/about" className="text-white font-medium">About</Link>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link href="/login" className="px-4 py-2 text-sm text-white/60 hover:text-white transition-colors font-medium">Sign in</Link>
-            <Link href="/register" className="px-4 py-2.5 text-white text-sm font-semibold rounded-lg transition-all hover:-translate-y-px" style={{ background: "linear-gradient(135deg, #FF6B00, #f97316)", boxShadow: "0 4px 16px rgba(255,107,0,0.3)" }}>
-              Start free
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <PublicNav active="about" />
 
       {/* Hero */}
       <section className="relative pt-40 pb-20 px-6 text-center overflow-hidden">

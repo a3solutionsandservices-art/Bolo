@@ -4,10 +4,8 @@ import Link from "next/link";
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/auth-store";
-import {
-  Mic, ArrowRight, Play,
-  Volume2, Sparkles,
-} from "lucide-react";
+import { Play, Volume2, Sparkles, ArrowRight, Mic } from "lucide-react";
+import PublicNav from "@/components/layout/PublicNav";
 
 const LANGUAGES = [
   { name: "हिंदी", label: "Hindi" },
@@ -93,32 +91,7 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-[#050a14] text-white overflow-x-hidden">
 
-      {/* Nav */}
-      <nav className="fixed top-0 inset-x-0 z-50 border-b border-white/[0.06]" style={{ backdropFilter: "blur(24px)", background: "rgba(5,10,20,0.85)" }}>
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-violet-600 flex items-center justify-center shadow-lg shadow-brand-600/40">
-              <Mic className="w-4 h-4 text-white" />
-            </div>
-            <span className="font-serif text-[18px] font-normal text-white tracking-tight">Bolo</span>
-          </Link>
-          <div className="hidden md:flex items-center gap-8 text-sm text-white/50">
-            <Link href="/" className="text-white font-medium">Home</Link>
-            <Link href="/features" className="hover:text-white transition-colors">Features</Link>
-            <Link href="/use-cases" className="hover:text-white transition-colors">Use Cases</Link>
-            <Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link>
-            <Link href="/about" className="hover:text-white transition-colors">About</Link>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link href="/login" className="px-4 py-2 text-sm text-white/60 hover:text-white transition-colors font-medium">
-              Sign in
-            </Link>
-            <Link href="/register" className="px-4 py-2.5 bg-brand-600 hover:bg-brand-500 text-white text-sm font-semibold rounded-lg transition-all shadow-lg shadow-brand-600/30 hover:-translate-y-px">
-              Start free
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <PublicNav active="home" />
 
       {/* ── HERO ── */}
       <section className="relative pt-36 pb-20 px-6">
