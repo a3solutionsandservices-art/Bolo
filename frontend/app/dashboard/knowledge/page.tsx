@@ -12,7 +12,7 @@ interface KnowledgeDocument { id: string; title: string; filename: string; statu
 const STATUS_COLORS: Record<string, string> = {
   ready: "text-emerald-600 bg-emerald-50",
   processing: "text-amber-600 bg-amber-50",
-  pending: "text-gray-600 bg-gray-50",
+  pending: "text-gray-600 bg-white/[0.03]",
   failed: "text-red-600 bg-red-50",
 };
 
@@ -76,7 +76,7 @@ export default function KnowledgePage() {
     <div className="p-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Knowledge Bases</h1>
+          <h1 className="text-2xl font-bold text-white">Knowledge Bases</h1>
           <p className="text-gray-500 mt-1">Document collections for AI-powered Q&A</p>
         </div>
         <button
@@ -116,9 +116,9 @@ export default function KnowledgePage() {
         <div className="space-y-3">
           <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wider">Libraries</h2>
           {(kbs || []).length === 0 && (
-            <div className="text-center py-12 bg-white rounded-xl border border-gray-100">
+            <div className="text-center py-12 bg-white/[0.04] rounded-xl border border-white/[0.07]">
               <BookOpen className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-              <p className="text-sm text-gray-400">No knowledge bases yet</p>
+              <p className="text-sm text-white/35">No knowledge bases yet</p>
             </div>
           )}
           {(kbs || []).map((kb) => (
@@ -133,8 +133,8 @@ export default function KnowledgePage() {
             >
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-900">{kb.name}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">{kb.document_count} documents</p>
+                  <p className="text-sm font-medium text-white/85">{kb.name}</p>
+                  <p className="text-xs text-white/35 mt-0.5">{kb.document_count} documents</p>
                 </div>
                 <BookOpen className="w-4 h-4 text-gray-400 flex-shrink-0" />
               </div>
@@ -144,11 +144,11 @@ export default function KnowledgePage() {
 
         <div className="lg:col-span-2">
           {selectedKb && selectedKbData ? (
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm">
-              <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+            <div className="bg-white/[0.04] rounded-xl border border-white/[0.07] shadow-sm">
+              <div className="p-4 border-b border-white/[0.06] flex items-center justify-between">
                 <div>
                   <h2 className="text-base font-semibold text-gray-900">{selectedKbData.name}</h2>
-                  <p className="text-xs text-gray-500">{selectedKbData.document_count} documents</p>
+                  <p className="text-xs text-white/35">{selectedKbData.document_count} documents</p>
                 </div>
                 <label className="flex items-center gap-2 px-3 py-2 bg-brand-600 text-white rounded-lg text-sm cursor-pointer hover:bg-brand-700">
                   <Upload className="w-4 h-4" />
@@ -160,18 +160,18 @@ export default function KnowledgePage() {
                 {(docs || []).length === 0 ? (
                   <div className="text-center py-12">
                     <FileText className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                    <p className="text-sm text-gray-400">Upload documents to build the knowledge base</p>
+                    <p className="text-sm text-white/35">Upload documents to build the knowledge base</p>
                   </div>
                 ) : (
                   <div className="space-y-2">
                     {docs?.map((doc) => (
-                      <div key={doc.id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 border border-gray-50">
+                      <div key={doc.id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/[0.04] border border-gray-50">
                         <FileText className="w-4 h-4 text-gray-400 flex-shrink-0" />
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 truncate">{doc.title}</p>
-                          <p className="text-xs text-gray-500">{doc.chunk_count} chunks · {doc.language}</p>
+                          <p className="text-sm font-medium text-white/85 truncate">{doc.title}</p>
+                          <p className="text-xs text-white/35">{doc.chunk_count} chunks · {doc.language}</p>
                         </div>
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[doc.status] || "bg-gray-50 text-gray-600"}`}>
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[doc.status] || "bg-gray-50 text-white/60"}`}>
                           {doc.status}
                         </span>
                         <button
@@ -187,7 +187,7 @@ export default function KnowledgePage() {
               </div>
             </div>
           ) : (
-            <div className="flex items-center justify-center h-64 bg-white rounded-xl border border-gray-100 border-dashed">
+            <div className="flex items-center justify-center h-64 bg-white/[0.04] rounded-xl border border-white/[0.07] border-dashed">
               <p className="text-gray-400 text-sm">Select a knowledge base to manage documents</p>
             </div>
           )}

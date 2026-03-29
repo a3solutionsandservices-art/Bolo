@@ -138,8 +138,8 @@ function ArtistCard({ artist }: { artist: Artist }) {
             {artist.rating_count > 0 && (
               <div className="flex items-center gap-1">
                 <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
-                <span className="text-xs font-semibold text-slate-700">{artist.avg_rating.toFixed(1)}</span>
-                <span className="text-xs text-slate-400">({artist.rating_count})</span>
+                <span className="text-xs font-semibold text-white/75">{artist.avg_rating.toFixed(1)}</span>
+                <span className="text-xs text-white/30">({artist.rating_count})</span>
               </div>
             )}
             <p className="text-[10px] text-slate-400 mt-0.5">{artist.total_licenses} licenses</p>
@@ -147,9 +147,9 @@ function ArtistCard({ artist }: { artist: Artist }) {
           <div className="text-right">
             {lowestPrice > 0 ? (
               <>
-                <p className="text-[10px] text-slate-400">from</p>
+                <p className="text-[10px] text-white/35">from</p>
                 <div className="flex items-center gap-0.5">
-                  <IndianRupee className="w-3 h-3 text-slate-700" />
+                  <IndianRupee className="w-3 h-3 text-white/75" />
                   <span className="text-sm font-bold text-slate-900">{lowestPrice.toLocaleString("en-IN")}</span>
                 </div>
               </>
@@ -205,7 +205,7 @@ export default function MarketplacePage() {
     <div className="p-8 max-w-7xl mx-auto animate-fade-in">
       <div className="mb-8 flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Voice Marketplace</h1>
+          <h1 className="text-2xl font-bold text-white tracking-tight">Voice Marketplace</h1>
           <p className="text-sm text-slate-500 mt-0.5">
             License authentic Indian voices from celebrities, RJs, and community speakers
           </p>
@@ -223,7 +223,7 @@ export default function MarketplacePage() {
         <div className="mb-10">
           <div className="flex items-center gap-2 mb-4">
             <Sparkles className="w-4 h-4 text-amber-500" />
-            <h2 className="text-[15px] font-semibold text-slate-900">Featured Artists</h2>
+            <h2 className="text-[15px] font-semibold text-white">Featured Artists</h2>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {featured.map((a) => <ArtistCard key={a.id} artist={a} />)}
@@ -231,10 +231,10 @@ export default function MarketplacePage() {
         </div>
       )}
 
-      <div className="bg-white rounded-2xl border border-slate-200/60 shadow-card p-5 mb-6">
+      <div className="bg-white/[0.04] rounded-2xl border border-white/[0.07] p-5 mb-6">
         <div className="flex flex-col gap-4">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/35" />
             <input
               type="text"
               placeholder="Search by name, language, or specialty..."
@@ -303,7 +303,7 @@ export default function MarketplacePage() {
         </div>
       ) : (
         <>
-          <p className="text-xs text-slate-400 mb-4">{artists.length} voices available</p>
+          <p className="text-xs text-white/30 mb-4">{artists.length} voices available</p>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
             {artists.map((a) => <ArtistCard key={a.id} artist={a} />)}
           </div>

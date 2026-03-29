@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { MessageSquare, Mic, Languages, Zap, ArrowRight, TrendingUp } from "lucide-react";
+import { MessageSquare, Mic, Languages, Zap, ArrowRight, Radio, BookOpen, BarChart3, Code2 } from "lucide-react";
 import { ProductTour, TourLauncher } from "@/components/ui/product-tour";
 import { DASHBOARD_TOUR } from "@/lib/tour-steps";
 import Link from "next/link";
@@ -20,27 +20,25 @@ interface OverviewData {
   };
 }
 
-function StatCard({ title, value, subtitle, icon: Icon, gradient, iconBg }: {
+function StatCard({ title, value, sub, icon: Icon, accent }: {
   title: string;
   value: string | number;
-  subtitle?: string;
+  sub?: string;
   icon: React.ComponentType<{ className?: string }>;
-  gradient: string;
-  iconBg: string;
+  accent: string;
 }) {
   return (
-    <div className="relative bg-white rounded-2xl p-6 border border-slate-200/60 shadow-card hover:shadow-card-md transition-shadow duration-200 overflow-hidden group">
-      <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${gradient}`} />
+    <div className="relative rounded-2xl p-5 border border-white/[0.07] bg-white/[0.03] overflow-hidden group hover:bg-white/[0.05] transition-all duration-200">
+      <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-br ${accent}`} />
       <div className="relative">
-        <div className="flex items-start justify-between mb-4">
-          <div className={`w-11 h-11 ${iconBg} rounded-xl flex items-center justify-center shadow-sm`}>
-            <Icon className="w-5 h-5 text-white" />
+        <div className="flex items-center justify-between mb-4">
+          <div className="w-9 h-9 rounded-xl bg-white/[0.06] border border-white/[0.08] flex items-center justify-center">
+            <Icon className="w-4 h-4 text-white/50" />
           </div>
-          <TrendingUp className="w-4 h-4 text-slate-300" />
         </div>
-        <p className="text-[13px] font-medium text-slate-500 mb-1">{title}</p>
-        <p className="text-3xl font-bold text-slate-900 tracking-tight">{value}</p>
-        {subtitle && <p className="text-xs text-slate-400 mt-1.5">{subtitle}</p>}
+        <p className="text-[11px] font-medium text-white/35 uppercase tracking-widest mb-1">{title}</p>
+        <p className="text-3xl font-bold text-white tracking-tight font-mono">{value}</p>
+        {sub && <p className="text-xs text-white/25 mt-1">{sub}</p>}
       </div>
     </div>
   );
@@ -72,10 +70,10 @@ export default function DashboardPage() {
     return (
       <div className="p-8">
         <div className="animate-pulse space-y-6">
-          <div className="h-8 bg-slate-200 rounded-lg w-48" />
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div className="h-8 bg-white/[0.06] rounded-lg w-48" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-36 bg-slate-200 rounded-2xl" />
+              <div key={i} className="h-32 bg-white/[0.04] rounded-2xl" />
             ))}
           </div>
         </div>
@@ -95,54 +93,52 @@ export default function DashboardPage() {
 
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Overview</h1>
-          <p className="text-sm text-slate-500 mt-0.5">Last 30 days performance</p>
+          <h1 className="font-serif text-3xl text-white tracking-tight">Overview</h1>
+          <p className="text-sm text-white/30 mt-0.5 font-mono">last 30 days</p>
         </div>
         <TourLauncher onStart={() => setTourActive(true)} />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+      {/* Stat cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <StatCard
-          title="Total Conversations"
+          title="Conversations"
           value={data?.total_conversations ?? 0}
-          subtitle={`${data?.completed_conversations ?? 0} completed`}
+          sub={`${data?.completed_conversations ?? 0} completed`}
           icon={MessageSquare}
-          gradient="bg-gradient-to-br from-brand-50/80 to-transparent"
-          iconBg="bg-brand-600"
+          accent="from-brand-600/10 to-transparent"
         />
         <StatCard
-          title="Total Messages"
+          title="Messages"
           value={data?.total_messages ?? 0}
-          subtitle="voice interactions"
+          sub="voice interactions"
           icon={Mic}
-          gradient="bg-gradient-to-br from-violet-50/80 to-transparent"
-          iconBg="bg-violet-600"
+          accent="from-violet-600/10 to-transparent"
         />
         <StatCard
-          title="Avg Response Time"
+          title="Avg Latency"
           value={`${Math.round(data?.avg_response_latency_ms ?? 0)}ms`}
-          subtitle="p50 latency"
+          sub="p50 response time"
           icon={Zap}
-          gradient="bg-gradient-to-br from-amber-50/80 to-transparent"
-          iconBg="bg-amber-500"
+          accent="from-fire-600/10 to-transparent"
         />
         <StatCard
-          title="Translation Chars"
+          title="Translation"
           value={(data?.usage?.translation?.total ?? 0).toLocaleString()}
-          subtitle="this period"
+          sub="characters this period"
           icon={Languages}
-          gradient="bg-gradient-to-br from-emerald-50/80 to-transparent"
-          iconBg="bg-emerald-600"
+          accent="from-emerald-600/10 to-transparent"
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
-        <div className="lg:col-span-3 bg-white rounded-2xl border border-slate-200/60 shadow-card">
-          <div className="px-6 py-5 border-b border-slate-100">
-            <h2 className="text-[15px] font-semibold text-slate-900">Usage Summary</h2>
-            <p className="text-xs text-slate-400 mt-0.5">AI operations billed this period</p>
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+        {/* Usage breakdown */}
+        <div className="lg:col-span-3 rounded-2xl border border-white/[0.07] bg-white/[0.03] overflow-hidden">
+          <div className="px-6 py-4 border-b border-white/[0.06]">
+            <h2 className="text-sm font-semibold text-white">AI Usage</h2>
+            <p className="text-[11px] text-white/25 mt-0.5 font-mono">operations billed this period</p>
           </div>
-          <div className="px-6 py-4 divide-y divide-slate-50">
+          <div className="px-6 py-4 divide-y divide-white/[0.04]">
             {[
               {
                 label: "Speech-to-Text",
@@ -150,13 +146,15 @@ export default function DashboardPage() {
                 unit: "min",
                 pct: Math.min(100, ((data?.usage?.stt?.total ?? 0) / 60) * 100),
                 color: "bg-brand-500",
+                glow: "shadow-brand-500/30",
               },
               {
                 label: "Text-to-Speech",
                 value: (data?.usage?.tts?.total ?? 0).toLocaleString(),
                 unit: "chars",
                 pct: Math.min(100, ((data?.usage?.tts?.total ?? 0) / 50000) * 100),
-                color: "bg-violet-500",
+                color: "bg-fire-500",
+                glow: "shadow-fire-500/30",
               },
               {
                 label: "Translation",
@@ -164,16 +162,17 @@ export default function DashboardPage() {
                 unit: "chars",
                 pct: Math.min(100, ((data?.usage?.translation?.total ?? 0) / 100000) * 100),
                 color: "bg-emerald-500",
+                glow: "shadow-emerald-500/30",
               },
             ].map(({ label, value, unit, pct, color }) => (
               <div key={label} className="py-4">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-slate-600">{label}</span>
-                  <span className="text-sm font-semibold text-slate-900">
-                    {value} <span className="text-xs text-slate-400 font-normal">{unit}</span>
+                  <span className="text-sm text-white/55">{label}</span>
+                  <span className="font-mono text-sm text-white font-semibold">
+                    {value} <span className="text-xs text-white/30 font-normal">{unit}</span>
                   </span>
                 </div>
-                <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                <div className="h-1 bg-white/[0.06] rounded-full overflow-hidden">
                   <div
                     className={`h-full ${color} rounded-full transition-all duration-700`}
                     style={{ width: `${pct}%` }}
@@ -184,58 +183,60 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div
-          className="lg:col-span-2 bg-white rounded-2xl border border-slate-200/60 shadow-card"
-          data-tour="quick-actions"
-        >
-          <div className="px-6 py-5 border-b border-slate-100">
-            <h2 className="text-[15px] font-semibold text-slate-900">Quick Actions</h2>
-            <p className="text-xs text-slate-400 mt-0.5">Jump to the most common tasks</p>
+        {/* Quick actions */}
+        <div className="lg:col-span-2 rounded-2xl border border-white/[0.07] bg-white/[0.03]" data-tour="quick-actions">
+          <div className="px-6 py-4 border-b border-white/[0.06]">
+            <h2 className="text-sm font-semibold text-white">Quick Actions</h2>
+            <p className="text-[11px] text-white/25 mt-0.5">Jump to common tasks</p>
           </div>
-          <div className="px-6 py-4 space-y-2">
+          <div className="px-4 py-3 space-y-1">
             {[
               {
-                label: "Build a widget integration",
-                href: "/dashboard/integrations",
-                iconBg: "bg-brand-100",
-                iconColor: "text-brand-600",
-                description: "Go live in 3 minutes",
+                label: "Open Playground",
+                desc: "Test voice & translations live",
+                href: "/dashboard/conversations/new",
+                icon: Radio,
+                color: "text-fire-400",
+                bg: "bg-fire-500/10",
               },
               {
-                label: "Upload knowledge documents",
+                label: "Build a widget",
+                desc: "Go live in 3 minutes",
+                href: "/dashboard/integrations",
+                icon: Code2,
+                color: "text-brand-400",
+                bg: "bg-brand-500/10",
+              },
+              {
+                label: "Upload knowledge",
+                desc: "Train your AI assistant",
                 href: "/dashboard/knowledge",
-                iconBg: "bg-violet-100",
-                iconColor: "text-violet-600",
-                description: "Train your AI assistant",
+                icon: BookOpen,
+                color: "text-violet-400",
+                bg: "bg-violet-500/10",
               },
               {
                 label: "View analytics",
+                desc: "Usage & performance data",
                 href: "/dashboard/analytics",
-                iconBg: "bg-emerald-100",
-                iconColor: "text-emerald-600",
-                description: "Usage & performance data",
+                icon: BarChart3,
+                color: "text-emerald-400",
+                bg: "bg-emerald-500/10",
               },
-              {
-                label: "Start a conversation",
-                href: "/dashboard/conversations",
-                iconBg: "bg-amber-100",
-                iconColor: "text-amber-600",
-                description: "Test your voice widget",
-              },
-            ].map(({ label, href, iconBg, iconColor, description }) => (
+            ].map(({ label, desc, href, icon: Icon, color, bg }) => (
               <Link
                 key={href}
                 href={href}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-50 transition-colors group"
+                className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-white/[0.04] transition-colors group"
               >
-                <div className={`w-9 h-9 ${iconBg} rounded-lg flex items-center justify-center shrink-0`}>
-                  <ArrowRight className={`w-4 h-4 ${iconColor}`} />
+                <div className={`w-8 h-8 ${bg} rounded-lg flex items-center justify-center shrink-0`}>
+                  <Icon className={`w-4 h-4 ${color}`} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-slate-800 leading-tight">{label}</p>
-                  <p className="text-xs text-slate-400 leading-tight mt-0.5">{description}</p>
+                  <p className="text-sm font-medium text-white/80 leading-tight group-hover:text-white transition-colors">{label}</p>
+                  <p className="text-[11px] text-white/30 leading-tight mt-0.5">{desc}</p>
                 </div>
-                <ArrowRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-slate-400 transition-colors shrink-0" />
+                <ArrowRight className="w-3.5 h-3.5 text-white/20 group-hover:text-white/40 transition-colors shrink-0" />
               </Link>
             ))}
           </div>

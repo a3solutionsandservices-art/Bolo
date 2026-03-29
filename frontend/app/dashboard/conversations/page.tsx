@@ -54,14 +54,14 @@ interface Conversation {
 const SENTIMENT_BADGE: Record<string, string> = {
   positive: "bg-emerald-50 text-emerald-700",
   negative: "bg-red-50 text-red-700",
-  neutral: "bg-gray-100 text-gray-600",
+  neutral: "bg-gray-100 text-white/60",
   mixed: "bg-amber-50 text-amber-700",
 };
 
 const STATUS_BADGE: Record<string, string> = {
   active: "bg-blue-50 text-blue-700",
   completed: "bg-emerald-50 text-emerald-700",
-  abandoned: "bg-gray-100 text-gray-600",
+  abandoned: "bg-gray-100 text-white/60",
 };
 
 export default function ConversationsPage() {
@@ -79,7 +79,7 @@ export default function ConversationsPage() {
     <div className="p-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Conversations</h1>
+          <h1 className="text-2xl font-bold text-white">Conversations</h1>
           <p className="text-gray-500 mt-1">Voice sessions and chat history</p>
         </div>
         <a
@@ -94,7 +94,7 @@ export default function ConversationsPage() {
       <div className="mb-8">
         <div className="flex items-center gap-2 mb-3">
           <Zap className="w-4 h-4 text-brand-600" />
-          <span className="text-sm font-semibold text-gray-700">Quick-start templates</span>
+          <span className="text-sm font-semibold text-white/75">Quick-start templates</span>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {DEMO_TEMPLATES.map(({ id, icon: Icon, color, label, desc }) => (
@@ -107,8 +107,8 @@ export default function ConversationsPage() {
                 <Icon className="w-4 h-4 text-white" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-gray-900 group-hover:text-brand-700 transition-colors">{label}</p>
-                <p className="text-xs text-gray-500 mt-0.5 leading-snug">{desc}</p>
+                <p className="text-sm font-semibold text-white group-hover:text-brand-700 transition-colors">{label}</p>
+                <p className="text-xs text-white/35 mt-0.5 leading-snug">{desc}</p>
               </div>
             </a>
           ))}
@@ -129,9 +129,9 @@ export default function ConversationsPage() {
           </a>
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="bg-white/[0.04] rounded-xl border border-white/[0.07] shadow-sm overflow-hidden">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-100">
+            <thead className="bg-gray-50 border-b border-white/[0.06]">
               <tr>
                 {["Session", "Mode", "Languages", "Duration", "Sentiment", "Status", "Started"].map((h) => (
                   <th key={h} className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{h}</th>
@@ -140,7 +140,7 @@ export default function ConversationsPage() {
             </thead>
             <tbody className="divide-y divide-gray-50">
               {conversations.map((conv) => (
-                <tr key={conv.id} className="hover:bg-gray-50 transition-colors cursor-pointer">
+                <tr key={conv.id} className="hover:bg-white/[0.04] transition-colors cursor-pointer">
                   <td className="px-4 py-3">
                     <a href={`/dashboard/conversations/${conv.id}`} className="text-sm font-medium text-brand-600 hover:underline">
                       {conv.session_id.slice(0, 8)}...
@@ -148,20 +148,20 @@ export default function ConversationsPage() {
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-600 capitalize">{conv.mode}</td>
                   <td className="px-4 py-3">
-                    <div className="flex items-center gap-1 text-sm text-gray-600">
+                    <div className="flex items-center gap-1 text-sm text-white/60">
                       <Globe className="w-3.5 h-3.5" />
                       {conv.source_language.toUpperCase()} → {conv.target_language.toUpperCase()}
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    <div className="flex items-center gap-1 text-sm text-gray-600">
+                    <div className="flex items-center gap-1 text-sm text-white/60">
                       <Clock className="w-3.5 h-3.5" />
                       {Math.round(conv.total_duration_seconds)}s
                     </div>
                   </td>
                   <td className="px-4 py-3">
                     {conv.overall_sentiment ? (
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${SENTIMENT_BADGE[conv.overall_sentiment] || "bg-gray-100 text-gray-600"}`}>
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${SENTIMENT_BADGE[conv.overall_sentiment] || "bg-gray-100 text-white/60"}`}>
                         {conv.overall_sentiment}
                       </span>
                     ) : (
@@ -169,11 +169,11 @@ export default function ConversationsPage() {
                     )}
                   </td>
                   <td className="px-4 py-3">
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_BADGE[conv.status] || "bg-gray-100 text-gray-600"}`}>
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_BADGE[conv.status] || "bg-gray-100 text-white/60"}`}>
                       {conv.status}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-500">
+                  <td className="px-4 py-3 text-sm text-white/45">
                     {formatDistanceToNow(new Date(conv.created_at), { addSuffix: true })}
                   </td>
                 </tr>
@@ -182,7 +182,7 @@ export default function ConversationsPage() {
           </table>
           <div className="px-4 py-3 border-t border-gray-100 flex justify-between items-center">
             <button onClick={() => setPage(Math.max(0, page - 1))} disabled={page === 0} className="px-3 py-1.5 text-sm text-gray-600 border rounded-lg disabled:opacity-40">Previous</button>
-            <span className="text-sm text-gray-500">Page {page + 1}</span>
+            <span className="text-sm text-white/45">Page {page + 1}</span>
             <button onClick={() => setPage(page + 1)} disabled={conversations.length < PAGE_SIZE} className="px-3 py-1.5 text-sm text-gray-600 border rounded-lg disabled:opacity-40">Next</button>
           </div>
         </div>

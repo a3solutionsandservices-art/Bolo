@@ -24,7 +24,7 @@ function UsageBar({ used, limit, label }: { used: number; limit: number; label: 
   return (
     <div>
       <div className="flex justify-between text-sm mb-1">
-        <span className="text-gray-600">{label}</span>
+        <span className="text-white/60">{label}</span>
         <span className="text-gray-900 font-medium">
           {limit < 0 ? `${used.toLocaleString()} / Unlimited` : `${used.toLocaleString()} / ${limit.toLocaleString()}`}
         </span>
@@ -79,13 +79,13 @@ export default function BillingPage() {
       <div className="max-w-4xl">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Billing</h1>
+            <h1 className="text-2xl font-bold text-white">Billing</h1>
             <p className="text-gray-500 mt-1">Manage your plan and usage</p>
           </div>
           <button
             onClick={() => portalMutation.mutate()}
             disabled={portalMutation.isPending}
-            className="flex items-center gap-2 px-4 py-2 border border-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50"
+            className="flex items-center gap-2 px-4 py-2 border border-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-white/[0.04]"
           >
             <CreditCard className="w-4 h-4" />
             Manage Billing
@@ -95,7 +95,7 @@ export default function BillingPage() {
         {usage && (
           <div className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm mb-8">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">Current Usage</h2>
+              <h2 className="text-lg font-semibold text-white">Current Usage</h2>
               <span className="px-2 py-0.5 bg-brand-50 text-brand-700 rounded-full text-xs font-medium capitalize">
                 {usage.plan_tier} plan
               </span>
@@ -160,17 +160,17 @@ export default function BillingPage() {
                     Current Plan
                   </div>
                 )}
-                <h3 className="text-xl font-bold text-gray-900">{plan.name}</h3>
-                <p className="text-xs text-gray-500 mt-0.5 mb-3">{meta.tagline}</p>
+                <h3 className="text-xl font-bold text-white">{plan.name}</h3>
+                <p className="text-xs text-white/35 mt-0.5 mb-3">{meta.tagline}</p>
                 <div className="mb-1">
                   {plan.price_monthly ? (
-                    <span className="text-3xl font-bold text-gray-900">₹{plan.price_monthly}<span className="text-base font-normal text-gray-500">/mo</span></span>
+                    <span className="text-3xl font-bold text-white">₹{plan.price_monthly}<span className="text-base font-normal text-white/45">/mo</span></span>
                   ) : (
-                    <span className="text-2xl font-bold text-gray-900">Custom</span>
+                    <span className="text-2xl font-bold text-white">Custom</span>
                   )}
                 </div>
                 <p className="text-xs font-semibold text-brand-600 mb-5">{meta.outcome}</p>
-                <ul className="space-y-2 mb-6 text-sm text-gray-600">
+                <ul className="space-y-2 mb-6 text-sm text-white/60">
                   {meta.features.map((feature) => (
                     <li key={feature} className="flex items-start gap-2">
                       <Check className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />

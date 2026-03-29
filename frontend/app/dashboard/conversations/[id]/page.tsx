@@ -10,7 +10,7 @@ import { useState } from "react";
 const SENTIMENT_BADGE: Record<string, string> = {
   positive: "bg-emerald-50 text-emerald-700",
   negative: "bg-red-50 text-red-700",
-  neutral: "bg-gray-100 text-gray-600",
+  neutral: "bg-gray-100 text-white/60",
   mixed: "bg-amber-50 text-amber-700",
 };
 
@@ -87,7 +87,7 @@ export default function ConversationDetailPage() {
   if (!conv) {
     return (
       <div className="p-8 text-center">
-        <p className="text-gray-500">Conversation not found</p>
+        <p className="text-white/45">Conversation not found</p>
         <button onClick={() => router.back()} className="mt-4 text-brand-600 text-sm hover:underline">
           Go back
         </button>
@@ -103,10 +103,10 @@ export default function ConversationDetailPage() {
             onClick={() => router.push("/dashboard/conversations")}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
           >
-            <ArrowLeft className="w-5 h-5 text-gray-600" />
+            <ArrowLeft className="w-5 h-5 text-white/60" />
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-2xl font-bold text-white">
               Session {conv.session_id.slice(0, 8)}...
             </h1>
             <p className="text-gray-500 text-sm mt-0.5">
@@ -116,7 +116,7 @@ export default function ConversationDetailPage() {
         </div>
         <button
           onClick={downloadTranscript}
-          className="flex items-center gap-2 px-4 py-2 border border-gray-200 text-gray-700 rounded-lg text-sm hover:bg-gray-50"
+          className="flex items-center gap-2 px-4 py-2 border border-gray-200 text-gray-700 rounded-lg text-sm hover:bg-white/[0.04]"
         >
           <Download className="w-4 h-4" />
           Download Transcript
@@ -154,8 +154,8 @@ export default function ConversationDetailPage() {
             <div className={`w-8 h-8 ${color} rounded-lg flex items-center justify-center mb-2`}>
               <Icon className="w-4 h-4" />
             </div>
-            <p className="text-xs text-gray-500">{label}</p>
-            <p className="text-sm font-semibold text-gray-900 capitalize mt-0.5">{value}</p>
+            <p className="text-xs text-white/35">{label}</p>
+            <p className="text-sm font-semibold text-white capitalize mt-0.5">{value}</p>
           </div>
         ))}
       </div>
@@ -163,22 +163,22 @@ export default function ConversationDetailPage() {
       {(conv.overall_sentiment || conv.overall_intent) && (
         <div className="flex gap-3 mb-6">
           {conv.overall_sentiment && (
-            <span className={`px-3 py-1 rounded-full text-xs font-medium ${SENTIMENT_BADGE[conv.overall_sentiment] || "bg-gray-100 text-gray-600"}`}>
+            <span className={`px-3 py-1 rounded-full text-xs font-medium ${SENTIMENT_BADGE[conv.overall_sentiment] || "bg-gray-100 text-white/60"}`}>
               Sentiment: {conv.overall_sentiment}
             </span>
           )}
           {conv.overall_intent && (
-            <span className={`px-3 py-1 rounded-full text-xs font-medium ${INTENT_COLORS[conv.overall_intent] || "bg-gray-100 text-gray-600"}`}>
+            <span className={`px-3 py-1 rounded-full text-xs font-medium ${INTENT_COLORS[conv.overall_intent] || "bg-gray-100 text-white/60"}`}>
               Intent: {conv.overall_intent}
             </span>
           )}
         </div>
       )}
 
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+      <div className="bg-white/[0.04] rounded-xl border border-white/[0.07] shadow-sm overflow-hidden">
+        <div className="px-6 py-4 border-b border-white/[0.06] bg-gray-50 flex items-center justify-between">
           <h2 className="text-base font-semibold text-gray-900">Conversation Transcript</h2>
-          <span className="text-sm text-gray-500">{conv.messages.length} messages</span>
+          <span className="text-sm text-white/45">{conv.messages.length} messages</span>
         </div>
 
         <div className="p-6 space-y-4 max-h-[600px] overflow-y-auto">
@@ -198,11 +198,11 @@ export default function ConversationDetailPage() {
                   }`}
                 >
                   <div className="flex items-center gap-2 mb-1">
-                    <span className={`text-xs font-medium capitalize ${msg.role === "user" ? "text-brand-200" : "text-gray-500"}`}>
+                    <span className={`text-xs font-medium capitalize ${msg.role === "user" ? "text-brand-200" : "text-white/45"}`}>
                       {msg.role}
                     </span>
                     {msg.detected_language && (
-                      <span className={`text-xs ${msg.role === "user" ? "text-brand-200" : "text-gray-400"}`}>
+                      <span className={`text-xs ${msg.role === "user" ? "text-brand-200" : "text-white/35"}`}>
                         · {msg.detected_language.toUpperCase()}
                       </span>
                     )}
@@ -214,7 +214,7 @@ export default function ConversationDetailPage() {
                   <p className="text-sm leading-relaxed">{msg.content_original}</p>
 
                   {msg.content_translated && msg.content_translated !== msg.content_original && (
-                    <p className={`text-xs mt-2 italic ${msg.role === "user" ? "text-brand-200" : "text-gray-500"}`}>
+                    <p className={`text-xs mt-2 italic ${msg.role === "user" ? "text-brand-200" : "text-white/45"}`}>
                       {msg.content_translated}
                     </p>
                   )}
@@ -224,7 +224,7 @@ export default function ConversationDetailPage() {
                       href={msg.audio_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className={`flex items-center gap-1 mt-2 text-xs ${msg.role === "user" ? "text-brand-200 hover:text-white" : "text-gray-500 hover:text-gray-700"}`}
+                      className={`flex items-center gap-1 mt-2 text-xs ${msg.role === "user" ? "text-brand-200 hover:text-white" : "text-gray-500 hover:text-white/75"}`}
                     >
                       <Volume2 className="w-3 h-3" />
                       Listen
@@ -233,12 +233,12 @@ export default function ConversationDetailPage() {
 
                   {msg.rag_sources && msg.rag_sources.length > 0 && (
                     <details className="mt-2">
-                      <summary className="text-xs text-gray-400 cursor-pointer hover:text-gray-600">
+                      <summary className="text-xs text-white/30 cursor-pointer hover:text-white/60">
                         {msg.rag_sources.length} source{msg.rag_sources.length > 1 ? "s" : ""}
                       </summary>
                       <div className="mt-1 space-y-1">
                         {msg.rag_sources.slice(0, 3).map((src, i) => (
-                          <p key={i} className="text-xs text-gray-500 bg-white rounded px-2 py-1 line-clamp-2">
+                          <p key={i} className="text-xs text-white/35 bg-white rounded px-2 py-1 line-clamp-2">
                             {src.content.slice(0, 120)}...
                           </p>
                         ))}
@@ -246,7 +246,7 @@ export default function ConversationDetailPage() {
                     </details>
                   )}
 
-                  <p className={`text-xs mt-2 ${msg.role === "user" ? "text-brand-200" : "text-gray-400"}`}>
+                  <p className={`text-xs mt-2 ${msg.role === "user" ? "text-brand-200" : "text-white/35"}`}>
                     {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true })}
                   </p>
                 </div>
@@ -264,7 +264,7 @@ export default function ConversationDetailPage() {
             >
               Previous
             </button>
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-white/45">
               Messages {skip + 1}–{skip + conv.messages.length}
             </span>
             <button

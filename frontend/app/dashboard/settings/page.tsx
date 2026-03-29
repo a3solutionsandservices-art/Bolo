@@ -94,7 +94,7 @@ export default function SettingsPage() {
                   onBlur={(e) => mutation.mutate({ primary_color: e.target.value })}
                   className="h-10 w-16 rounded border border-gray-300 cursor-pointer"
                 />
-                <span className="text-sm text-gray-500">{tenant?.primary_color || "#6366f1"}</span>
+                <span className="text-sm text-white/45">{tenant?.primary_color || "#6366f1"}</span>
               </div>
             </div>
           </div>
@@ -125,7 +125,7 @@ export default function SettingsPage() {
 
         <div className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">Embed Widget</h2>
+            <h2 className="text-lg font-semibold text-white">Embed Widget</h2>
             <button
               onClick={handleCopyEmbed}
               className="flex items-center gap-2 px-3 py-1.5 text-sm text-brand-600 border border-brand-200 rounded-lg hover:bg-brand-50 transition-colors"

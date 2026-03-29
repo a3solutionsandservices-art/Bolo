@@ -94,7 +94,7 @@ const USE_CASES = [
     icon: Code2,
     label: "Custom",
     description: "Build your own integration from scratch with full control",
-    color: "bg-gray-100 text-gray-700",
+    color: "bg-gray-100 text-white/75",
     mode: "conversation",
     defaultSource: "en",
     defaultTarget: "hi",
@@ -719,7 +719,7 @@ function EmbedCode({ config, tenantId }: { config: WizardConfig; tenantId: strin
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-gray-500">Paste before the closing <code className="text-xs bg-gray-100 px-1 rounded">&lt;/body&gt;</code> tag</p>
+        <p className="text-sm text-white/45">Paste before the closing <code className="text-xs bg-gray-100 px-1 rounded">&lt;/body&gt;</code> tag</p>
         <button
           onClick={handleCopy}
           className="flex items-center gap-2 px-3 py-1.5 text-sm text-brand-600 border border-brand-200 rounded-lg hover:bg-brand-50 transition-colors"
@@ -767,21 +767,21 @@ function TemplatePanel({
     <div className="fixed inset-0 z-50 flex">
       <div className="flex-1 bg-black/40" onClick={onClose} />
       <div className="w-full max-w-2xl bg-white shadow-2xl flex flex-col h-full overflow-hidden">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.06]">
           <div className="flex items-center gap-3">
             <span className="text-2xl">{connector.logo}</span>
             <div>
               <div className="font-semibold text-gray-900">{connector.label} — Full Template</div>
-              <div className="text-xs text-gray-500">{connector.description}</div>
+              <div className="text-xs text-white/35">{connector.description}</div>
             </div>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-            <X className="w-5 h-5 text-gray-500" />
+            <X className="w-5 h-5 text-white/45" />
           </button>
         </div>
 
         <div className="px-6 pt-4">
-          <div className="flex gap-1 border-b border-gray-100">
+          <div className="flex gap-1 border-b border-white/[0.06]">
             {connector.templateTabs.map((t, i) => (
               <button
                 key={t.label}
@@ -789,7 +789,7 @@ function TemplatePanel({
                 className={`px-4 py-2 text-xs font-medium rounded-t-lg transition-colors ${
                   activeTabIdx === i
                     ? "bg-gray-900 text-white"
-                    : "text-gray-500 hover:text-gray-900 hover:bg-gray-50"
+                    : "text-gray-500 hover:text-gray-900 hover:bg-white/[0.04]"
                 }`}
               >
                 {t.label}
@@ -813,11 +813,11 @@ function TemplatePanel({
           </div>
         </div>
 
-        <div className="px-6 py-4 border-t border-gray-100 bg-gray-50">
+        <div className="px-6 py-4 border-t border-gray-100 bg-white/[0.03]">
           <div className="space-y-2">
             <div className="text-xs font-medium text-gray-700 mb-2">Installation steps</div>
             {connector.steps.map((step, i) => (
-              <div key={i} className="flex gap-2.5 text-xs text-gray-600">
+              <div key={i} className="flex gap-2.5 text-xs text-white/60">
                 <span
                   className="w-5 h-5 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center shrink-0 font-medium"
                   style={{ fontSize: "10px" }}
@@ -889,7 +889,7 @@ export default function IntegrationsPage() {
   return (
     <div className="p-8">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Integrations</h1>
+        <h1 className="text-2xl font-bold text-white">Integrations</h1>
         <p className="text-gray-500 mt-1">Build and deploy your multilingual voice widget in minutes</p>
       </div>
 
@@ -912,8 +912,8 @@ export default function IntegrationsPage() {
       {activeTab === "wizard" && (
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
           <div className="lg:col-span-3 space-y-6">
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-              <div className="flex border-b border-gray-100">
+            <div className="bg-white/[0.04] rounded-xl border border-white/[0.07] shadow-sm overflow-hidden">
+              <div className="flex border-b border-white/[0.06]">
                 {STEPS.map((s, i) => (
                   <div
                     key={s.id}
@@ -922,7 +922,7 @@ export default function IntegrationsPage() {
                         ? "bg-brand-50 text-brand-700 border-b-2 border-brand-600"
                         : step > s.id
                         ? "text-green-600"
-                        : "text-gray-400"
+                        : "text-white/35"
                     }`}
                   >
                     {step > s.id ? (
@@ -955,7 +955,7 @@ export default function IntegrationsPage() {
                             <uc.icon className="w-5 h-5" />
                           </div>
                           <div className="font-semibold text-sm text-gray-900">{uc.label}</div>
-                          <div className="text-xs text-gray-500 mt-1 leading-relaxed">{uc.description}</div>
+                          <div className="text-xs text-white/35 mt-1 leading-relaxed">{uc.description}</div>
                         </button>
                       ))}
                     </div>
@@ -1031,7 +1031,7 @@ export default function IntegrationsPage() {
                               <option key={kb.id} value={kb.id}>{kb.name}</option>
                             ))}
                           </select>
-                          <p className="text-xs text-gray-400 mt-1">Connect a knowledge base to ground answers in your content</p>
+                          <p className="text-xs text-white/30 mt-1">Connect a knowledge base to ground answers in your content</p>
                         </div>
                       )}
                     </div>
@@ -1160,13 +1160,13 @@ export default function IntegrationsPage() {
           </div>
 
           <div className="lg:col-span-2 space-y-4">
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-              <h3 className="text-sm font-semibold text-gray-900 mb-3">Live Preview</h3>
+            <div className="bg-white/[0.04] rounded-xl border border-white/[0.07] shadow-sm p-5">
+              <h3 className="text-sm font-semibold text-white mb-3">Live Preview</h3>
               <WidgetPreview config={config} />
             </div>
 
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-              <h3 className="text-sm font-semibold text-gray-900 mb-3">Configuration Summary</h3>
+            <div className="bg-white/[0.04] rounded-xl border border-white/[0.07] shadow-sm p-5">
+              <h3 className="text-sm font-semibold text-white mb-3">Configuration Summary</h3>
               <div className="space-y-2 text-xs">
                 {[
                   { label: "Use case", value: USE_CASES.find((u) => u.id === config.useCase)?.label ?? "Not selected" },
@@ -1177,7 +1177,7 @@ export default function IntegrationsPage() {
                   { label: "Position", value: config.position },
                 ].map(({ label, value }) => (
                   <div key={label} className="flex justify-between py-1.5 border-b border-gray-50 last:border-0">
-                    <span className="text-gray-500">{label}</span>
+                    <span className="text-white/45">{label}</span>
                     <span className="font-medium text-gray-900 text-right">{value}</span>
                   </div>
                 ))}
@@ -1194,12 +1194,12 @@ export default function IntegrationsPage() {
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {CONNECTORS.map((connector) => (
-              <div key={connector.id} className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex flex-col">
+              <div key={connector.id} className="bg-white/[0.04] rounded-xl border border-white/[0.07] shadow-sm p-5 flex flex-col">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="text-2xl">{connector.logo}</div>
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-gray-900 text-sm">{connector.label}</div>
-                    <div className="text-xs text-gray-500 truncate">{connector.description}</div>
+                    <div className="text-xs text-white/35 truncate">{connector.description}</div>
                   </div>
                   <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full shrink-0">
                     {connector.templateTabs.length} file{connector.templateTabs.length !== 1 ? "s" : ""}
@@ -1207,7 +1207,7 @@ export default function IntegrationsPage() {
                 </div>
                 <ol className="space-y-2 flex-1">
                   {connector.steps.map((step, i) => (
-                    <li key={i} className="flex gap-2.5 text-xs text-gray-600">
+                    <li key={i} className="flex gap-2.5 text-xs text-white/60">
                       <span
                         className="w-5 h-5 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center shrink-0 font-medium mt-0.5"
                         style={{ fontSize: "10px" }}
@@ -1230,7 +1230,7 @@ export default function IntegrationsPage() {
                       href={connector.docsUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center justify-center gap-1 px-3 py-2 border border-gray-200 text-gray-500 hover:text-gray-900 hover:bg-gray-50 text-xs rounded-lg transition-colors"
+                      className="flex items-center justify-center gap-1 px-3 py-2 border border-gray-200 text-gray-500 hover:text-gray-900 hover:bg-white/[0.04] text-xs rounded-lg transition-colors"
                       title="Platform docs"
                     >
                       <ExternalLink className="w-3.5 h-3.5" />

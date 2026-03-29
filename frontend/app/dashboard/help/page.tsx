@@ -299,7 +299,7 @@ function GuideCard({ guide, search }: { guide: typeof GUIDES[number]; search: st
   if (highlight && !matches) return null;
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/60 shadow-card overflow-hidden">
+    <div className="bg-white/[0.04] rounded-2xl border border-white/[0.07] overflow-hidden">
       <button onClick={() => setOpen(o => !o)} className="w-full text-left">
         <div className={`bg-gradient-to-r ${guide.color} p-5 flex items-center gap-4`}>
           <span className="text-3xl">{guide.icon}</span>
@@ -346,7 +346,7 @@ function FaqItem({ q, a, search }: { q: string; a: string; search: string }) {
 
   return (
     <div className="border border-slate-200/70 rounded-xl overflow-hidden bg-white">
-      <button onClick={() => setOpen(o => !o)} className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-slate-50 transition-colors">
+      <button onClick={() => setOpen(o => !o)} className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-white/[0.04] transition-colors">
         <span className="font-medium text-slate-900 text-sm pr-4 leading-snug">{q}</span>
         {open ? <ChevronUp className="w-4 h-4 text-slate-400 shrink-0" /> : <ChevronDown className="w-4 h-4 text-slate-400 shrink-0" />}
       </button>
@@ -403,7 +403,7 @@ export default function HelpPage() {
           <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">
             <Lightbulb className="w-5 h-5 text-amber-600" />
           </div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Help Centre</h1>
+          <h1 className="text-2xl font-bold text-white tracking-tight">Help Centre</h1>
         </div>
         <p className="text-slate-500 text-sm">Step-by-step guides for getting the most out of Bolo — no technical knowledge needed.</p>
       </div>
@@ -424,7 +424,7 @@ export default function HelpPage() {
 
       {/* Search */}
       <div className="relative mb-6">
-        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/35" />
         <input
           type="text"
           placeholder="Search guides and FAQs… e.g. 'how to add to Shopify' or 'voice clone'"
@@ -472,7 +472,7 @@ export default function HelpPage() {
           <h2 className="text-base font-bold text-slate-900 mb-3 flex items-center gap-2">
             <Play className="w-4 h-4 text-brand-600" />
             Step-by-step guides
-            <span className="text-xs font-normal text-slate-400">({filteredGuides.length})</span>
+            <span className="text-xs font-normal text-white/35">({filteredGuides.length})</span>
           </h2>
           <div className="space-y-2.5 mb-8">
             {filteredGuides.map(guide => (
@@ -488,7 +488,7 @@ export default function HelpPage() {
           <h2 className="text-base font-bold text-slate-900 mb-3 flex items-center gap-2">
             <MessageSquare className="w-4 h-4 text-brand-600" />
             Frequently asked questions
-            <span className="text-xs font-normal text-slate-400">({filteredFaqs.length})</span>
+            <span className="text-xs font-normal text-white/35">({filteredFaqs.length})</span>
           </h2>
           <div className="space-y-2 mb-8">
             {filteredFaqs.map(faq => (
@@ -500,9 +500,9 @@ export default function HelpPage() {
 
       {/* No results */}
       {filteredGuides.length === 0 && filteredFaqs.length === 0 && (
-        <div className="text-center py-16 text-slate-500">
+        <div className="text-center py-16 text-white/45">
           <Search className="w-10 h-10 mx-auto mb-3 text-slate-300" />
-          <p className="font-medium text-slate-700">No results for &quot;{search}&quot;</p>
+          <p className="font-medium text-white/75">No results for &quot;{search}&quot;</p>
           <p className="text-sm mt-1">Try a different keyword or email us — we&apos;re happy to help.</p>
           <a href="mailto:support@bolo.app" className="inline-flex items-center gap-1.5 mt-4 text-sm font-semibold text-brand-600 hover:underline">
             Email support <ArrowRight className="w-3.5 h-3.5" />

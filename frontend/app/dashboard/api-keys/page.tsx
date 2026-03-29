@@ -64,7 +64,7 @@ export default function APIKeysPage() {
     <div className="p-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">API Keys</h1>
+          <h1 className="text-2xl font-bold text-white">API Keys</h1>
           <p className="text-gray-500 mt-1">Manage developer access keys</p>
         </div>
         <button
@@ -117,18 +117,18 @@ export default function APIKeysPage() {
         </div>
       )}
 
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm">
+      <div className="bg-white/[0.04] rounded-xl border border-white/[0.07] shadow-sm">
         {(keys || []).length === 0 ? (
           <div className="text-center py-16">
             <Key className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500">No API keys yet</p>
+            <p className="text-white/45">No API keys yet</p>
             <button onClick={() => setShowCreate(true)} className="mt-3 text-sm text-brand-600 hover:underline">
               Create your first API key
             </button>
           </div>
         ) : (
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-100">
+            <thead className="bg-gray-50 border-b border-white/[0.06]">
               <tr>
                 {["Name", "Key", "Scopes", "Last Used", "Created"].map((h) => (
                   <th key={h} className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{h}</th>
@@ -139,9 +139,9 @@ export default function APIKeysPage() {
             <tbody className="divide-y divide-gray-50">
               {keys?.map((key) => (
                 <tr key={key.id}>
-                  <td className="px-4 py-3 text-sm font-medium text-gray-900">{key.name}</td>
+                  <td className="px-4 py-3 text-sm font-medium text-white/85">{key.name}</td>
                   <td className="px-4 py-3">
-                    <code className="text-xs font-mono bg-gray-50 px-2 py-1 rounded text-gray-600">
+                    <code className="text-xs font-mono bg-gray-50 px-2 py-1 rounded text-white/60">
                       vai_{key.key_prefix}••••••••
                     </code>
                   </td>
@@ -152,10 +152,10 @@ export default function APIKeysPage() {
                       ))}
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-500">
+                  <td className="px-4 py-3 text-sm text-white/45">
                     {key.last_used_at ? formatDistanceToNow(new Date(key.last_used_at), { addSuffix: true }) : "Never"}
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-500">
+                  <td className="px-4 py-3 text-sm text-white/45">
                     {formatDistanceToNow(new Date(key.created_at), { addSuffix: true })}
                   </td>
                   <td className="px-4 py-3 text-right">

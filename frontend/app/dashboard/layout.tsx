@@ -32,7 +32,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   if (!isAuthenticated) return null;
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-[#070d1a]">
       <Sidebar />
       <main className="flex-1 overflow-y-auto">
         {children}

@@ -24,7 +24,7 @@ const STATUS_CONFIG: Record<VoiceClone["status"], {
   icon: React.ComponentType<{ className?: string }>;
   color: string;
 }> = {
-  pending: { label: "Pending", icon: Clock, color: "text-gray-500 bg-gray-50" },
+  pending: { label: "Pending", icon: Clock, color: "text-gray-500 bg-white/[0.03]" },
   training: { label: "Training", icon: Loader2, color: "text-amber-600 bg-amber-50" },
   ready: { label: "Ready", icon: CheckCircle, color: "text-emerald-600 bg-emerald-50" },
   failed: { label: "Failed", icon: AlertCircle, color: "text-red-600 bg-red-50" },
@@ -118,7 +118,7 @@ export default function VoiceClonesPage() {
     <div className="p-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Voice Clones</h1>
+          <h1 className="text-2xl font-bold text-white">Voice Clones</h1>
           <p className="text-gray-500 mt-1">Create branded AI voices for your assistant</p>
         </div>
         <button
@@ -146,7 +146,7 @@ export default function VoiceClonesPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Description <span className="text-gray-400">(optional)</span>
+                  Description <span className="text-white/35">(optional)</span>
                 </label>
                 <input
                   value={newDesc}
@@ -200,7 +200,7 @@ export default function VoiceClonesPage() {
           ))}
         </div>
       ) : (clones || []).length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-24 bg-white rounded-xl border border-gray-100">
+        <div className="flex flex-col items-center justify-center py-24 bg-white/[0.04] rounded-xl border border-white/[0.07]">
           <Mic className="w-12 h-12 text-gray-300 mb-4" />
           <p className="text-gray-600 font-medium">No voice clones yet</p>
           <p className="text-gray-400 text-sm mt-1 text-center max-w-sm">
@@ -261,13 +261,13 @@ export default function VoiceClonesPage() {
                 )}
 
                 {clone.sarvam_voice_id && (
-                  <p className="text-xs text-gray-400 mb-3 font-mono bg-gray-50 px-2 py-1 rounded inline-block">
+                  <p className="text-xs text-white/30 mb-3 font-mono bg-gray-50 px-2 py-1 rounded inline-block">
                     Voice ID: {clone.sarvam_voice_id}
                   </p>
                 )}
 
                 <div className="flex items-center gap-2 flex-wrap">
-                  <label className="flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 text-gray-700 rounded-lg text-sm cursor-pointer hover:bg-gray-50 transition-colors">
+                  <label className="flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 text-gray-700 rounded-lg text-sm cursor-pointer hover:bg-white/[0.04] transition-colors">
                     <Upload className="w-3.5 h-3.5" />
                     Upload Sample
                     <input
@@ -321,7 +321,7 @@ export default function VoiceClonesPage() {
                   </p>
                 )}
 
-                <p className="text-xs text-gray-400 mt-3">
+                <p className="text-xs text-white/30 mt-3">
                   Created {formatDistanceToNow(new Date(clone.created_at), { addSuffix: true })}
                 </p>
               </div>

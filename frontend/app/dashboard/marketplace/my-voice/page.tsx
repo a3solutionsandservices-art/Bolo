@@ -92,7 +92,7 @@ interface ContributeStats {
 const STATUS_STYLES: Record<string, string> = {
   active: "bg-emerald-100 text-emerald-700",
   pending: "bg-amber-100 text-amber-700",
-  expired: "bg-slate-100 text-slate-600",
+  expired: "bg-slate-100 text-white/60",
   revoked: "bg-red-100 text-red-700",
 };
 
@@ -107,11 +107,11 @@ const LANG_CODES: Record<string, string> = {
 
 function StatTile({ label, value, icon: Icon, sub, color }: { label: string; value: string | number; icon: React.ComponentType<{ className?: string }>; sub?: string; color: string }) {
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/60 shadow-card p-5">
+    <div className="bg-white/[0.04] rounded-2xl border border-white/[0.07] p-5">
       <div className={`w-10 h-10 ${color} rounded-xl flex items-center justify-center mb-3`}>
         <Icon className="w-5 h-5 text-white" />
       </div>
-      <p className="text-2xl font-bold text-slate-900 tracking-tight">{value}</p>
+      <p className="text-2xl font-bold text-white tracking-tight">{value}</p>
       <p className="text-xs text-slate-500 mt-0.5">{label}</p>
       {sub && <p className="text-[10px] text-slate-400 mt-0.5">{sub}</p>}
     </div>
@@ -160,7 +160,7 @@ function RegistrationForm({ onSuccess }: { onSuccess: () => void }) {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <div className="bg-white rounded-2xl border border-slate-200/70 shadow-card p-6">
-        <h2 className="text-[15px] font-semibold text-slate-900 mb-5">Profile Details</h2>
+        <h2 className="text-[15px] font-semibold text-white mb-5">Profile Details</h2>
         <div className="grid grid-cols-2 gap-4">
           {[
             { name: "display_name", label: "Artist / Stage Name", placeholder: "Amitabh B. Voice" },
@@ -189,8 +189,8 @@ function RegistrationForm({ onSuccess }: { onSuccess: () => void }) {
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200/70 shadow-card p-6">
-        <h2 className="text-[15px] font-semibold text-slate-900 mb-2">Speaker Background</h2>
-        <p className="text-xs text-slate-400 mb-5">This helps researchers and linguists properly attribute your voice data.</p>
+        <h2 className="text-[15px] font-semibold text-white mb-2">Speaker Background</h2>
+        <p className="text-xs text-white/30 mb-5">This helps researchers and linguists properly attribute your voice data.</p>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1.5">Age Range</label>
@@ -215,7 +215,7 @@ function RegistrationForm({ onSuccess }: { onSuccess: () => void }) {
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200/70 shadow-card p-6">
-        <h2 className="text-[15px] font-semibold text-slate-900 mb-5">Languages & Dialects</h2>
+        <h2 className="text-[15px] font-semibold text-white mb-5">Languages & Dialects</h2>
         <div className="mb-4">
           <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-2">Languages *</p>
           <div className="flex flex-wrap gap-2">
@@ -241,8 +241,8 @@ function RegistrationForm({ onSuccess }: { onSuccess: () => void }) {
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200/70 shadow-card p-6">
-        <h2 className="text-[15px] font-semibold text-slate-900 mb-2">Specialties</h2>
-        <p className="text-xs text-slate-400 mb-4">What types of voice work do you offer?</p>
+        <h2 className="text-[15px] font-semibold text-white mb-2">Specialties</h2>
+        <p className="text-xs text-white/30 mb-4">What types of voice work do you offer?</p>
         <div className="flex flex-wrap gap-2">
           {SPECIALTY_LIST.map((s) => (
             <button key={s} type="button" onClick={() => toggle(selectedSpecialties, setSelectedSpecialties, s)}
@@ -254,8 +254,8 @@ function RegistrationForm({ onSuccess }: { onSuccess: () => void }) {
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200/70 shadow-card p-6">
-        <h2 className="text-[15px] font-semibold text-slate-900 mb-1">Set Your Prices (₹ INR)</h2>
-        <p className="text-xs text-slate-400 mb-5">Set to 0 to disable that tier. Bolo takes 20% — you keep 80%.</p>
+        <h2 className="text-[15px] font-semibold text-white mb-1">Set Your Prices (₹ INR)</h2>
+        <p className="text-xs text-white/30 mb-5">Set to 0 to disable that tier. Bolo takes 20% — you keep 80%.</p>
         <div className="grid grid-cols-2 gap-4">
           {[
             { name: "price_personal_inr", label: "Personal Use", placeholder: "e.g. 500" },
@@ -266,7 +266,7 @@ function RegistrationForm({ onSuccess }: { onSuccess: () => void }) {
             <div key={name}>
               <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1.5">{label}</label>
               <div className="relative">
-                <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/35" />
                 <input type="number" {...register(name as "price_personal_inr")} placeholder={placeholder} className="input-field pl-8" min="0" />
               </div>
             </div>
@@ -454,7 +454,7 @@ function ContributeTab({ profile }: { profile: ArtistProfile }) {
       {stats && (
         <div className="grid grid-cols-3 gap-4">
           <div className="bg-white rounded-xl border border-slate-200 p-4 text-center">
-            <p className="text-2xl font-bold text-slate-900">{stats.total_submissions}</p>
+            <p className="text-2xl font-bold text-white">{stats.total_submissions}</p>
             <p className="text-xs text-slate-500 mt-1">Total Submissions</p>
           </div>
           <div className="bg-white rounded-xl border border-slate-200 p-4 text-center">
@@ -462,7 +462,7 @@ function ContributeTab({ profile }: { profile: ArtistProfile }) {
             <p className="text-xs text-slate-500 mt-1">Accepted</p>
           </div>
           <div className="bg-white rounded-xl border border-slate-200 p-4 text-center">
-            <p className="text-2xl font-bold text-slate-900">{((1 - stats.rejection_rate) * 100).toFixed(0)}%</p>
+            <p className="text-2xl font-bold text-white">{((1 - stats.rejection_rate) * 100).toFixed(0)}%</p>
             <p className="text-xs text-slate-500 mt-1">Acceptance Rate</p>
           </div>
         </div>
@@ -471,11 +471,11 @@ function ContributeTab({ profile }: { profile: ArtistProfile }) {
       <div className="bg-white rounded-2xl border border-slate-200 shadow-card p-6">
         <div className="flex items-center justify-between mb-5">
           <div>
-            <h2 className="text-[15px] font-semibold text-slate-900">Recording Session</h2>
-            <p className="text-xs text-slate-400 mt-0.5">Read each sentence clearly in your natural voice</p>
+            <h2 className="text-[15px] font-semibold text-white">Recording Session</h2>
+            <p className="text-xs text-white/30 mt-0.5">Read each sentence clearly in your natural voice</p>
           </div>
           <div className="flex items-center gap-2">
-            <label className="text-xs font-medium text-slate-600">Language:</label>
+            <label className="text-xs font-medium text-white/60">Language:</label>
             <select value={language} onChange={(e) => setLanguage(e.target.value)} className="input-field py-1 text-xs w-32">
               {Object.entries(LANG_CODES).map(([name, code]) => (
                 <option key={code} value={code}>{name}</option>
@@ -489,11 +489,11 @@ function ContributeTab({ profile }: { profile: ArtistProfile }) {
             <div className="w-6 h-6 border-2 border-brand-200 border-t-brand-600 rounded-full animate-spin" />
           </div>
         ) : prompts.length === 0 ? (
-          <div className="py-10 text-center text-slate-400">No prompts available for this language yet.</div>
+          <div className="py-10 text-center text-white/35">No prompts available for this language yet.</div>
         ) : (
           <>
             <div className="flex items-center gap-2 mb-3">
-              <span className="text-xs font-medium text-slate-400">Prompt {currentIdx + 1} of {prompts.length}</span>
+              <span className="text-xs font-medium text-white/35">Prompt {currentIdx + 1} of {prompts.length}</span>
               <div className="flex-1 h-1 bg-slate-100 rounded-full">
                 <div className="h-1 bg-brand-500 rounded-full transition-all" style={{ width: `${((currentIdx + 1) / prompts.length) * 100}%` }} />
               </div>
@@ -532,7 +532,7 @@ function ContributeTab({ profile }: { profile: ArtistProfile }) {
                     <audio controls src={audioUrl} className="w-full h-10 rounded-lg" />
                   )}
                   <div className="flex gap-3">
-                    <button onClick={resetRecording} className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-sm font-medium transition-colors">
+                    <button onClick={resetRecording} className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-white/[0.04] text-sm font-medium transition-colors">
                       <RotateCcw className="w-4 h-4" />
                       Re-record
                     </button>
@@ -554,10 +554,10 @@ function ContributeTab({ profile }: { profile: ArtistProfile }) {
               {state === "submitting" && (
                 <div className="flex flex-col items-center gap-2">
                   <div className="w-8 h-8 border-2 border-brand-200 border-t-brand-600 rounded-full animate-spin" />
-                  <p className="text-xs text-slate-500">Validating recording...</p>
+                  <p className="text-xs text-white/45">Validating recording...</p>
                 </div>
               )}
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-white/30">
                 {state === "idle" ? "Tap the microphone to start recording" :
                  state === "recording" ? "Recording... tap to stop" :
                  state === "recorded" ? "Review your recording, then submit" :
@@ -620,7 +620,7 @@ export default function MyVoicePage() {
     return (
       <div className="p-8 max-w-2xl mx-auto">
         <div className="text-center mb-10">
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight mb-2">Monetise Your Voice</h1>
+          <h1 className="text-2xl font-bold text-white tracking-tight mb-2">Monetise Your Voice</h1>
           <p className="text-slate-500 text-sm">Join India&apos;s first consent-first voice licensing platform</p>
         </div>
 
@@ -631,7 +631,7 @@ export default function MyVoicePage() {
             { icon: Users, color: "bg-violet-600", title: "Reach 10,000+ brands", desc: "Enterprise clients across BFSI, EdTech, E-commerce, and more." },
             { icon: BadgeCheck, color: "bg-amber-500", title: "Verified & protected", desc: "ID verified. Compliant with Indian personality rights law." },
           ].map(({ icon: Icon, color, title, desc }) => (
-            <div key={title} className="bg-white rounded-2xl border border-slate-200/60 shadow-card p-5">
+            <div key={title} className="bg-white/[0.04] rounded-2xl border border-white/[0.07] p-5">
               <div className={`w-9 h-9 ${color} rounded-xl flex items-center justify-center mb-3`}>
                 <Icon className="w-4 h-4 text-white" />
               </div>
@@ -663,7 +663,7 @@ export default function MyVoicePage() {
   if (!profile && showRegistration) {
     return (
       <div className="p-8 max-w-2xl mx-auto animate-fade-in">
-        <h1 className="text-2xl font-bold text-slate-900 tracking-tight mb-6">Register Your Voice</h1>
+        <h1 className="text-2xl font-bold text-white tracking-tight mb-6">Register Your Voice</h1>
         <RegistrationForm onSuccess={() => { setShowRegistration(false); queryClient.invalidateQueries({ queryKey: ["my-artist-profile"] }); }} />
       </div>
     );
@@ -673,7 +673,7 @@ export default function MyVoicePage() {
     <div className="p-8 max-w-5xl mx-auto animate-fade-in">
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">My Voice Studio</h1>
+          <h1 className="text-2xl font-bold text-white tracking-tight">My Voice Studio</h1>
           <p className="text-sm text-slate-500 mt-0.5">{profile?.display_name}</p>
         </div>
         <span className={clsx("flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold",
@@ -709,7 +709,7 @@ export default function MyVoicePage() {
         {([["earnings", "Licence Earnings", IndianRupee], ["contribute", "Contribute & Earn", Database]] as [TabKey, string, React.ComponentType<{ className?: string }>][]).map(([key, label, Icon]) => (
           <button key={key} onClick={() => setActiveTab(key)}
             className={clsx("flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
-              activeTab === key ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700")}>
+              activeTab === key ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-white/75")}>
             <Icon className="w-4 h-4" />
             {label}
           </button>
@@ -731,13 +731,13 @@ export default function MyVoicePage() {
           )}
 
           <div className="bg-white rounded-2xl border border-slate-200/70 shadow-card">
-            <div className="px-6 py-5 border-b border-slate-100">
-              <h2 className="text-[15px] font-semibold text-slate-900">Licence Requests</h2>
-              <p className="text-xs text-slate-400 mt-0.5">Review and approve who can use your voice</p>
+            <div className="px-6 py-5 border-b border-white/[0.06]">
+              <h2 className="text-[15px] font-semibold text-white">Licence Requests</h2>
+              <p className="text-xs text-white/30 mt-0.5">Review and approve who can use your voice</p>
             </div>
-            <div className="divide-y divide-slate-50">
+            <div className="divide-y divide-white/[0.04]">
               {!earnings?.licenses?.length ? (
-                <div className="py-12 text-center text-slate-400">
+                <div className="py-12 text-center text-white/35">
                   <Users className="w-8 h-8 mx-auto mb-3 opacity-40" />
                   <p className="text-sm">No licence requests yet</p>
                 </div>
@@ -753,7 +753,7 @@ export default function MyVoicePage() {
                   </div>
                   <div className="text-right shrink-0">
                     <p className="text-sm font-bold text-slate-900">₹{lic.artist_earnings_inr.toLocaleString("en-IN")}</p>
-                    <p className="text-[10px] text-slate-400">your share</p>
+                    <p className="text-[10px] text-white/35">your share</p>
                   </div>
                   {lic.status === "pending" && (
                     <div className="flex gap-2 shrink-0">

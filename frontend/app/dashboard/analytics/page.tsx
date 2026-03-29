@@ -55,7 +55,7 @@ export default function AnalyticsPage() {
     <div className="p-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Analytics</h1>
+          <h1 className="text-2xl font-bold text-white">Analytics</h1>
           <p className="text-gray-500 mt-1">Platform usage and performance metrics</p>
         </div>
         <div className="flex gap-2">
@@ -66,7 +66,7 @@ export default function AnalyticsPage() {
               className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
                 days === value
                   ? "bg-brand-600 text-white"
-                  : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
+                  : "bg-white text-gray-600 border border-gray-200 hover:bg-white/[0.04]"
               }`}
             >
               {label}

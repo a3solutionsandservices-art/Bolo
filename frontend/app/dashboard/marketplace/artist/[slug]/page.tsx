@@ -53,7 +53,7 @@ const TIER_INFO = [
     priceKey: "price_personal_inr" as keyof Artist,
     includes: ["Non-commercial use", "Single project", "Unlimited duration"],
     color: "border-slate-200",
-    badge: "bg-slate-100 text-slate-700",
+    badge: "bg-slate-100 text-white/75",
   },
   {
     id: "commercial",
@@ -124,7 +124,7 @@ export default function ArtistStorefrontPage() {
   if (!artist) {
     return (
       <div className="p-8 text-center">
-        <p className="text-slate-500">Artist not found.</p>
+        <p className="text-white/45">Artist not found.</p>
         <Link href="/dashboard/marketplace" className="text-brand-600 mt-2 inline-block">← Back to marketplace</Link>
       </div>
     );
@@ -168,21 +168,21 @@ export default function ArtistStorefrontPage() {
                 </div>
                 <div className="mb-1">
                   <div className="flex items-center gap-2">
-                    <h1 className="text-xl font-bold text-slate-900">{artist.display_name}</h1>
+                    <h1 className="text-xl font-bold text-white">{artist.display_name}</h1>
                     {artist.verification_status === "verified" && (
                       <ShieldCheck className="w-5 h-5 text-brand-500" />
                     )}
                   </div>
-                  {artist.tagline && <p className="text-sm text-slate-500">{artist.tagline}</p>}
+                  {artist.tagline && <p className="text-sm text-white/45">{artist.tagline}</p>}
                 </div>
               </div>
 
-              <div className="flex flex-wrap gap-3 mb-4 text-sm text-slate-600">
+              <div className="flex flex-wrap gap-3 mb-4 text-sm text-white/60">
                 {artist.rating_count > 0 && (
                   <div className="flex items-center gap-1">
                     <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
                     <span className="font-semibold">{artist.avg_rating.toFixed(1)}</span>
-                    <span className="text-slate-400">({artist.rating_count} reviews)</span>
+                    <span className="text-white/35">({artist.rating_count} reviews)</span>
                   </div>
                 )}
                 <span className="text-slate-300">•</span>
@@ -222,7 +222,7 @@ export default function ArtistStorefrontPage() {
 
           {artist.sample_audio_urls.length > 0 && (
             <div className="bg-white rounded-2xl border border-slate-200/70 shadow-card p-6">
-              <h2 className="text-[15px] font-semibold text-slate-900 mb-4">Voice Samples</h2>
+              <h2 className="text-[15px] font-semibold text-white mb-4">Voice Samples</h2>
               <div className="space-y-3">
                 {artist.sample_audio_urls.map((url, idx) => (
                   <div key={idx} className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
@@ -239,7 +239,7 @@ export default function ArtistStorefrontPage() {
                     <div className="flex-1 h-1.5 bg-slate-200 rounded-full overflow-hidden">
                       <div className="h-full bg-brand-400 rounded-full w-0" />
                     </div>
-                    <span className="text-xs text-slate-400 shrink-0">Sample {idx + 1}</span>
+                    <span className="text-xs text-white/30 shrink-0">Sample {idx + 1}</span>
                   </div>
                 ))}
               </div>
@@ -259,7 +259,7 @@ export default function ArtistStorefrontPage() {
 
         <div className="space-y-5">
           <div className="bg-white rounded-2xl border border-slate-200/70 shadow-card p-5">
-            <h2 className="text-[15px] font-semibold text-slate-900 mb-4">Choose a Licence</h2>
+            <h2 className="text-[15px] font-semibold text-white mb-4">Choose a Licence</h2>
 
             <div className="space-y-2.5 mb-5">
               {TIER_INFO.map((tier) => {
@@ -287,7 +287,7 @@ export default function ArtistStorefrontPage() {
                       <div className="text-right shrink-0">
                         {price > 0 ? (
                           <div className="flex items-center gap-0.5">
-                            <IndianRupee className="w-3 h-3 text-slate-700" />
+                            <IndianRupee className="w-3 h-3 text-white/75" />
                             <span className="text-sm font-bold text-slate-900">{price.toLocaleString("en-IN")}</span>
                           </div>
                         ) : (
@@ -298,7 +298,7 @@ export default function ArtistStorefrontPage() {
                     {selectedTier === tier.id && (
                       <div className="mt-2.5 space-y-1">
                         {tier.includes.map((item) => (
-                          <div key={item} className="flex items-center gap-1.5 text-[11px] text-slate-600">
+                          <div key={item} className="flex items-center gap-1.5 text-[11px] text-white/60">
                             <CheckCircle2 className="w-3 h-3 text-emerald-500 shrink-0" />
                             {item}
                           </div>
@@ -341,7 +341,7 @@ export default function ArtistStorefrontPage() {
 
             {selectedPrice > 0 && (
               <div className="bg-slate-50 rounded-xl p-3 mb-4 space-y-1.5 text-sm">
-                <div className="flex justify-between text-slate-600">
+                <div className="flex justify-between text-white/60">
                   <span>Licence fee</span>
                   <span>₹{selectedPrice.toLocaleString("en-IN")}</span>
                 </div>
@@ -383,7 +383,7 @@ export default function ArtistStorefrontPage() {
               ].map((item) => (
                 <div key={item} className="flex items-start gap-2">
                   <ShieldCheck className="w-3.5 h-3.5 text-brand-500 shrink-0 mt-0.5" />
-                  <p className="text-xs text-slate-600">{item}</p>
+                  <p className="text-xs text-white/60">{item}</p>
                 </div>
               ))}
             </div>

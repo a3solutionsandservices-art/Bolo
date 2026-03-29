@@ -342,13 +342,13 @@ function IPOCard({ feature, expanded, onToggle }: { feature: IPOFeature; expande
   const Icon = feature.icon;
   return (
     <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-      <button onClick={onToggle} className="w-full text-left p-5 flex items-center gap-4 hover:bg-slate-50/60 transition-colors">
+      <button onClick={onToggle} className="w-full text-left p-5 flex items-center gap-4 hover:bg-white/[0.04]/60 transition-colors">
         <div className={clsx("w-10 h-10 rounded-xl flex items-center justify-center shrink-0", feature.color)}>
           <Icon className="w-5 h-5 text-white" />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <h3 className="text-sm font-semibold text-slate-900">{feature.title}</h3>
+            <h3 className="text-sm font-semibold text-white">{feature.title}</h3>
             {feature.status === "live" ? (
               <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-[10px] font-semibold rounded-full">LIVE</span>
             ) : (
@@ -362,7 +362,7 @@ function IPOCard({ feature, expanded, onToggle }: { feature: IPOFeature; expande
             <IndianRupee className="w-3 h-3" />
             {feature.monetization.split("—")[0].trim()}
           </div>
-          {expanded ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+          {expanded ? <ChevronUp className="w-4 h-4 text-white/35" /> : <ChevronDown className="w-4 h-4 text-white/35" />}
         </div>
       </button>
 
@@ -450,11 +450,11 @@ export default function FeatureGuidePage() {
     <div className="p-6 max-w-4xl mx-auto space-y-8">
       <div>
         <div className="flex items-center gap-2 mb-1">
-          <Link href="/dashboard/help" className="text-xs text-slate-400 hover:text-slate-600 transition-colors">Help Centre</Link>
+          <Link href="/dashboard/help" className="text-xs text-white/30 hover:text-slate-600 transition-colors">Help Centre</Link>
           <span className="text-slate-300">/</span>
           <span className="text-xs text-slate-600 font-medium">Feature Guide</span>
         </div>
-        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Feature Guide</h1>
+        <h1 className="text-2xl font-bold text-white tracking-tight">Feature Guide</h1>
         <p className="text-sm text-slate-500 mt-1">Input → Process → Output for every monetizable feature on Bolo</p>
       </div>
 
@@ -467,7 +467,7 @@ export default function FeatureGuidePage() {
         ].map((s) => (
           <div key={s.label} className={clsx("rounded-2xl border border-slate-200/60 p-4", s.bg)}>
             <s.icon className={clsx("w-5 h-5 mb-2", s.color)} />
-            <p className="text-2xl font-bold text-slate-900">{s.value}</p>
+            <p className="text-2xl font-bold text-white">{s.value}</p>
             <p className="text-xs text-slate-500 mt-0.5">{s.label}</p>
           </div>
         ))}
@@ -476,7 +476,7 @@ export default function FeatureGuidePage() {
       <div>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-base font-bold text-slate-900">Live Features</h2>
-          <span className="text-xs text-slate-400">Click any feature to expand</span>
+          <span className="text-xs text-white/30">Click any feature to expand</span>
         </div>
         <div className="space-y-3">
           {FEATURES.map((f) => (
@@ -500,7 +500,7 @@ export default function FeatureGuidePage() {
             {(["all", "high", "medium", "low"] as const).map((p) => (
               <button key={p} onClick={() => setRemainingFilter(p)} className={clsx(
                 "px-3 py-1 rounded-full text-xs font-semibold border transition-colors capitalize",
-                remainingFilter === p ? "bg-slate-900 text-white border-slate-900" : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                remainingFilter === p ? "bg-slate-900 text-white border-slate-900" : "bg-white text-slate-600 border-slate-200 hover:bg-white/[0.04]"
               )}>
                 {p}
               </button>
