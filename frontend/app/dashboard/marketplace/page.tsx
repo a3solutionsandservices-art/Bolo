@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api";
 import {
@@ -34,12 +35,12 @@ const CATEGORIES = [
 const LANGUAGES = ["All", "Hindi", "Tamil", "Telugu", "Bengali", "Marathi", "Gujarati", "Kannada", "Malayalam", "Punjabi", "Odia", "Bhojpuri", "Awadhi", "Maithili"];
 
 const CATEGORY_COLORS: Record<string, string> = {
-  celebrity: "bg-amber-100 text-amber-700 border-amber-200",
-  voice_artist: "bg-brand-100 text-brand-700 border-brand-200",
-  rj: "bg-violet-100 text-violet-700 border-violet-200",
-  singer: "bg-pink-100 text-pink-700 border-pink-200",
-  narrator: "bg-emerald-100 text-emerald-700 border-emerald-200",
-  community_speaker: "bg-orange-100 text-orange-700 border-orange-200",
+  celebrity: "bg-amber-500/20 text-amber-400 border-amber-500/30",
+  voice_artist: "bg-brand-500/20 text-brand-400 border-brand-500/30",
+  rj: "bg-violet-500/20 text-violet-400 border-violet-500/30",
+  singer: "bg-pink-500/20 text-pink-400 border-pink-500/30",
+  narrator: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
+  community_speaker: "bg-saffron-500/20 text-saffron-400 border-saffron-500/30",
 };
 
 const TIER_LABELS: Record<string, string> = {
@@ -80,24 +81,24 @@ function ArtistCard({ artist }: { artist: Artist }) {
   );
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/70 shadow-card hover:shadow-card-md transition-all duration-200 overflow-hidden group">
-      <div className="relative h-32 bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center">
+    <div className="card-dark rounded-2xl overflow-hidden group hover:border-white/[0.14] transition-all duration-200">
+      <div className="relative h-32 bg-gradient-to-br from-white/[0.04] to-white/[0.02] flex items-center justify-center">
         {artist.avatar_url ? (
-          <img src={artist.avatar_url} alt={artist.display_name} className="w-full h-full object-cover" />
+          <Image src={artist.avatar_url} alt={artist.display_name} fill className="object-cover" />
         ) : (
-          <div className="w-16 h-16 bg-brand-gradient rounded-full flex items-center justify-center text-white text-2xl font-bold shadow-glow-brand">
+          <div className="w-16 h-16 bg-saffron-gradient rounded-full flex items-center justify-center text-white text-2xl font-bold shadow-glow-saffron">
             {artist.display_name[0]}
           </div>
         )}
         {artist.is_featured && (
-          <div className="absolute top-2.5 left-2.5 flex items-center gap-1 px-2 py-0.5 bg-amber-400 text-white text-[10px] font-bold rounded-full shadow-sm">
+          <div className="absolute top-2.5 left-2.5 flex items-center gap-1 px-2 py-0.5 bg-amber-500 text-white text-[10px] font-bold rounded-full shadow-sm">
             <Sparkles className="w-2.5 h-2.5" />
             Featured
           </div>
         )}
         {artist.sample_audio_urls.length > 0 && (
-          <button className="absolute bottom-2.5 right-2.5 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-md hover:bg-white transition-colors">
-            <Play className="w-3.5 h-3.5 text-brand-600 ml-0.5" />
+          <button className="absolute bottom-2.5 right-2.5 w-8 h-8 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors">
+            <Play className="w-3.5 h-3.5 text-white ml-0.5" />
           </button>
         )}
       </div>
@@ -106,13 +107,13 @@ function ArtistCard({ artist }: { artist: Artist }) {
         <div className="flex items-start justify-between gap-2 mb-2">
           <div>
             <div className="flex items-center gap-1.5">
-              <h3 className="text-[14px] font-bold text-slate-900 leading-tight">{artist.display_name}</h3>
+              <h3 className="text-[14px] font-bold text-white leading-tight">{artist.display_name}</h3>
               {artist.verification_status === "verified" && (
-                <ShieldCheck className="w-3.5 h-3.5 text-brand-500 shrink-0" />
+                <ShieldCheck className="w-3.5 h-3.5 text-brand-400 shrink-0" />
               )}
             </div>
             {artist.tagline && (
-              <p className="text-xs text-slate-500 mt-0.5 leading-tight">{artist.tagline}</p>
+              <p className="text-xs text-white/45 mt-0.5 leading-tight">{artist.tagline}</p>
             )}
           </div>
           <span className={clsx("shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full border", CATEGORY_COLORS[artist.category])}>
@@ -122,12 +123,12 @@ function ArtistCard({ artist }: { artist: Artist }) {
 
         <div className="flex flex-wrap gap-1 mb-3">
           {artist.languages.slice(0, 3).map((lang) => (
-            <span key={lang} className="px-1.5 py-0.5 bg-slate-100 text-slate-600 text-[10px] rounded font-medium">
+            <span key={lang} className="lang-pill text-[10px]">
               {lang}
             </span>
           ))}
           {artist.languages.length > 3 && (
-            <span className="px-1.5 py-0.5 bg-slate-100 text-slate-500 text-[10px] rounded font-medium">
+            <span className="px-1.5 py-0.5 bg-white/[0.06] text-white/40 text-[10px] rounded font-medium">
               +{artist.languages.length - 3}
             </span>
           )}
@@ -142,7 +143,7 @@ function ArtistCard({ artist }: { artist: Artist }) {
                 <span className="text-xs text-white/30">({artist.rating_count})</span>
               </div>
             )}
-            <p className="text-[10px] text-slate-400 mt-0.5">{artist.total_licenses} licenses</p>
+            <p className="text-[10px] text-white/30 mt-0.5">{artist.total_licenses} licenses</p>
           </div>
           <div className="text-right">
             {lowestPrice > 0 ? (
@@ -150,20 +151,20 @@ function ArtistCard({ artist }: { artist: Artist }) {
                 <p className="text-[10px] text-white/35">from</p>
                 <div className="flex items-center gap-0.5">
                   <IndianRupee className="w-3 h-3 text-white/75" />
-                  <span className="text-sm font-bold text-slate-900">{lowestPrice.toLocaleString("en-IN")}</span>
+                  <span className="text-sm font-bold text-white">{lowestPrice.toLocaleString("en-IN")}</span>
                 </div>
               </>
             ) : (
-              <span className="text-xs font-semibold text-emerald-600">Free</span>
+              <span className="text-xs font-semibold text-emerald-400">Free</span>
             )}
           </div>
         </div>
 
         <Link
           href={`/dashboard/marketplace/artist/${artist.slug}`}
-          className="mt-3 flex items-center justify-center gap-1.5 w-full py-2 bg-brand-50 hover:bg-brand-100 text-brand-700 text-[13px] font-semibold rounded-lg transition-colors group"
+          className="mt-3 flex items-center justify-center gap-1.5 w-full py-2 bg-saffron-500/10 hover:bg-saffron-500/20 text-saffron-400 border border-saffron-500/20 text-[13px] font-semibold rounded-lg transition-colors group"
         >
-          View & License
+          View &amp; License
           <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
         </Link>
       </div>
@@ -206,14 +207,11 @@ export default function MarketplacePage() {
       <div className="mb-8 flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-bold text-white tracking-tight">Voice Marketplace</h1>
-          <p className="text-sm text-slate-500 mt-0.5">
+          <p className="text-sm text-white/40 mt-0.5">
             License authentic Indian voices from celebrities, RJs, and community speakers
           </p>
         </div>
-        <Link
-          href="/dashboard/marketplace/my-voice"
-          className="btn-secondary flex items-center gap-2 text-sm"
-        >
+        <Link href="/dashboard/marketplace/my-voice" className="btn-secondary flex items-center gap-2 text-sm">
           <Mic className="w-4 h-4" />
           Monetise My Voice
         </Link>
@@ -222,7 +220,7 @@ export default function MarketplacePage() {
       {featured.length > 0 && (
         <div className="mb-10">
           <div className="flex items-center gap-2 mb-4">
-            <Sparkles className="w-4 h-4 text-amber-500" />
+            <Sparkles className="w-4 h-4 text-amber-400" />
             <h2 className="text-[15px] font-semibold text-white">Featured Artists</h2>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -231,7 +229,7 @@ export default function MarketplacePage() {
         </div>
       )}
 
-      <div className="bg-white/[0.04] rounded-2xl border border-white/[0.07] p-5 mb-6">
+      <div className="glass-dark rounded-2xl p-5 mb-6">
         <div className="flex flex-col gap-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/35" />
@@ -240,7 +238,7 @@ export default function MarketplacePage() {
               placeholder="Search by name, language, or specialty..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="input-field pl-9"
+              className="input-dark pl-9 w-full"
             />
           </div>
 
@@ -252,8 +250,8 @@ export default function MarketplacePage() {
                 className={clsx(
                   "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-medium transition-all",
                   selectedCategory === id
-                    ? "bg-brand-600 text-white shadow-sm"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    ? "bg-saffron-500 text-white shadow-sm"
+                    : "bg-white/[0.06] text-white/60 hover:bg-white/[0.10] hover:text-white"
                 )}
               >
                 <Icon className="w-3.5 h-3.5" />
@@ -270,8 +268,8 @@ export default function MarketplacePage() {
                 className={clsx(
                   "shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-all border",
                   selectedLanguage === lang
-                    ? "bg-brand-600 text-white border-brand-600"
-                    : "bg-white text-slate-600 border-slate-200 hover:border-brand-300"
+                    ? "bg-saffron-500 text-white border-saffron-500"
+                    : "bg-white/[0.04] text-white/50 border-white/[0.08] hover:border-saffron-500/40 hover:text-white/80"
                 )}
               >
                 {lang}
@@ -284,14 +282,14 @@ export default function MarketplacePage() {
       {isLoading ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
           {[...Array(8)].map((_, i) => (
-            <div key={i} className="h-72 bg-slate-200 rounded-2xl animate-pulse" />
+            <div key={i} className="h-72 bg-white/[0.04] rounded-2xl animate-pulse" />
           ))}
         </div>
       ) : artists.length === 0 ? (
         <div className="text-center py-20">
-          <Mic className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-slate-600 mb-2">No artists found</h3>
-          <p className="text-sm text-slate-400 mb-6">
+          <Mic className="w-12 h-12 text-white/20 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-white/60 mb-2">No artists found</h3>
+          <p className="text-sm text-white/35 mb-6">
             {search || selectedCategory || selectedLanguage !== "All"
               ? "Try adjusting your filters"
               : "The marketplace is growing — be the first to list your voice"}
@@ -310,19 +308,19 @@ export default function MarketplacePage() {
         </>
       )}
 
-      <div className="mt-12 bg-hero-gradient rounded-2xl p-8 relative overflow-hidden">
-        <div className="absolute inset-0 bg-mesh-gradient" />
+      <div className="mt-12 rounded-2xl p-8 relative overflow-hidden" style={{ background: "linear-gradient(135deg, rgba(255,107,0,0.1) 0%, rgba(79,70,229,0.08) 100%)", border: "1px solid rgba(255,107,0,0.18)" }}>
         <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
           <div>
             <h2 className="text-xl font-bold text-white mb-2">Are you a voice artist or celebrity?</h2>
-            <p className="text-white/60 text-sm max-w-md">
+            <p className="text-white/55 text-sm max-w-md">
               Monetise your voice on India&apos;s first consent-first voice licensing platform.
               Set your own prices. Control what your voice is used for. Earn royalties every time.
             </p>
           </div>
           <Link
             href="/dashboard/marketplace/my-voice"
-            className="shrink-0 flex items-center gap-2 px-5 py-3 bg-white text-brand-700 font-semibold text-sm rounded-xl hover:bg-white/90 transition-colors shadow-card-md"
+            className="shrink-0 flex items-center gap-2 px-5 py-3 font-semibold text-sm rounded-xl transition-all hover:-translate-y-0.5"
+            style={{ background: "linear-gradient(135deg, #FF6B00, #f97316)", boxShadow: "0 4px 16px rgba(255,107,0,0.3)", color: "white" }}
           >
             <Mic className="w-4 h-4" />
             Start Earning
