@@ -21,6 +21,13 @@ SARVAM_DEFAULT_SPEAKERS = {
     "en": "meera",
 }
 
+VOXTRAL_DEFAULT_VOICES = {
+    "hi": "sanchit",
+    "en": "nick",
+}
+
+VOXTRAL_SUPPORTED_LANGUAGES = {"hi", "en"}
+
 
 @dataclass
 class SynthesisResult:
@@ -166,5 +173,72 @@ class SarvamTTS:
         await self._client.aclose()
 
 
-def get_tts() -> SarvamTTS:
+class VoxtralTTS:
+    """Mistral Voxtral TTS — best-in-class for Hindi and English."""
+
+    _instance: Optional["VoxtralTTS"] = None
+
+    def __init__(self) -> None:
+        self._client = httpx.AsyncClient(
+            base_url="https://api.mistral.ai",
+            headers={
+                "Authorization": f"Bearer {settings.MISTRAL_API_KEY}",
+                "Content-Type": "application/json",
+            },
+            timeout=60.0,
+        )
+
+    @classmethod
+    def get_instance(cls) -> "VoxtralTTS":
+        if cls._instance is None:
+            cls._instance = cls()
+        return cls._instance
+
+    async def synthesize(
+        self,
+        text: str,
+        language: str,
+        voice_id: Optional[str] = None,
+        **_kwargs,
+    ) -> SynthesisResult:
+        start = time.perf_counter()
+        vid = voice_id or VOXTRAL_DEFAULT_VOICES.get(language, "nick")
+        payload = {
+            "model": settings.VOXTRAL_TTS_MODEL,
+            "input": text,
+            "voice_id": vid,
+            "response_format": "wav",
+        }
+        response = await self._client.post("/v1/audio/speech", json=payload)
+        response.raise_for_status()
+
+        content_type = response.headers.get("content-type", "")
+        if "application/json" in content_type:
+            data = response.json()
+            audio_bytes = base64.b64decode(data["audio_data"])
+        else:
+            audio_bytes = response.content
+
+        elapsed_ms = (time.perf_counter() - start) * 1000
+        return SynthesisResult(
+            audio_bytes=audio_bytes,
+            audio_format="wav",
+            language=language,
+            voice_id=vid,
+            character_count=len(text),
+            processing_time_ms=elapsed_ms,
+            request_id=response.headers.get("x-request-id"),
+        )
+
+    async def close(self) -> None:
+        await self._client.aclose()
+
+
+def get_tts(language: Optional[str] = None) -> SarvamTTS | VoxtralTTS:
+    """Route to Voxtral for Hindi/English (when configured), Sarvam for everything else."""
+    if (
+        language in VOXTRAL_SUPPORTED_LANGUAGES
+        and settings.MISTRAL_API_KEY
+    ):
+        return VoxtralTTS.get_instance()
     return SarvamTTS.get_instance()

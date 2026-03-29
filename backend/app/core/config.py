@@ -24,6 +24,9 @@ class Settings(BaseSettings):
     SARVAM_API_KEY: str = ""
     SARVAM_API_BASE: str = "https://api.sarvam.ai"
 
+    MISTRAL_API_KEY: str = ""
+    VOXTRAL_TTS_MODEL: str = "voxtral-mini-tts-2603"
+
     GOOGLE_TRANSLATE_API_KEY: str = ""
 
     PINECONE_API_KEY: str = ""

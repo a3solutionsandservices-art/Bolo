@@ -18,7 +18,7 @@ from app.core.rag import get_rag_agent
 from app.core.security import decode_token, hash_api_key
 from app.core.stt import get_stt
 from app.core.translation import get_translation_service
-from app.core.tts import get_tts
+from app.core.tts import VoxtralTTS, get_tts
 from app.db.base import get_db
 from app.middleware.auth import get_current_user
 from app.models.api_key import APIKey
@@ -131,7 +131,7 @@ async def synthesize_speech(
     if body.language not in settings.SUPPORTED_LANGUAGES:
         raise HTTPException(status_code=400, detail=f"Unsupported language: {body.language}")
 
-    tts = get_tts()
+    tts = get_tts(body.language)
     result = await tts.synthesize(
         text=body.text,
         language=body.language,
@@ -140,14 +140,18 @@ async def synthesize_speech(
         pitch=body.pitch,
         loudness=body.loudness,
     )
-
+    model_used = (
+        settings.VOXTRAL_TTS_MODEL
+        if isinstance(tts, VoxtralTTS)
+        else settings.SARVAM_TTS_MODEL
+    )
     await UsageService.record(
         db=db,
         tenant_id=current_user.tenant_id,
         event_type="tts",
         quantity=result.character_count,
         unit="characters",
-        model_used="sarvam-bulbul:v1",
+        model_used=model_used,
         target_language=body.language,
     )
 

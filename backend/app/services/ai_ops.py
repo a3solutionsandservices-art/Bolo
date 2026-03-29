@@ -14,7 +14,7 @@ from app.core.config import settings
 from app.core.language_detection import get_language_detector
 from app.core.stt import TranscriptionResult, get_stt
 from app.core.translation import TranslationResult, get_translation_service
-from app.core.tts import SynthesisResult, get_tts
+from app.core.tts import SynthesisResult, VoxtralTTS, get_tts
 from app.services.usage import UsageService
 
 
@@ -69,7 +69,13 @@ async def synthesize(
     tenant_id: uuid.UUID,
     conversation_id: Optional[uuid.UUID] = None,
 ) -> SynthesisResult:
-    result = await get_tts().synthesize(text, language)
+    tts = get_tts(language)
+    result = await tts.synthesize(text, language)
+    model_used = (
+        settings.VOXTRAL_TTS_MODEL
+        if isinstance(tts, VoxtralTTS)
+        else settings.SARVAM_TTS_MODEL
+    )
     await UsageService.record(
         db=db,
         tenant_id=tenant_id,
@@ -78,7 +84,7 @@ async def synthesize(
         quantity=len(text),
         unit="characters",
         target_language=language,
-        model_used=settings.SARVAM_TTS_MODEL,
+        model_used=model_used,
     )
     return result
 
