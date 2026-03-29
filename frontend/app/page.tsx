@@ -5,7 +5,7 @@ import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/auth-store";
 import {
-  Mic, ArrowRight, Check, Play, ChevronRight,
+  Mic, ArrowRight, Play,
   Volume2, Sparkles,
 } from "lucide-react";
 
@@ -103,9 +103,10 @@ export default function LandingPage() {
             <span className="font-serif text-[18px] font-normal text-white tracking-tight">Bolo</span>
           </Link>
           <div className="hidden md:flex items-center gap-8 text-sm text-white/50">
+            <Link href="/" className="text-white font-medium">Home</Link>
             <Link href="/features" className="hover:text-white transition-colors">Features</Link>
-            <Link href="/use-cases" className="hover:text-white transition-colors">Use cases</Link>
-            <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
+            <Link href="/use-cases" className="hover:text-white transition-colors">Use Cases</Link>
+            <Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link>
             <Link href="/about" className="hover:text-white transition-colors">About</Link>
           </div>
           <div className="flex items-center gap-3">
@@ -231,142 +232,6 @@ export default function LandingPage() {
           {[...COMPANIES, ...COMPANIES].map((c, i) => (
             <span key={i} className="mx-8 text-sm text-white/20 font-medium tracking-wide">{c}</span>
           ))}
-        </div>
-      </section>
-
-      {/* ── PLATFORM TEASER ── */}
-      <section className="py-20 px-6 border-t border-white/[0.05]">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-8 glass-dark rounded-3xl p-10">
-            <div>
-              <p className="text-xs text-saffron-400 font-semibold tracking-widest uppercase mb-3">Platform</p>
-              <h2 className="font-serif text-3xl md:text-4xl text-white mb-3 leading-tight">
-                Built for Bharat.<br />
-                <span className="italic text-white/50">Ready for the world.</span>
-              </h2>
-              <p className="text-white/40 text-sm max-w-sm leading-relaxed">
-                11 languages natively. Sub-500ms response. RAG on your data. One script tag to go live.
-              </p>
-            </div>
-            <div className="flex flex-col gap-3 shrink-0">
-              <Link href="/features" className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold text-white transition-all hover:-translate-y-px" style={{ background: "linear-gradient(135deg, #FF6B00, #f97316)", boxShadow: "0 4px 16px rgba(255,107,0,0.3)" }}>
-                Explore all features
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-              <Link href="/use-cases" className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-medium text-white/60 hover:text-white transition-all" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}>
-                See use cases by industry
-                <ChevronRight className="w-4 h-4" />
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── HOW IT WORKS ── */}
-      <section className="py-24 px-6 border-t border-white/[0.05]">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="font-serif text-4xl md:text-5xl text-white leading-tight">
-              Live in{" "}
-              <span className="italic bg-gradient-to-r from-brand-400 to-violet-400 bg-clip-text text-transparent">5 minutes</span>
-            </h2>
-          </div>
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              { n: "01", title: "Upload your docs", desc: "Drop in FAQs, product catalogs, policy PDFs. Bolo indexes them instantly." },
-              { n: "02", title: "Configure your agent", desc: "Pick languages, choose a voice, set your colors. No code. Done in 2 minutes." },
-              { n: "03", title: "Embed one script tag", desc: "Copy a single <script> and paste before </body>. Or call our API." },
-            ].map(({ n, title, desc }) => (
-              <div key={n} className="relative">
-                <div className="text-[56px] font-serif text-white/[0.06] leading-none mb-4 select-none">{n}</div>
-                <h3 className="text-[15px] font-semibold text-white mb-2">{title}</h3>
-                <p className="text-sm text-white/40 leading-relaxed">{desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── WHY NOT GOOGLE/MSFT ── */}
-      <section className="py-20 px-6 border-t border-white/[0.05]">
-        <div className="max-w-4xl mx-auto">
-          <div className="glass-dark rounded-3xl p-10 md:p-14 text-center">
-            <p className="text-xs text-white/30 uppercase tracking-widest mb-6 font-semibold">The honest pitch</p>
-            <h2 className="font-serif text-3xl md:text-4xl text-white mb-6 leading-snug">
-              Google and Azure give you APIs.<br />
-              <span className="italic text-brand-400">Bolo gives you a working product.</span>
-            </h2>
-            <p className="text-white/45 text-base max-w-xl mx-auto mb-10 leading-relaxed">
-              Stitching together STT + Translation + LLM + TTS + voice UI takes months.
-              Bolo ships the full stack, tuned for Indian languages and accents, in a single platform.
-            </p>
-            <Link href="/register" className="inline-flex items-center gap-2 px-7 py-3.5 bg-brand-600 hover:bg-brand-500 text-white font-semibold rounded-xl transition-all shadow-xl shadow-brand-600/30 hover:-translate-y-0.5">
-              Start for free
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ── PRICING ── */}
-      <section id="pricing" className="py-24 px-6 border-t border-white/[0.05]">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-14">
-            <h2 className="font-serif text-4xl md:text-5xl text-white mb-3">Simple pricing</h2>
-            <p className="text-white/40 text-base">Pay for outcomes, not API units.</p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-5">
-            {[
-              {
-                name: "Starter", price: "₹49", period: "/mo",
-                tagline: "Handle up to 1,000 customer queries",
-                features: ["1,000 conversations / month", "3 Knowledge Bases", "11 Indian languages", "Text + voice", "Widget embed"],
-                cta: "Start free", href: "/register", highlight: false,
-              },
-              {
-                name: "Growth", price: "₹199", period: "/mo",
-                tagline: "Handle up to 10,000+ customer queries",
-                features: ["10,000 conversations / month", "20 Knowledge Bases", "Voice Cloning", "Voice Marketplace", "Priority support"],
-                cta: "Start Growth", href: "/register?plan=growth", highlight: true,
-              },
-              {
-                name: "Enterprise", price: "Custom", period: "",
-                tagline: "Unlimited queries — zero cap",
-                features: ["Unlimited conversations", "Dedicated infrastructure", "Custom SLA", "Dialect fine-tuning", "Account manager"],
-                cta: "Talk to sales", href: "mailto:sales@bolo.ai", highlight: false,
-              },
-            ].map((plan) => (
-              <div key={plan.name} className={`rounded-2xl p-7 relative transition-all ${plan.highlight ? "bg-brand-600/20 border-2 border-brand-500/50" : "glass-dark border border-white/[0.08]"}`}>
-                {plan.highlight && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-brand-600 text-white text-[11px] font-semibold rounded-full">
-                    Most popular
-                  </div>
-                )}
-                <div className="mb-5">
-                  <p className="text-xs font-semibold text-white/40 uppercase tracking-widest mb-2">{plan.name}</p>
-                  <div className="flex items-baseline gap-0.5 mb-1">
-                    <span className="font-serif text-4xl text-white">{plan.price}</span>
-                    <span className="text-sm text-white/40">{plan.period}</span>
-                  </div>
-                  <p className="text-xs text-brand-400 font-medium">{plan.tagline}</p>
-                </div>
-                <ul className="space-y-2.5 mb-8">
-                  {plan.features.map((f) => (
-                    <li key={f} className="flex items-center gap-2 text-sm text-white/55">
-                      <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <Link
-                  href={plan.href}
-                  className={`block text-center py-2.5 rounded-xl text-sm font-semibold transition-all ${plan.highlight ? "bg-brand-600 hover:bg-brand-500 text-white shadow-lg shadow-brand-600/30" : "glass-dark hover:bg-white/[0.08] text-white/70 hover:text-white"}`}
-                >
-                  {plan.cta}
-                </Link>
-              </div>
-            ))}
-          </div>
         </div>
       </section>
 

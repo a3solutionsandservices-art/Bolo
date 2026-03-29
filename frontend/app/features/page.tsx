@@ -3,7 +3,7 @@
 import Link from "next/link";
 import {
   Mic, Globe, Zap, Shield, Database, Code2, BarChart3,
-  Volume2, Lock, Webhook, RefreshCw, Layers, Clock,
+  Volume2, Lock, Webhook, RefreshCw, Layers, Clock, ArrowRight, Check,
 } from "lucide-react";
 
 const FEATURES = [
@@ -105,9 +105,10 @@ export default function FeaturesPage() {
             <span className="font-serif text-[18px] text-white tracking-tight">Bolo</span>
           </Link>
           <div className="hidden md:flex items-center gap-8 text-sm text-white/50">
+            <Link href="/" className="hover:text-white transition-colors">Home</Link>
             <Link href="/features" className="text-white font-medium">Features</Link>
-            <Link href="/use-cases" className="hover:text-white transition-colors">Use cases</Link>
-            <Link href="/#pricing" className="hover:text-white transition-colors">Pricing</Link>
+            <Link href="/use-cases" className="hover:text-white transition-colors">Use Cases</Link>
+            <Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link>
             <Link href="/about" className="hover:text-white transition-colors">About</Link>
           </div>
           <div className="flex items-center gap-3">
@@ -168,6 +169,61 @@ export default function FeaturesPage() {
                 <p className="text-sm text-white/45 leading-relaxed">{desc}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── HOW IT WORKS ── */}
+      <section className="py-24 px-6 border-t border-white/[0.05]">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-16">
+            <p className="text-xs text-white/30 font-semibold tracking-widest uppercase mb-4">Getting Started</p>
+            <h2 className="font-serif text-4xl md:text-5xl text-white leading-tight">
+              Live in{" "}
+              <span className="italic bg-gradient-to-r from-brand-400 to-violet-400 bg-clip-text text-transparent">5 minutes</span>
+            </h2>
+          </div>
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              { n: "01", title: "Upload your docs", desc: "Drop in FAQs, product catalogs, policy PDFs. Bolo indexes them instantly." },
+              { n: "02", title: "Configure your agent", desc: "Pick languages, choose a voice, set your colors. No code. Done in 2 minutes." },
+              { n: "03", title: "Embed one script tag", desc: "Copy a single <script> tag and paste before </body>. Or call our API." },
+            ].map(({ n, title, desc }) => (
+              <div key={n} className="relative">
+                <div className="text-[56px] font-serif text-white/[0.06] leading-none mb-4 select-none">{n}</div>
+                <h3 className="text-[15px] font-semibold text-white mb-2">{title}</h3>
+                <p className="text-sm text-white/40 leading-relaxed">{desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── WHY BOLO ── */}
+      <section className="py-20 px-6 border-t border-white/[0.05] pb-32">
+        <div className="max-w-4xl mx-auto">
+          <div className="glass-dark rounded-3xl p-10 md:p-14 text-center">
+            <p className="text-xs text-white/30 uppercase tracking-widest mb-6 font-semibold">The honest pitch</p>
+            <h2 className="font-serif text-3xl md:text-4xl text-white mb-6 leading-snug">
+              Google and Azure give you APIs.<br />
+              <span className="italic text-brand-400">Bolo gives you a working product.</span>
+            </h2>
+            <p className="text-white/45 text-base max-w-xl mx-auto mb-8 leading-relaxed">
+              Stitching together STT + Translation + LLM + TTS + voice UI takes months.
+              Bolo ships the full stack, tuned for Indian languages and accents, in a single platform.
+            </p>
+            <div className="flex flex-wrap justify-center gap-3 mb-10">
+              {["Indian-first STT & TTS", "RAG on your own data", "Sub-500ms latency", "Data stays in India", "No engineering team needed"].map((f) => (
+                <span key={f} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm text-white/60" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                  <Check className="w-3 h-3 text-emerald-400 shrink-0" />
+                  {f}
+                </span>
+              ))}
+            </div>
+            <Link href="/register" className="inline-flex items-center gap-2 px-7 py-3.5 bg-brand-600 hover:bg-brand-500 text-white font-semibold rounded-xl transition-all shadow-xl shadow-brand-600/30 hover:-translate-y-0.5">
+              Start for free
+              <ArrowRight className="w-4 h-4" />
+            </Link>
           </div>
         </div>
       </section>

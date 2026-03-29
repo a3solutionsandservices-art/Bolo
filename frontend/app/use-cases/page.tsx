@@ -127,9 +127,10 @@ export default function UseCasesPage() {
             <span className="font-serif text-[18px] text-white tracking-tight">Bolo</span>
           </Link>
           <div className="hidden md:flex items-center gap-8 text-sm text-white/50">
+            <Link href="/" className="hover:text-white transition-colors">Home</Link>
             <Link href="/features" className="hover:text-white transition-colors">Features</Link>
-            <Link href="/use-cases" className="text-white font-medium">Use cases</Link>
-            <Link href="/#pricing" className="hover:text-white transition-colors">Pricing</Link>
+            <Link href="/use-cases" className="text-white font-medium">Use Cases</Link>
+            <Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link>
             <Link href="/about" className="hover:text-white transition-colors">About</Link>
           </div>
           <div className="flex items-center gap-3">
