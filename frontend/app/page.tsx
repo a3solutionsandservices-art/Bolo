@@ -138,10 +138,10 @@ export default function LandingPage() {
 
           {/* Headline */}
           <h1 className="text-center mb-8">
-            <span className="block font-serif text-6xl md:text-7xl lg:text-8xl text-white leading-[0.95] tracking-tight mb-2">
+            <span className="block font-serif text-5xl md:text-6xl lg:text-7xl text-white leading-[1.0] tracking-tight mb-2">
               Speak the Heart of Bharat
             </span>
-            <span className="block font-serif italic text-6xl md:text-7xl lg:text-8xl leading-[0.95] tracking-tight bg-gradient-to-r from-saffron-400 via-turmeric-400 to-fire-400 bg-clip-text text-transparent">
+            <span className="block font-serif italic text-5xl md:text-6xl lg:text-7xl leading-[1.0] tracking-tight bg-gradient-to-r from-saffron-400 via-turmeric-400 to-fire-400 bg-clip-text text-transparent">
               in {LANGUAGES[activeLang].name}
             </span>
           </h1>
