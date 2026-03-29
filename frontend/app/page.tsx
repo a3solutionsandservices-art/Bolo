@@ -215,19 +215,19 @@ export default function LandingPage() {
             </span>
           </div>
 
-          {/* Headline — editorial serif + sans mix (Mistral-style) */}
+          {/* Headline */}
           <h1 className="text-center mb-8">
             <span className="block font-serif text-6xl md:text-7xl lg:text-8xl text-white leading-[0.95] tracking-tight mb-2">
-              Voice AI that speaks
+              Your customers speak
             </span>
-            <span className="block font-serif italic text-6xl md:text-7xl lg:text-8xl leading-[0.95] tracking-tight bg-gradient-to-r from-brand-400 via-violet-400 to-fire-400 bg-clip-text text-transparent">
+            <span className="block font-serif italic text-6xl md:text-7xl lg:text-8xl leading-[0.95] tracking-tight bg-gradient-to-r from-saffron-400 via-turmeric-400 to-fire-400 bg-clip-text text-transparent">
               {LANGUAGES[activeLang].name}
             </span>
           </h1>
 
           <p className="text-center text-lg md:text-xl text-white/45 max-w-xl mx-auto mb-12 leading-relaxed font-light">
-            Deploy multilingual voice assistants across 11 Indian languages.
-            No AI infra expertise required. Live in 5 minutes.
+            Deploy voice assistants across 11 Indian languages — so speak in theirs.
+            No engineering required. Live in 5 minutes.
           </p>
 
           {/* CTAs */}
