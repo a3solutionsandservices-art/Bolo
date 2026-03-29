@@ -186,7 +186,7 @@ export default function LandingPage() {
             <a href="#features" className="hover:text-white transition-colors">Features</a>
             <a href="#usecases" className="hover:text-white transition-colors">Use cases</a>
             <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
-            <a href="https://docs.bolo.ai" className="hover:text-white transition-colors">Docs</a>
+            <Link href="/about" className="hover:text-white transition-colors">About</Link>
           </div>
           <div className="flex items-center gap-3">
             <Link href="/login" className="px-4 py-2 text-sm text-white/60 hover:text-white transition-colors font-medium">
