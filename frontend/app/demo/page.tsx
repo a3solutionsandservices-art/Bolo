@@ -134,11 +134,12 @@ const REVENUE_MODELS = [
   },
 ];
 
-function VoiceCard({ demo, apiBase }: { demo: typeof VOICE_DEMOS[0]; apiBase: string }) {
-  const [state, setState] = useState<"idle" | "loading" | "playing">("idle");
+function VoiceCard({ demo, apiBase, apiOnline }: { demo: typeof VOICE_DEMOS[0]; apiBase: string; apiOnline: boolean }) {
+  const [state, setState] = useState<"idle" | "loading" | "playing" | "error">("idle");
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const play = async () => {
+    if (!apiOnline) return;
     if (state === "loading") return;
     if (state === "playing" && audioRef.current) {
       audioRef.current.pause();
@@ -151,23 +152,34 @@ function VoiceCard({ demo, apiBase }: { demo: typeof VOICE_DEMOS[0]; apiBase: st
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: demo.text, language: demo.code }),
+        signal: AbortSignal.timeout(15000),
       });
       if (!res.ok) throw new Error("TTS failed");
       const data = await res.json();
       const audio = new Audio(`data:audio/${data.audio_format};base64,${data.audio_base64}`);
       audioRef.current = audio;
       audio.onended = () => setState("idle");
+      audio.onerror = () => setState("error");
       await audio.play();
       setState("playing");
     } catch {
-      setState("idle");
+      setState("error");
+      setTimeout(() => setState("idle"), 3000);
     }
   };
 
+  const statusLabel = !apiOnline
+    ? "Backend starting up — try again shortly"
+    : state === "error"
+    ? "Playback failed — tap to retry"
+    : state === "playing"
+    ? "Playing live AI voice…"
+    : "Click to hear real AI voice";
+
   return (
     <div
-      className="rounded-2xl p-5 cursor-pointer group hover:-translate-y-0.5 transition-all duration-200"
-      style={{ background: demo.bg, border: `1px solid ${demo.color}30` }}
+      className={`rounded-2xl p-5 transition-all duration-200 ${apiOnline ? "cursor-pointer hover:-translate-y-0.5" : "opacity-60 cursor-not-allowed"}`}
+      style={{ background: demo.bg, border: `1px solid ${state === "error" ? "#ef444440" : demo.color + "30"}` }}
       onClick={play}
     >
       <div className="flex items-start justify-between mb-3">
@@ -181,20 +193,24 @@ function VoiceCard({ demo, apiBase }: { demo: typeof VOICE_DEMOS[0]; apiBase: st
         <button
           className="w-10 h-10 rounded-xl flex items-center justify-center transition-all"
           style={{ background: `${demo.color}25`, border: `1px solid ${demo.color}40` }}
+          disabled={!apiOnline}
         >
           {state === "loading"
             ? <Loader2 className="w-4 h-4 animate-spin" style={{ color: demo.color }} />
             : state === "playing"
             ? <Pause className="w-4 h-4" style={{ color: demo.color }} />
+            : state === "error"
+            ? <span className="text-red-400 text-xs font-bold">!</span>
             : <Play className="w-4 h-4 ml-0.5" style={{ color: demo.color }} />}
         </button>
       </div>
       <p className="text-xs text-white/40 leading-relaxed line-clamp-2">{demo.text}</p>
       <div className="flex items-center gap-1.5 mt-3">
-        <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: demo.color }} />
-        <span className="text-[10px] text-white/30">
-          {state === "playing" ? "Playing live audio…" : "Click to hear real AI voice"}
-        </span>
+        <span
+          className={`w-1.5 h-1.5 rounded-full ${state === "playing" ? "animate-pulse" : ""}`}
+          style={{ background: state === "error" ? "#ef4444" : !apiOnline ? "#6b7280" : demo.color }}
+        />
+        <span className="text-[10px] text-white/30">{statusLabel}</span>
       </div>
     </div>
   );
@@ -203,7 +219,22 @@ function VoiceCard({ demo, apiBase }: { demo: typeof VOICE_DEMOS[0]; apiBase: st
 export default function DemoPage() {
   const [activeFlow, setActiveFlow] = useState(0);
   const [flowPlaying, setFlowPlaying] = useState(false);
+  const [apiOnline, setApiOnline] = useState<boolean | null>(null);
   const flowTimer = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    const check = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/health`, { signal: AbortSignal.timeout(6000) });
+        setApiOnline(res.ok);
+      } catch {
+        setApiOnline(false);
+      }
+    };
+    check();
+    const interval = setInterval(check, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   const startFlow = () => {
     if (flowPlaying) return;
@@ -225,6 +256,20 @@ export default function DemoPage() {
   return (
     <div className="min-h-screen text-white" style={{ background: "#050a14" }}>
       <PublicNav />
+
+      {/* ── API STATUS BANNER ── */}
+      {apiOnline === false && (
+        <div className="fixed top-16 inset-x-0 z-40 flex items-center justify-center gap-3 px-4 py-2.5 text-xs font-medium" style={{ background: "rgba(239,68,68,0.12)", borderBottom: "1px solid rgba(239,68,68,0.25)", color: "#fca5a5" }}>
+          <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
+          Voice playback unavailable — backend is restarting on Railway. The rest of the demo works perfectly. Retry in ~60s.
+        </div>
+      )}
+      {apiOnline === true && (
+        <div className="fixed top-16 inset-x-0 z-40 flex items-center justify-center gap-3 px-4 py-2.5 text-xs font-medium" style={{ background: "rgba(16,185,129,0.08)", borderBottom: "1px solid rgba(16,185,129,0.2)", color: "#6ee7b7" }}>
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          Backend online — all voice features active. Click any language card to hear live AI audio.
+        </div>
+      )}
 
       {/* ── HERO ── */}
       <section className="relative pt-36 pb-16 px-6 overflow-hidden">
@@ -285,7 +330,7 @@ export default function DemoPage() {
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {VOICE_DEMOS.map((d) => (
-              <VoiceCard key={d.code} demo={d} apiBase={API_BASE} />
+              <VoiceCard key={d.code} demo={d} apiBase={API_BASE} apiOnline={apiOnline === true} />
             ))}
           </div>
           <p className="text-center text-xs text-white/20 mt-6">
