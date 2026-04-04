@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import field_validator
 from typing import List
 
 
@@ -14,6 +15,24 @@ class Settings(BaseSettings):
 
     DATABASE_URL: str = "postgresql+asyncpg://bolo:bolo@localhost:5432/bolo"
     DATABASE_SYNC_URL: str = "postgresql://bolo:bolo@localhost:5432/bolo"
+
+    @field_validator("DATABASE_URL", mode="before")
+    @classmethod
+    def fix_async_db_url(cls, v: str) -> str:
+        if v.startswith("postgresql://"):
+            return v.replace("postgresql://", "postgresql+asyncpg://", 1)
+        if v.startswith("postgres://"):
+            return v.replace("postgres://", "postgresql+asyncpg://", 1)
+        return v
+
+    @field_validator("DATABASE_SYNC_URL", mode="before")
+    @classmethod
+    def fix_sync_db_url(cls, v: str) -> str:
+        if v.startswith("postgresql+asyncpg://"):
+            return v.replace("postgresql+asyncpg://", "postgresql://", 1)
+        if v.startswith("postgres://"):
+            return v.replace("postgres://", "postgresql://", 1)
+        return v
 
     REDIS_URL: str = "redis://localhost:6379/0"
 
@@ -72,6 +91,8 @@ class Settings(BaseSettings):
         "http://localhost:3000",
         "http://localhost:8000",
         "https://app.bolo.com",
+        "https://frontend-two-mocha-50.vercel.app",
+        "https://*.vercel.app",
     ]
 
     RATE_LIMIT_DEFAULT: str = "100/minute"
