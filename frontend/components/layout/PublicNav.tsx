@@ -10,10 +10,11 @@ const NAV_LINKS = [
   { href: "/use-cases", label: "Use Cases" },
   { href: "/pricing", label: "Pricing" },
   { href: "/about", label: "About" },
+  { href: "/demo", label: "Demo", highlight: true },
 ];
 
 interface PublicNavProps {
-  active?: "home" | "features" | "use-cases" | "pricing" | "about";
+  active?: "home" | "features" | "use-cases" | "pricing" | "about" | "demo";
 }
 
 export default function PublicNav({ active }: PublicNavProps) {
@@ -24,7 +25,8 @@ export default function PublicNav({ active }: PublicNavProps) {
     active === "features" ? "/features" :
     active === "use-cases" ? "/use-cases" :
     active === "pricing" ? "/pricing" :
-    active === "about" ? "/about" : null;
+    active === "about" ? "/about" :
+    active === "demo" ? "/demo" : null;
 
   return (
     <>
@@ -46,14 +48,25 @@ export default function PublicNav({ active }: PublicNavProps) {
 
           {/* Desktop links */}
           <div className="hidden md:flex items-center gap-8 text-sm text-white/50">
-            {NAV_LINKS.map(({ href, label }) => (
-              <Link
-                key={href}
-                href={href}
-                className={`transition-colors ${href === activeHref ? "text-white font-medium" : "hover:text-white"}`}
-              >
-                {label}
-              </Link>
+            {NAV_LINKS.map(({ href, label, highlight }) => (
+              highlight ? (
+                <Link
+                  key={href}
+                  href={href}
+                  className="px-3 py-1.5 rounded-lg text-[13px] font-semibold text-white transition-all hover:-translate-y-px"
+                  style={{ background: "linear-gradient(135deg, #FF6B00, #f97316)", boxShadow: "0 2px 12px rgba(255,107,0,0.3)" }}
+                >
+                  {label}
+                </Link>
+              ) : (
+                <Link
+                  key={href}
+                  href={href}
+                  className={`transition-colors ${href === activeHref ? "text-white font-medium" : "hover:text-white"}`}
+                >
+                  {label}
+                </Link>
+              )
             ))}
           </div>
 
