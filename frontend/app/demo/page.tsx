@@ -449,7 +449,7 @@ export default function DemoPage() {
           <div className="text-center mb-12">
             <p className="text-xs text-white/30 font-semibold tracking-widest uppercase mb-3">Market Opportunity</p>
             <h2 className="font-serif text-4xl md:text-5xl text-white mb-3">Every industry needs this</h2>
-            <p className="text-white/40 text-base max-w-xl mx-auto">India's Tier 2 & 3 markets are the next $1T opportunity. They don't speak English.</p>
+            <p className="text-white/40 text-base max-w-xl mx-auto">{"India's Tier 2 & 3 markets are the next $1T opportunity. They don't speak English."}</p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             {USE_CASES.map(({ icon: Icon, color, industry, value, example }) => (
@@ -579,7 +579,7 @@ export default function DemoPage() {
               <p className="text-xs text-white/30 font-semibold uppercase tracking-widest mb-4">5-Minute Integration</p>
               <h2 className="font-serif text-4xl text-white mb-4 leading-tight">
                 One script tag.<br />
-                <span className="italic text-white/45">Your brand's voice.</span>
+                <span className="italic text-white/45">{"Your brand's voice."}</span>
               </h2>
               <p className="text-white/45 text-base leading-relaxed mb-6">
                 Copy this into your website. Configure language, voice, and colors. Go live in minutes. No engineering team needed.

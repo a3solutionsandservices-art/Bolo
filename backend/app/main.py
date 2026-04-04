@@ -15,7 +15,7 @@ from slowapi.errors import RateLimitExceeded
 
 from app.core.config import settings
 from app.core.limiter import limiter
-from app.api import auth, voice, conversation, knowledge, analytics, billing, tenants, telephony, voice_clones, marketplace
+from app.api import auth, voice, conversation, knowledge, analytics, billing, tenants, telephony, voice_clones, marketplace, demo
 
 _MEDIA_DIR = Path("/app/media")
 
@@ -82,6 +82,7 @@ app.include_router(tenants.router, prefix="/api/v1")
 app.include_router(telephony.router, prefix="/api/v1")
 app.include_router(voice_clones.router, prefix="/api/v1")
 app.include_router(marketplace.router, prefix="/api/v1")
+app.include_router(demo.router, prefix="/api/v1")
 
 app.mount("/media", StaticFiles(directory=str(_MEDIA_DIR), check_dir=False), name="media")
 
