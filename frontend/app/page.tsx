@@ -4,8 +4,10 @@ import Link from "next/link";
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/auth-store";
-import { Play, Volume2, Sparkles, ArrowRight, Mic } from "lucide-react";
+import { Play, Volume2, Sparkles, ArrowRight, Mic, Loader2 } from "lucide-react";
 import PublicNav from "@/components/layout/PublicNav";
+import { api } from "@/lib/api";
+import { parseJwt } from "@/lib/jwt";
 
 const LANGUAGES = [
   { name: "हिंदी", label: "Hindi" },
@@ -52,12 +54,13 @@ function WaveformVisualizer({ active }: { active: boolean }) {
 }
 
 export default function LandingPage() {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, login } = useAuthStore();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [activeLang, setActiveLang] = useState(0);
   const [demoStep, setDemoStep] = useState(-1);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [demoLoading, setDemoLoading] = useState(false);
   const demoTimers = useRef<NodeJS.Timeout[]>([]);
 
   useEffect(() => { setMounted(true); }, []);
@@ -69,6 +72,25 @@ export default function LandingPage() {
     const t = setInterval(() => setActiveLang((p) => (p + 1) % LANGUAGES.length), 1600);
     return () => clearInterval(t);
   }, []);
+
+  const launchDemo = async () => {
+    if (demoLoading) return;
+    setDemoLoading(true);
+    try {
+      const { data: tokenData } = await api.auth.login("demo@bolo.ai", "BoloDemo@2026!");
+      const payload = parseJwt(tokenData.access_token);
+      login(tokenData.access_token, tokenData.refresh_token, {
+        email: "demo@bolo.ai",
+        full_name: "Bolo Demo",
+        role: (payload.role as string) || "tenant_admin",
+      }, payload.tenant_id as string);
+      router.push("/dashboard");
+    } catch {
+      router.push("/register");
+    } finally {
+      setDemoLoading(false);
+    }
+  };
 
   const runDemo = () => {
     if (isPlaying) return;
@@ -126,16 +148,32 @@ export default function LandingPage() {
 
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-20">
-            <Link href="/register" className="group flex items-center gap-2.5 px-7 py-3.5 bg-brand-600 hover:bg-brand-500 text-white font-semibold rounded-xl transition-all shadow-xl shadow-brand-600/30 hover:shadow-brand-500/40 hover:-translate-y-0.5 text-[15px]">
+            <button
+              onClick={launchDemo}
+              disabled={demoLoading}
+              className="group flex items-center gap-2.5 px-7 py-3.5 text-white font-semibold rounded-xl transition-all text-[15px] disabled:opacity-70"
+              style={{ background: "linear-gradient(135deg, #FF6B00, #f97316)", boxShadow: "0 4px 24px rgba(255,107,0,0.35)" }}
+            >
+              {demoLoading
+                ? <Loader2 className="w-4 h-4 animate-spin" />
+                : <Play className="w-4 h-4" />
+              }
+              {demoLoading ? "Loading demo…" : "Try Live Demo"}
+            </button>
+            <Link href="/register" className="group flex items-center gap-2.5 px-7 py-3.5 glass-dark hover:bg-white/[0.07] text-white/70 hover:text-white font-medium rounded-xl transition-all text-[15px]">
               Start building free
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </Link>
+          </div>
+
+          {/* Demo hint */}
+          <div className="flex justify-center mb-12">
             <button
               onClick={runDemo}
-              className="flex items-center gap-2.5 px-7 py-3.5 glass-dark hover:bg-white/[0.07] text-white/80 hover:text-white font-medium rounded-xl transition-all text-[15px]"
+              className="flex items-center gap-2 text-sm text-white/30 hover:text-white/60 transition-colors"
             >
-              <Play className="w-4 h-4 text-brand-400" />
-              Watch live demo
+              <Play className="w-3 h-3" />
+              Watch animated preview instead
             </button>
           </div>
 
