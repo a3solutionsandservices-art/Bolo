@@ -10,6 +10,7 @@ from app.models.subscription import Subscription
 from app.models.webhook import Webhook
 from app.models.voice_artist import VoiceArtist, VoiceLicense
 from app.models.data_contribution import DataContribution
+from app.models.missed_call import MissedCallLog
 
 __all__ = [
     "Tenant",
@@ -26,4 +27,5 @@ __all__ = [
     "VoiceArtist",
     "VoiceLicense",
     "DataContribution",
+    "MissedCallLog",
 ]
