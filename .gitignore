@@ -71,7 +71,7 @@ audio_cache/
 *.ftz
 
 # Whisper models (large)
-models/
+backend/models/
 *.pt
 
 # Alembic versions (keep structure, ignore local dev migrations)
