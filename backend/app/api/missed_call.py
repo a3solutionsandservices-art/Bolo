@@ -9,19 +9,43 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.core.rag import get_rag_agent
-from app.core.translation import get_translation_service
 from app.db.base import get_db
 from app.models.missed_call import CallIntent, MissedCallLog, MissedCallStatus
-from app.models.conversation import Conversation, ConversationMode, ConversationStatus
 from app.models.message import Message, MessageRole
 from app.services.missed_call_service import (
     build_exotel_payload,
     build_twilio_payload,
+    detect_language_from_number,
     finalize_call,
+    get_closing,
+    get_greeting,
+    get_intent_response,
     trigger_outbound_call,
+    _classify_intent,
 )
-from app.api.telephony import TWILIO_LANG_MAP, _twiml_say_and_gather, _twiml_say_and_hangup
+from app.api.telephony import TWILIO_LANG_MAP
+
+
+def _mc_say_and_gather(text: str, action_url: str, language: str = "hi-IN", timeout: int = 6) -> str:
+    return (
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        "<Response>"
+        f'<Say language="{language}">{text}</Say>'
+        f'<Gather input="speech" action="{action_url}" method="POST" '
+        f'language="{language}" speechTimeout="auto" timeout="{timeout}"></Gather>'
+        f'<Redirect method="POST">{action_url}</Redirect>'
+        "</Response>"
+    )
+
+
+def _mc_say_and_hangup(text: str, language: str = "hi-IN") -> str:
+    return (
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        "<Response>"
+        f'<Say language="{language}">{text}</Say>'
+        "<Hangup/>"
+        "</Response>"
+    )
 
 logger = logging.getLogger(__name__)
 
@@ -209,6 +233,9 @@ async def exotel_missed_call_webhook(
     return Response(status_code=204)
 
 
+_MAX_TURNS = 2
+
+
 @router.post("/callback-gather/{log_id}")
 async def callback_gather(
     log_id: uuid.UUID,
@@ -220,88 +247,103 @@ async def callback_gather(
     result = await db.execute(select(MissedCallLog).where(MissedCallLog.id == log_id))
     log = result.scalar_one_or_none()
     if not log:
-        return Response(content=_twiml_say_and_hangup("Sorry, could not find your record.", "en-IN"), media_type="application/xml")
+        return Response(
+            content=_mc_say_and_hangup("Sorry, we could not find your record. Please call us back.", "en-IN"),
+            media_type="application/xml",
+        )
 
     action_url = f"{settings.API_BASE_URL}/api/v1/missed-call/callback-gather/{log_id}"
-    lang_code = TWILIO_LANG_MAP.get(log.language_detected, "hi-IN")
+    transcript = log.conversation_transcript or []
+    user_turns = [t for t in transcript if t.get("role") == "user"]
+    turn_count = len(user_turns)
 
+    # ── PHASE 0: GREET ────────────────────────────────────────────────────────
+    # First call with no speech — infer language from number, play greeting
     if not SpeechResult.strip():
-        greeting = "Namaste! Aapka missed call mila. Apna sawaal batayein."
-        return Response(content=_twiml_say_and_gather(greeting, action_url, lang_code), media_type="application/xml")
-
-    conv_result = await db.execute(
-        select(Conversation).where(Conversation.session_id == f"missed-call-{log_id}")
-    )
-    conv = conv_result.scalar_one_or_none()
-    if not conv:
-        conv = Conversation(
-            tenant_id=log.tenant_id,
-            session_id=f"missed-call-{log_id}",
-            mode=ConversationMode.AGENT,
-            status=ConversationStatus.ACTIVE,
-            source_language=log.language_detected,
-            target_language="hi",
-            caller_id=log.caller_number,
-            caller_metadata={"missed_call_log_id": str(log_id)},
+        lang = detect_language_from_number(log.caller_number)
+        if lang != log.language_detected:
+            log.language_detected = lang
+            await db.commit()
+        lang_code = TWILIO_LANG_MAP.get(lang, "hi-IN")
+        greeting = get_greeting(lang)
+        logger.info("PHASE=GREET | log=%s | lang=%s | caller=%s", log_id, lang, log.caller_number)
+        return Response(
+            content=_mc_say_and_gather(greeting, action_url, lang_code, timeout=8),
+            media_type="application/xml",
         )
-        db.add(conv)
-        await db.flush()
 
-    user_msg = Message(
-        conversation_id=conv.id,
-        role=MessageRole.USER,
-        content_original=SpeechResult,
+    # ── Update language from first speech turn (Sarvam STT detects it) ────────
+    speech = SpeechResult.strip()
+    lang = log.language_detected
+    lang_code = TWILIO_LANG_MAP.get(lang, "hi-IN")
+
+    # ── PHASE 1: DETECT INTENT FROM REASON ───────────────────────────────────
+    if turn_count == 0:
+        intent, confidence = _classify_intent(speech)
+        logger.info(
+            "PHASE=REASON | log=%s | speech='%s' | intent=%s (%.0f%%)",
+            log_id, speech[:60], intent, confidence * 100,
+        )
+
+        log.intent = intent
+        log.intent_confidence = confidence
+
+        transcript.append({"role": "user", "content": speech, "turn": 1})
+        response_text = get_intent_response(intent, lang)
+        transcript.append({"role": "assistant", "content": response_text, "turn": 1, "intent": intent})
+        log.conversation_transcript = transcript
+        await db.commit()
+
+        _store_message(db, log, conv_session_id=f"missed-call-{log_id}",
+                       role="user", content=speech, confidence=float(Confidence or 0))
+        _store_message(db, log, conv_session_id=f"missed-call-{log_id}",
+                       role="assistant", content=response_text)
+        await db.flush()
+        await db.commit()
+
+        return Response(
+            content=_mc_say_and_gather(response_text, action_url, lang_code, timeout=6),
+            media_type="application/xml",
+        )
+
+    # ── PHASE 2: CLOSE ───────────────────────────────────────────────────────
+    transcript.append({"role": "user", "content": speech, "turn": turn_count + 1})
+    closing = get_closing(lang)
+    transcript.append({"role": "assistant", "content": closing, "turn": turn_count + 1, "phase": "close"})
+    log.conversation_transcript = transcript
+    log.status = MissedCallStatus.CALLBACK_COMPLETED
+    log.callback_completed_at = datetime.now(timezone.utc)
+    await db.commit()
+
+    logger.info("PHASE=CLOSE | log=%s | total_turns=%d | intent=%s", log_id, turn_count + 1, log.intent)
+
+    return Response(
+        content=_mc_say_and_hangup(closing, lang_code),
+        media_type="application/xml",
+    )
+
+
+def _store_message(
+    db: AsyncSession,
+    log: MissedCallLog,
+    conv_session_id: str,
+    role: str,
+    content: str,
+    confidence: float = 0.0,
+) -> None:
+    from sqlalchemy import select as _select
+    msg_role = MessageRole.USER if role == "user" else MessageRole.ASSISTANT
+    msg = Message(
+        conversation_id=None,
+        role=msg_role,
+        content_original=content,
         detected_language=log.language_detected,
         source_language=log.language_detected,
         target_language="en",
-        stt_confidence=float(Confidence) if Confidence else 0.0,
+        stt_confidence=confidence,
+        caller_metadata={"missed_call_log_id": str(log.id), "session_id": conv_session_id},
     )
-    db.add(user_msg)
-    await db.flush()
-
-    translator = get_translation_service()
-    rag = get_rag_agent()
-
-    question_en = SpeechResult
-    if log.language_detected != "en":
-        trans = await translator.translate(SpeechResult, log.language_detected, "en")
-        question_en = trans.translated_text
-
-    namespace = str(log.tenant_id) if log.tenant_id else "default"
-    response_en, _ = await rag.generate_response(
-        question=question_en,
-        namespace=namespace,
-        conversation_history=[],
-        tenant_name=namespace,
-        response_language="en",
-    )
-
-    response_native = response_en
-    if log.language_detected != "en":
-        trans_back = await translator.translate(response_en, "en", log.language_detected)
-        response_native = trans_back.translated_text
-
-    assistant_msg = Message(
-        conversation_id=conv.id,
-        role=MessageRole.ASSISTANT,
-        content_original=response_en,
-        content_translated=response_native,
-        source_language="en",
-        target_language=log.language_detected,
-    )
-    db.add(assistant_msg)
-    await db.commit()
-
-    existing = log.conversation_transcript or []
-    existing.append({"role": "user", "content": SpeechResult})
-    existing.append({"role": "assistant", "content": response_native})
-    log.conversation_transcript = existing
-    await db.commit()
-
-    return Response(
-        content=_twiml_say_and_gather(response_native, action_url, lang_code),
-        media_type="application/xml",
-    )
+    db.add(msg)
 
 
 @router.post("/callback-status/{log_id}")
