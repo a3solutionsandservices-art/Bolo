@@ -240,22 +240,105 @@ async def trigger_outbound_call(log: MissedCallLog, db: AsyncSession) -> bool:
         return False
 
 
+# ── Structured entity extraction ──────────────────────────────────────────────
+
+async def _extract_structured_entities(
+    transcript_turns: list[dict], language: str, intent: CallIntent
+) -> dict:
+    user_text = " ".join(
+        t.get("content", "") for t in transcript_turns if t.get("role") == "user"
+    )
+    if not user_text.strip() or not settings.OPENAI_API_KEY:
+        return {}
+
+    try:
+        import openai
+        client = openai.AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+        response = await client.chat.completions.create(
+            model=settings.SENTIMENT_MODEL,
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You are an entity extractor for Indian voice calls. "
+                        f"Language: {language}. Detected intent: {intent}. "
+                        "Extract these fields if mentioned (use null if absent): "
+                        "caller_name (person's name), "
+                        "requested_service (service or product they want), "
+                        "requested_time (date/time for booking if any), "
+                        "location (city or area if mentioned). "
+                        'Respond as JSON only: {"caller_name": null, "requested_service": null, '
+                        '"requested_time": null, "location": null}'
+                    ),
+                },
+                {"role": "user", "content": f"Transcript:\n{user_text}"},
+            ],
+            max_tokens=150,
+            response_format={"type": "json_object"},
+        )
+        data = json.loads(response.choices[0].message.content or "{}")
+        return {k: v for k, v in data.items() if v is not None}
+    except Exception as exc:
+        logger.warning("Entity extraction failed: %s", exc)
+        return {}
+
+
 # ── Post-call finalization ────────────────────────────────────────────────────
 
-async def finalize_call(log: MissedCallLog, transcript_turns: list[dict[str, str]], db: AsyncSession) -> None:
-    full_text = " ".join(t.get("content", "") for t in transcript_turns if t.get("role") == "user")
-    intent, confidence, entities = await _extract_intent_via_llm(full_text, log.language_detected)
+async def finalize_call(
+    log: MissedCallLog,
+    transcript_turns: list[dict[str, str]],
+    db: AsyncSession,
+    call_succeeded: bool = True,
+) -> None:
+    from app.services.missed_call_storage import MissedCallResult, persist_result
+
+    user_text = " ".join(t.get("content", "") for t in transcript_turns if t.get("role") == "user")
+    intent, confidence, _ = await _extract_intent_via_llm(user_text, log.language_detected)
+    entities = await _extract_structured_entities(transcript_turns, log.language_detected, intent)
 
     log.intent = intent
     log.intent_confidence = confidence
     log.extracted_entities = entities
     log.conversation_transcript = transcript_turns
-    log.status = MissedCallStatus.CALLBACK_COMPLETED
+    log.status = MissedCallStatus.CALLBACK_COMPLETED if call_succeeded else MissedCallStatus.CALLBACK_FAILED
     log.callback_completed_at = datetime.now(timezone.utc)
     await db.commit()
+
     logger.info(
-        "Finalized log %s — intent=%s confidence=%.0f%% entities=%s",
-        log.id, intent, confidence * 100, entities,
+        "FINALIZED | log=%s | intent=%s (%.0f%%) | name=%s | service=%s | time=%s | status=%s",
+        log.id,
+        intent,
+        confidence * 100,
+        entities.get("caller_name", "-"),
+        entities.get("requested_service", "-"),
+        entities.get("requested_time", "-"),
+        log.status,
+    )
+
+    result = MissedCallResult(
+        log_id=str(log.id),
+        caller_number=log.caller_number,
+        called_number=log.called_number,
+        provider=log.provider,
+        intent=intent,
+        intent_confidence=confidence,
+        caller_name=entities.get("caller_name"),
+        requested_service=entities.get("requested_service"),
+        requested_time=entities.get("requested_time"),
+        language=log.language_detected,
+        status=log.status,
+        received_at=log.received_at.isoformat() if log.received_at else "",
+        completed_at=log.callback_completed_at.isoformat() if log.callback_completed_at else None,
+        transcript_turns=len([t for t in transcript_turns if t.get("role") == "user"]),
+        raw_entities=entities,
+    )
+
+    storage_results = await persist_result(result)
+
+    logger.info(
+        "CONFIRMATION | log=%s | success=%s | storage=%s",
+        log.id, call_succeeded, storage_results,
     )
 
 

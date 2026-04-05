@@ -361,11 +361,13 @@ async def callback_status(
     if CallStatus in ("completed",):
         transcript = log.conversation_transcript or []
         if transcript:
-            await finalize_call(log, transcript, db)
+            await finalize_call(log, transcript, db, call_succeeded=True)
         else:
             log.status = MissedCallStatus.CALLBACK_COMPLETED
             await db.commit()
     elif CallStatus in ("no-answer", "busy", "failed", "canceled"):
+        transcript = log.conversation_transcript or []
+        await finalize_call(log, transcript, db, call_succeeded=False)
         log.status = MissedCallStatus.NO_ANSWER
         await db.commit()
 
