@@ -19,6 +19,8 @@ class Settings(BaseSettings):
     @field_validator("DATABASE_URL", mode="before")
     @classmethod
     def fix_async_db_url(cls, v: str) -> str:
+        if not v or not v.strip():
+            return "postgresql+asyncpg://bolo:bolo@localhost:5432/bolo"
         if v.startswith("postgresql://"):
             return v.replace("postgresql://", "postgresql+asyncpg://", 1)
         if v.startswith("postgres://"):
@@ -28,6 +30,8 @@ class Settings(BaseSettings):
     @field_validator("DATABASE_SYNC_URL", mode="before")
     @classmethod
     def fix_sync_db_url(cls, v: str) -> str:
+        if not v or not v.strip():
+            return "postgresql://bolo:bolo@localhost:5432/bolo"
         if v.startswith("postgresql+asyncpg://"):
             return v.replace("postgresql+asyncpg://", "postgresql://", 1)
         if v.startswith("postgres://"):
