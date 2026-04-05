@@ -1,0 +1,312 @@
+"use client";
+
+import { useState, useEffect, useRef } from "react";
+import { Phone, PhoneOff, PhoneMissed, PhoneIncoming, CheckCircle2, Calendar, HelpCircle, X } from "lucide-react";
+
+type SimPhase =
+  | "idle"
+  | "incoming"
+  | "missed"
+  | "countdown"
+  | "calling"
+  | "conversation"
+  | "booked"
+  | "inquiry_done";
+
+const MASKED_NUMBER = "+91 98XXX XXXXX";
+
+function Ring() {
+  return (
+    <div className="relative flex items-center justify-center">
+      <span className="absolute inline-flex h-20 w-20 rounded-full bg-emerald-500/20 animate-ping" />
+      <span className="absolute inline-flex h-14 w-14 rounded-full bg-emerald-500/30 animate-ping" style={{ animationDelay: "200ms" }} />
+      <div className="relative z-10 w-16 h-16 rounded-full bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/40">
+        <PhoneIncoming className="w-7 h-7 text-white" />
+      </div>
+    </div>
+  );
+}
+
+function PulseOrb({ color }: { color: string }) {
+  return (
+    <div className="relative flex items-center justify-center">
+      <span className={`absolute inline-flex h-20 w-20 rounded-full ${color} opacity-30 animate-ping`} />
+      <span className={`absolute inline-flex h-14 w-14 rounded-full ${color} opacity-40 animate-ping`} style={{ animationDelay: "150ms" }} />
+    </div>
+  );
+}
+
+export default function MissedCallSimulator({ onClose }: { onClose?: () => void }) {
+  const [phase, setPhase] = useState<SimPhase>("idle");
+  const [count, setCount] = useState(3);
+  const [chatLines, setChatLines] = useState<{ role: "ai" | "user"; text: string }[]>([]);
+  const chatRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight;
+  }, [chatLines]);
+
+  const start = () => {
+    setPhase("incoming");
+    setChatLines([]);
+    setCount(3);
+  };
+
+  useEffect(() => {
+    if (phase === "incoming") {
+      const t = setTimeout(() => setPhase("missed"), 2200);
+      return () => clearTimeout(t);
+    }
+    if (phase === "missed") {
+      const t = setTimeout(() => setPhase("countdown"), 800);
+      return () => clearTimeout(t);
+    }
+  }, [phase]);
+
+  useEffect(() => {
+    if (phase !== "countdown") return;
+    if (count === 0) {
+      setPhase("calling");
+      return;
+    }
+    const t = setTimeout(() => setCount((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [phase, count]);
+
+  useEffect(() => {
+    if (phase !== "calling") return;
+    const t = setTimeout(() => {
+      setPhase("conversation");
+      setChatLines([{
+        role: "ai",
+        text: "Namaste! Bolo AI calling from City Clinic. We noticed your call was missed. How can we help you today?",
+      }]);
+    }, 2000);
+    return () => clearTimeout(t);
+  }, [phase]);
+
+  const choose = (intent: "booking" | "inquiry") => {
+    if (intent === "booking") {
+      const lines: typeof chatLines = [
+        { role: "user", text: "I wanted to book an appointment with Dr. Mehta." },
+        { role: "ai", text: "Of course! Dr. Mehta has slots available tomorrow at 10 AM and 3 PM. Which works for you?" },
+        { role: "user", text: "10 AM please." },
+        { role: "ai", text: "✅ Perfect! Appointment booked for tomorrow, 10 AM with Dr. Mehta. You'll receive a confirmation SMS shortly." },
+      ];
+      let delay = 0;
+      lines.forEach((line, i) => {
+        delay += i === 0 ? 0 : 900;
+        setTimeout(() => {
+          setChatLines((prev) => [...prev, line]);
+          if (i === lines.length - 1) setTimeout(() => setPhase("booked"), 1200);
+        }, delay);
+      });
+    } else {
+      const lines: typeof chatLines = [
+        { role: "user", text: "I wanted to ask about the OPD charges." },
+        { role: "ai", text: "OPD consultation is ₹300 for general and ₹500 for specialist. Would you like to book an appointment as well?" },
+        { role: "user", text: "No, that's all. Thank you." },
+        { role: "ai", text: "Happy to help! Feel free to call us anytime. Have a healthy day!" },
+      ];
+      let delay = 0;
+      lines.forEach((line, i) => {
+        delay += i === 0 ? 0 : 900;
+        setTimeout(() => {
+          setChatLines((prev) => [...prev, line]);
+          if (i === lines.length - 1) setTimeout(() => setPhase("inquiry_done"), 1200);
+        }, delay);
+      });
+    }
+  };
+
+  const reset = () => {
+    setPhase("idle");
+    setCount(3);
+    setChatLines([]);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={(e) => { if (e.target === e.currentTarget) { reset(); onClose?.(); } }}>
+      <div className="relative w-full max-w-md bg-[#0d1117] border border-white/10 rounded-3xl overflow-hidden shadow-2xl">
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.07]">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-xs font-mono text-white/40">Bolo Missed Call Recovery · Live Simulation</span>
+          </div>
+          <button onClick={() => { reset(); onClose?.(); }} className="text-white/30 hover:text-white/70 transition-colors">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="px-6 py-8 min-h-[420px] flex flex-col items-center justify-center">
+
+          {/* IDLE */}
+          {phase === "idle" && (
+            <div className="text-center space-y-6">
+              <div className="w-20 h-20 mx-auto rounded-2xl bg-brand-600/20 border border-brand-500/30 flex items-center justify-center">
+                <Phone className="w-9 h-9 text-brand-400" />
+              </div>
+              <div>
+                <p className="text-white font-semibold text-lg mb-1">Ready to simulate</p>
+                <p className="text-white/40 text-sm">Watch Bolo recover a missed clinic call in real-time</p>
+              </div>
+              <button
+                onClick={start}
+                className="px-8 py-3.5 rounded-xl font-semibold text-white text-sm transition-all"
+                style={{ background: "linear-gradient(135deg,#FF6B00,#f97316)", boxShadow: "0 4px 20px rgba(255,107,0,0.35)" }}
+              >
+                ▶ Start Simulation
+              </button>
+            </div>
+          )}
+
+          {/* INCOMING */}
+          {phase === "incoming" && (
+            <div className="text-center space-y-5">
+              <Ring />
+              <div>
+                <p className="text-white/50 text-xs font-mono mb-1">INCOMING CALL</p>
+                <p className="text-white font-semibold text-xl">{MASKED_NUMBER}</p>
+                <p className="text-white/40 text-sm mt-1">City Clinic Helpline</p>
+              </div>
+              <div className="flex items-center gap-2 justify-center text-white/30 text-xs animate-pulse">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
+                Ringing…
+              </div>
+            </div>
+          )}
+
+          {/* MISSED */}
+          {phase === "missed" && (
+            <div className="text-center space-y-5">
+              <div className="w-16 h-16 mx-auto rounded-full bg-red-500/20 border border-red-500/30 flex items-center justify-center">
+                <PhoneMissed className="w-7 h-7 text-red-400" />
+              </div>
+              <div>
+                <p className="text-red-400 font-semibold text-lg">Call Missed</p>
+                <p className="text-white/40 text-sm mt-1">{MASKED_NUMBER}</p>
+              </div>
+              <p className="text-white/30 text-xs">Bolo detected a missed call…</p>
+            </div>
+          )}
+
+          {/* COUNTDOWN */}
+          {phase === "countdown" && (
+            <div className="text-center space-y-5">
+              <div className="relative flex items-center justify-center">
+                <PulseOrb color="bg-brand-500" />
+                <div className="relative z-10 w-16 h-16 rounded-full bg-brand-600/30 border border-brand-500/40 flex items-center justify-center">
+                  <span className="text-3xl font-bold text-brand-300">{count}</span>
+                </div>
+              </div>
+              <div>
+                <p className="text-brand-300 font-semibold text-lg">AI Callback in {count}s</p>
+                <p className="text-white/40 text-sm mt-1">Preparing personalised callback…</p>
+              </div>
+            </div>
+          )}
+
+          {/* CALLING */}
+          {phase === "calling" && (
+            <div className="text-center space-y-5">
+              <div className="relative flex items-center justify-center">
+                <PulseOrb color="bg-violet-500" />
+                <div className="relative z-10 w-16 h-16 rounded-full bg-violet-600/30 border border-violet-500/40 flex items-center justify-center">
+                  <Phone className="w-7 h-7 text-violet-300 animate-bounce" />
+                </div>
+              </div>
+              <div>
+                <p className="text-violet-300 font-semibold text-lg">AI Callback Calling…</p>
+                <p className="text-white/40 text-sm mt-1">Connecting to {MASKED_NUMBER}</p>
+              </div>
+            </div>
+          )}
+
+          {/* CONVERSATION */}
+          {phase === "conversation" && (
+            <div className="w-full space-y-4">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-xs text-emerald-400 font-mono">Call Connected · AI speaking in Hindi/English</span>
+              </div>
+
+              <div ref={chatRef} className="space-y-3 max-h-52 overflow-y-auto pr-1 scrollbar-thin">
+                {chatLines.map((line, i) => (
+                  <div key={i} className={`flex gap-2 animate-fade-in ${line.role === "ai" ? "flex-row" : "flex-row-reverse"}`}>
+                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-bold shrink-0 ${line.role === "ai" ? "bg-brand-600/30 text-brand-300 border border-brand-500/30" : "bg-white/10 text-white/50"}`}>
+                      {line.role === "ai" ? "AI" : "P"}
+                    </div>
+                    <div className={`max-w-[80%] px-3 py-2 rounded-xl text-xs leading-relaxed ${line.role === "ai" ? "bg-brand-600/15 border border-brand-500/20 text-white/85" : "bg-white/[0.07] border border-white/[0.08] text-white/70"}`}>
+                      {line.text}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {chatLines.length === 1 && (
+                <div className="space-y-2 pt-2">
+                  <p className="text-xs text-white/30 text-center mb-3">Patient selects reason for call:</p>
+                  <button
+                    onClick={() => choose("booking")}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-brand-600/15 border border-brand-500/25 hover:bg-brand-600/25 text-white/80 text-sm transition-all"
+                  >
+                    <Calendar className="w-4 h-4 text-brand-400 shrink-0" />
+                    Book Appointment
+                  </button>
+                  <button
+                    onClick={() => choose("inquiry")}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] text-white/60 text-sm transition-all"
+                  >
+                    <HelpCircle className="w-4 h-4 text-white/40 shrink-0" />
+                    General Inquiry
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* BOOKED */}
+          {phase === "booked" && (
+            <div className="text-center space-y-5">
+              <div className="w-20 h-20 mx-auto rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center">
+                <CheckCircle2 className="w-10 h-10 text-emerald-400" />
+              </div>
+              <div>
+                <p className="text-emerald-400 font-bold text-xl">Appointment Booked ✔</p>
+                <p className="text-white/50 text-sm mt-2">Dr. Mehta · Tomorrow 10 AM</p>
+                <p className="text-white/30 text-xs mt-1">Confirmation SMS sent to patient</p>
+              </div>
+              <div className="px-4 py-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-300/70">
+                Total time: ~45 seconds · Zero human involvement
+              </div>
+              <button onClick={reset} className="text-xs text-white/30 hover:text-white/60 transition-colors underline underline-offset-2">
+                Run again
+              </button>
+            </div>
+          )}
+
+          {/* INQUIRY DONE */}
+          {phase === "inquiry_done" && (
+            <div className="text-center space-y-5">
+              <div className="w-20 h-20 mx-auto rounded-full bg-brand-500/20 border border-brand-500/30 flex items-center justify-center">
+                <CheckCircle2 className="w-10 h-10 text-brand-400" />
+              </div>
+              <div>
+                <p className="text-brand-300 font-bold text-xl">Query Resolved ✔</p>
+                <p className="text-white/50 text-sm mt-2">Patient received all information</p>
+                <p className="text-white/30 text-xs mt-1">No hold time · No missed opportunity</p>
+              </div>
+              <button onClick={reset} className="text-xs text-white/30 hover:text-white/60 transition-colors underline underline-offset-2">
+                Run again
+              </button>
+            </div>
+          )}
+
+        </div>
+      </div>
+    </div>
+  );
+}

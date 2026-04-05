@@ -1,67 +1,43 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/auth-store";
-import { Play, Volume2, Sparkles, ArrowRight, Mic, Loader2 } from "lucide-react";
+import {
+  PhoneMissed, ArrowRight, Mic, CheckCircle2, Phone,
+  TrendingUp, IndianRupee, Zap, Shield, Globe, Timer, Play,
+} from "lucide-react";
 import PublicNav from "@/components/layout/PublicNav";
-import { api } from "@/lib/api";
-import { parseJwt } from "@/lib/jwt";
+import MissedCallSimulator from "@/components/MissedCallSimulator";
 
 const LANGUAGES = [
-  { name: "हिंदी", label: "Hindi" },
-  { name: "தமிழ்", label: "Tamil" },
-  { name: "తెలుగు", label: "Telugu" },
-  { name: "বাংলা", label: "Bengali" },
-  { name: "ગુજરાતી", label: "Gujarati" },
-  { name: "मराठी", label: "Marathi" },
-  { name: "ಕನ್ನಡ", label: "Kannada" },
-  { name: "മലയാളം", label: "Malayalam" },
-  { name: "ਪੰਜਾਬੀ", label: "Punjabi" },
-  { name: "ଓଡ଼ିଆ", label: "Odia" },
-  { name: "English", label: "English" },
+  "हिंदी", "தமிழ்", "తెలుగు", "বাংলা", "ਪੰਜਾਬੀ", "ಕನ್ನಡ", "മലയാളം", "ଓଡ଼ିଆ", "English",
 ];
 
-const DEMO_CONVERSATION = [
-  { role: "user", text: "मेरा ऑर्डर कहाँ है?", lang: "Hindi", delay: 0 },
-  { role: "ai", text: "आपका ऑर्डर #4521 रास्ते में है और कल शाम तक पहुँच जाएगा।", lang: "Hindi", delay: 900 },
-  { role: "user", text: "என் ஆர்டர் எங்கே இருக்கிறது?", lang: "Tamil", delay: 1800 },
-  { role: "ai", text: "உங்கள் ஆர்டர் #4521 வழியில் உள்ளது, நாளை மாலைக்குள் வரும்.", lang: "Tamil", delay: 2700 },
+const TRUST_POINTS = [
+  { icon: Phone, text: "Works with Exotel & your existing phone system" },
+  { icon: Globe, text: "Supports Hindi + 10 regional Indian languages" },
+  { icon: Zap, text: "Setup in under 30 minutes — no app required" },
+  { icon: Shield, text: "Data residency in India · DPDP compliant" },
+  { icon: Timer, text: "Average callback time: 3–5 seconds" },
+  { icon: CheckCircle2, text: "No app required for clinic staff" },
 ];
-
-const COMPANIES = ["Razorpay", "Zepto", "PhonePe", "CRED", "Meesho", "Groww", "Slice", "Fi Money", "Nykaa", "Boat", "Lenskart", "Zomato"];
-
-function WaveformVisualizer({ active }: { active: boolean }) {
-  const bars = [4, 8, 14, 10, 18, 12, 20, 9, 15, 11, 7, 16, 13, 19, 8];
-  return (
-    <div className="flex items-center gap-[3px] h-8">
-      {bars.map((height, i) => (
-        <span
-          key={i}
-          className="waveform-bar"
-          style={{
-            height: active ? `${height}px` : "4px",
-            animationDelay: `${i * 80}ms`,
-            animationPlayState: active ? "running" : "paused",
-            background: "rgba(99,102,241,0.8)",
-            transition: "height 0.3s ease",
-          }}
-        />
-      ))}
-    </div>
-  );
-}
 
 export default function LandingPage() {
-  const { isAuthenticated, login } = useAuthStore();
+  const { isAuthenticated } = useAuthStore();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [activeLang, setActiveLang] = useState(0);
-  const [demoStep, setDemoStep] = useState(-1);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [demoLoading, setDemoLoading] = useState(false);
-  const demoTimers = useRef<NodeJS.Timeout[]>([]);
+  const [showSim, setShowSim] = useState(false);
+
+  // Revenue calculator state
+  const [missedPerDay, setMissedPerDay] = useState(10);
+  const [avgBookingValue, setAvgBookingValue] = useState(500);
+  const recoveryRate = 0.65;
+  const workingDays = 26;
+  const monthlyLoss = missedPerDay * avgBookingValue * workingDays;
+  const monthlyRecoverable = Math.round(monthlyLoss * recoveryRate);
 
   useEffect(() => { setMounted(true); }, []);
   useEffect(() => {
@@ -69,180 +45,341 @@ export default function LandingPage() {
   }, [mounted, isAuthenticated, router]);
 
   useEffect(() => {
-    const t = setInterval(() => setActiveLang((p) => (p + 1) % LANGUAGES.length), 1600);
+    const t = setInterval(() => setActiveLang((p) => (p + 1) % LANGUAGES.length), 1800);
     return () => clearInterval(t);
   }, []);
-
-  const launchDemo = async () => {
-    if (demoLoading) return;
-    setDemoLoading(true);
-    try {
-      const { data: tokenData } = await api.auth.login("demo@bolo.ai", "BoloDemo@2026!");
-      const payload = parseJwt(tokenData.access_token);
-      login(tokenData.access_token, tokenData.refresh_token, {
-        email: "demo@bolo.ai",
-        full_name: "Bolo Demo",
-        role: (payload.role as string) || "tenant_admin",
-      }, payload.tenant_id as string);
-      router.push("/dashboard");
-    } catch {
-      router.push("/register");
-    } finally {
-      setDemoLoading(false);
-    }
-  };
-
-  const runDemo = () => {
-    if (isPlaying) return;
-    setIsPlaying(true);
-    setDemoStep(-1);
-    demoTimers.current.forEach(clearTimeout);
-    DEMO_CONVERSATION.forEach((msg, i) => {
-      const t = setTimeout(() => {
-        setDemoStep(i);
-        if (i === DEMO_CONVERSATION.length - 1) {
-          setTimeout(() => setIsPlaying(false), 1200);
-        }
-      }, msg.delay + 400);
-      demoTimers.current.push(t);
-    });
-  };
 
   if (!mounted || isAuthenticated) return null;
 
   return (
     <div className="min-h-screen bg-[#050a14] text-white overflow-x-hidden">
-
       <PublicNav active="home" />
 
-      {/* ── HERO ── */}
-      <section className="relative pt-36 pb-20 px-6">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_50%_-5%,rgba(79,70,229,0.2),transparent)]" />
-        <div className="absolute top-40 left-1/4 w-80 h-80 bg-brand-600/8 rounded-full blur-3xl" />
-        <div className="absolute top-32 right-1/4 w-64 h-64 bg-violet-600/8 rounded-full blur-3xl" />
+      {showSim && <MissedCallSimulator onClose={() => setShowSim(false)} />}
 
-        <div className="relative max-w-6xl mx-auto">
+      {/* ── HERO ── */}
+      <section className="relative pt-36 pb-24 px-6">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_50%_-5%,rgba(79,70,229,0.18),transparent)]" />
+        <div className="absolute top-40 left-1/4 w-96 h-96 bg-brand-600/6 rounded-full blur-3xl" />
+        <div className="absolute top-32 right-1/4 w-72 h-72 bg-violet-600/6 rounded-full blur-3xl" />
+
+        <div className="relative max-w-5xl mx-auto text-center">
           {/* Badge */}
           <div className="flex justify-center mb-10">
             <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-brand-500/25 bg-brand-500/10 text-brand-300 text-xs font-medium tracking-wide">
-              <span className="w-1.5 h-1.5 rounded-full bg-brand-400 animate-pulse" />
-              Purpose-built for Indian languages
-              <Sparkles className="w-3 h-3" />
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              Missed Call Revenue Recovery System
             </span>
           </div>
 
           {/* Headline */}
-          <h1 className="text-center mb-8">
-            <span className="block font-serif text-5xl md:text-6xl lg:text-7xl text-white leading-[1.0] tracking-tight mb-2">
-              Speak the Heart of Bharat
-            </span>
-            <span className="block font-serif italic text-5xl md:text-6xl lg:text-7xl leading-[1.0] tracking-tight bg-gradient-to-r from-saffron-400 via-turmeric-400 to-fire-400 bg-clip-text text-transparent">
-              in {LANGUAGES[activeLang].name}
+          <h1 className="font-serif text-4xl md:text-6xl lg:text-7xl text-white leading-[1.05] tracking-tight mb-6">
+            Turn Every Missed Call Into a<br />
+            <span className="bg-gradient-to-r from-saffron-400 via-turmeric-400 to-fire-400 bg-clip-text text-transparent">
+              Booked Appointment in 5 Seconds
             </span>
           </h1>
 
-          <p className="text-center text-lg md:text-xl text-white/45 max-w-xl mx-auto mb-12 leading-relaxed font-light">
-            The hyper-personalized voice platform that converts every interaction
-            into exponential growth.
+          <p className="text-lg md:text-xl text-white/45 max-w-2xl mx-auto mb-4 leading-relaxed font-light">
+            Bolo automatically calls back patients the moment they miss your clinic call —
+            and converts their intent into confirmed bookings.
+            Speaks{" "}
+            <span className="text-white/75 font-medium transition-all duration-500">
+              {LANGUAGES[activeLang]}
+            </span>{" "}
+            and 10 more Indian languages.
           </p>
 
+          {/* Stats row */}
+          <div className="flex flex-wrap items-center justify-center gap-6 mb-12 text-sm">
+            {[
+              { label: "Callback time", value: "3–5 sec" },
+              { label: "Avg recovery rate", value: "65%" },
+              { label: "Languages", value: "11" },
+            ].map((s) => (
+              <div key={s.label} className="flex items-center gap-2">
+                <span className="font-bold text-white text-base">{s.value}</span>
+                <span className="text-white/35">{s.label}</span>
+              </div>
+            ))}
+          </div>
+
           {/* CTAs */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-20">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <button
-              onClick={launchDemo}
-              disabled={demoLoading}
-              className="group flex items-center gap-2.5 px-7 py-3.5 text-white font-semibold rounded-xl transition-all text-[15px] disabled:opacity-70"
+              onClick={() => setShowSim(true)}
+              className="group flex items-center gap-2.5 px-8 py-4 text-white font-semibold rounded-xl transition-all text-[15px]"
               style={{ background: "linear-gradient(135deg, #FF6B00, #f97316)", boxShadow: "0 4px 24px rgba(255,107,0,0.35)" }}
             >
-              {demoLoading
-                ? <Loader2 className="w-4 h-4 animate-spin" />
-                : <Play className="w-4 h-4" />
-              }
-              {demoLoading ? "Loading demo…" : "Try Live Demo"}
+              <Play className="w-4 h-4" />
+              See Live Demo
             </button>
-            <Link href="/register" className="group flex items-center gap-2.5 px-7 py-3.5 glass-dark hover:bg-white/[0.07] text-white/70 hover:text-white font-medium rounded-xl transition-all text-[15px]">
-              Start building free
+            <Link
+              href="/register"
+              className="group flex items-center gap-2.5 px-8 py-4 glass-dark hover:bg-white/[0.07] text-white/70 hover:text-white font-medium rounded-xl transition-all text-[15px]"
+            >
+              Start free — no card needed
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
+        </div>
+      </section>
 
-          {/* Demo hint */}
-          <div className="flex justify-center mb-12">
-            <button
-              onClick={runDemo}
-              className="flex items-center gap-2 text-sm text-white/30 hover:text-white/60 transition-colors"
-            >
-              <Play className="w-3 h-3" />
-              Watch animated preview instead
-            </button>
+      {/* ── BEFORE vs AFTER ── */}
+      <section className="py-20 px-6 border-t border-white/[0.05]">
+        <div className="max-w-5xl mx-auto">
+          <h2 className="text-center font-serif text-3xl md:text-4xl text-white mb-4">
+            The Problem Bolo Solves
+          </h2>
+          <p className="text-center text-white/40 text-sm mb-14 max-w-lg mx-auto">
+            Every missed call is a patient lost — and revenue gone. Until now.
+          </p>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* BEFORE */}
+            <div className="rounded-2xl bg-red-500/[0.06] border border-red-500/15 p-8">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-8 h-8 rounded-lg bg-red-500/20 flex items-center justify-center">
+                  <PhoneMissed className="w-4 h-4 text-red-400" />
+                </div>
+                <span className="text-red-400 font-semibold text-sm uppercase tracking-wider">Before Bolo</span>
+              </div>
+              <ul className="space-y-4">
+                {[
+                  "Phone rings unanswered — patient gives up",
+                  "Staff too busy to follow up later",
+                  "Patient books with a competitor",
+                  "Lost revenue — zero visibility",
+                  "Repeat every single day",
+                ].map((item) => (
+                  <li key={item} className="flex items-start gap-3 text-white/55 text-sm">
+                    <span className="text-red-500 mt-0.5 shrink-0">✕</span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* AFTER */}
+            <div className="rounded-2xl bg-emerald-500/[0.06] border border-emerald-500/15 p-8">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                </div>
+                <span className="text-emerald-400 font-semibold text-sm uppercase tracking-wider">After Bolo</span>
+              </div>
+              <ul className="space-y-4">
+                {[
+                  "Call missed → Bolo detects in real-time",
+                  "AI calls back in 3–5 seconds automatically",
+                  "Patient hears their own language — Hindi, Tamil, Telugu…",
+                  "Intent captured: booking, inquiry, complaint",
+                  "Appointment confirmed — zero staff effort",
+                ].map((item) => (
+                  <li key={item} className="flex items-start gap-3 text-white/75 text-sm">
+                    <span className="text-emerald-400 mt-0.5 shrink-0">✓</span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
 
-          {/* Interactive Demo Card */}
-          <div className="max-w-2xl mx-auto">
-            <div className="glass-dark rounded-2xl overflow-hidden">
-              {/* Terminal header */}
-              <div className="flex items-center gap-2 px-5 py-3 border-b border-white/[0.06]">
-                <div className="w-3 h-3 rounded-full bg-red-500/60" />
-                <div className="w-3 h-3 rounded-full bg-amber-500/60" />
-                <div className="w-3 h-3 rounded-full bg-emerald-500/60" />
-                <span className="ml-3 text-xs text-white/30 font-mono">bolo — live conversation demo</span>
-                <div className="ml-auto">
-                  <WaveformVisualizer active={isPlaying} />
+          <div className="mt-10 text-center">
+            <button
+              onClick={() => setShowSim(true)}
+              className="inline-flex items-center gap-2 text-sm text-brand-400 hover:text-brand-300 transition-colors underline underline-offset-4"
+            >
+              <Play className="w-3.5 h-3.5" />
+              See exactly how it works — 45 second demo
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* ── HOW IT WORKS (3-step) ── */}
+      <section className="py-20 px-6 border-t border-white/[0.05]">
+        <div className="max-w-5xl mx-auto">
+          <h2 className="text-center font-serif text-3xl md:text-4xl text-white mb-14">
+            How It Works
+          </h2>
+          <div className="grid md:grid-cols-3 gap-6">
+            {[
+              {
+                step: "01",
+                icon: PhoneMissed,
+                color: "text-red-400",
+                bg: "bg-red-500/10 border-red-500/20",
+                title: "Missed Call Detected",
+                desc: "Bolo monitors your Exotel/Twilio number 24×7. The instant a call is missed, it fires.",
+              },
+              {
+                step: "02",
+                icon: Phone,
+                color: "text-brand-400",
+                bg: "bg-brand-600/10 border-brand-500/20",
+                title: "AI Calls Back in 3–5 Seconds",
+                desc: "Bolo dials the patient automatically — faster than any human — and greets them in their language.",
+              },
+              {
+                step: "03",
+                icon: CheckCircle2,
+                color: "text-emerald-400",
+                bg: "bg-emerald-500/10 border-emerald-500/20",
+                title: "Appointment Booked",
+                desc: "Patient speaks their intent. Bolo understands, responds, and confirms the booking — end to end.",
+              },
+            ].map(({ step, icon: Icon, color, bg, title, desc }) => (
+              <div key={step} className={`rounded-2xl bg-white/[0.03] border border-white/[0.07] p-7 relative`}>
+                <span className="absolute top-5 right-6 font-mono text-white/10 text-3xl font-bold">{step}</span>
+                <div className={`w-10 h-10 rounded-xl ${bg} border flex items-center justify-center mb-5`}>
+                  <Icon className={`w-5 h-5 ${color}`} />
+                </div>
+                <h3 className="text-white font-semibold mb-2">{title}</h3>
+                <p className="text-white/45 text-sm leading-relaxed">{desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── REVENUE CALCULATOR ── */}
+      <section className="py-20 px-6 border-t border-white/[0.05]">
+        <div className="max-w-3xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="font-serif text-3xl md:text-4xl text-white mb-4">
+              How Much Revenue Are You Losing?
+            </h2>
+            <p className="text-white/40 text-sm">Adjust the numbers below — see your real impact.</p>
+          </div>
+
+          <div className="rounded-2xl bg-white/[0.03] border border-white/[0.07] p-8 space-y-8">
+            {/* Inputs */}
+            <div className="grid sm:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm text-white/50 mb-3">
+                  Missed calls per day
+                  <span className="ml-2 text-white font-bold text-base">{missedPerDay}</span>
+                </label>
+                <input
+                  type="range" min={1} max={100} step={1}
+                  value={missedPerDay}
+                  onChange={(e) => setMissedPerDay(Number(e.target.value))}
+                  className="w-full accent-orange-500 cursor-pointer"
+                />
+                <div className="flex justify-between text-xs text-white/25 mt-1">
+                  <span>1</span><span>100</span>
                 </div>
               </div>
-
-              {/* Conversation replay */}
-              <div className="p-6 space-y-4 min-h-[220px]">
-                {demoStep === -1 && !isPlaying && (
-                  <div className="flex flex-col items-center justify-center h-40 gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-brand-600/20 border border-brand-500/30 flex items-center justify-center">
-                      <Volume2 className="w-6 h-6 text-brand-400" />
-                    </div>
-                    <p className="text-sm text-white/40 text-center">
-                      Click <span className="text-white/70 font-medium">Watch live demo</span> to see Bolo handle customer queries<br />across Hindi and Tamil — automatically.
-                    </p>
-                  </div>
-                )}
-                {DEMO_CONVERSATION.map((msg, i) => {
-                  if (i > demoStep) return null;
-                  return (
-                    <div key={i} className={`flex gap-3 animate-fade-in ${msg.role === "ai" ? "flex-row" : "flex-row-reverse"}`}>
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 text-xs font-bold ${msg.role === "ai" ? "bg-brand-600/30 text-brand-300 border border-brand-500/30" : "bg-white/10 text-white/60"}`}>
-                        {msg.role === "ai" ? "AI" : "U"}
-                      </div>
-                      <div className={`max-w-[75%] px-4 py-2.5 rounded-xl text-sm leading-relaxed ${msg.role === "ai" ? "bg-brand-600/15 border border-brand-500/20 text-white/85" : "bg-white/[0.06] border border-white/[0.08] text-white/70"}`}>
-                        <p>{msg.text}</p>
-                        <p className="text-[10px] mt-1 opacity-50">{msg.lang}</p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Footer bar */}
-              <div className="px-5 py-3 border-t border-white/[0.06] flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  {LANGUAGES.slice(0, 5).map((l, i) => (
-                    <span key={i} className="text-[11px] text-white/30 font-mono">{l.name}</span>
-                  ))}
-                  <span className="text-[11px] text-white/20">+6 more</span>
+              <div>
+                <label className="block text-sm text-white/50 mb-3">
+                  Avg booking value (₹)
+                  <span className="ml-2 text-white font-bold text-base">₹{avgBookingValue}</span>
+                </label>
+                <input
+                  type="range" min={100} max={5000} step={100}
+                  value={avgBookingValue}
+                  onChange={(e) => setAvgBookingValue(Number(e.target.value))}
+                  className="w-full accent-orange-500 cursor-pointer"
+                />
+                <div className="flex justify-between text-xs text-white/25 mt-1">
+                  <span>₹100</span><span>₹5,000</span>
                 </div>
-                <span className="text-[11px] text-emerald-400/70 font-mono flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
-                  &lt;500ms
-                </span>
               </div>
+            </div>
+
+            {/* Output */}
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div className="rounded-xl bg-red-500/[0.08] border border-red-500/15 p-5">
+                <div className="flex items-center gap-2 mb-1">
+                  <TrendingUp className="w-4 h-4 text-red-400" />
+                  <span className="text-xs text-red-400 uppercase tracking-wider font-medium">Monthly Loss</span>
+                </div>
+                <p className="text-2xl font-bold text-red-300">
+                  ₹{monthlyLoss.toLocaleString("en-IN")}
+                </p>
+                <p className="text-xs text-white/30 mt-1">{missedPerDay} calls/day × ₹{avgBookingValue} × {workingDays} days</p>
+              </div>
+
+              <div className="rounded-xl bg-emerald-500/[0.08] border border-emerald-500/15 p-5">
+                <div className="flex items-center gap-2 mb-1">
+                  <IndianRupee className="w-4 h-4 text-emerald-400" />
+                  <span className="text-xs text-emerald-400 uppercase tracking-wider font-medium">Recoverable with Bolo</span>
+                </div>
+                <p className="text-2xl font-bold text-emerald-300">
+                  ₹{monthlyRecoverable.toLocaleString("en-IN")}
+                </p>
+                <p className="text-xs text-white/30 mt-1">At 65% conversion rate</p>
+              </div>
+            </div>
+
+            <div className="text-center pt-2">
+              <Link
+                href="/register"
+                className="inline-flex items-center gap-2.5 px-8 py-3.5 rounded-xl font-semibold text-white text-sm transition-all"
+                style={{ background: "linear-gradient(135deg,#FF6B00,#f97316)", boxShadow: "0 4px 20px rgba(255,107,0,0.3)" }}
+              >
+                Recover This Revenue Automatically
+                <ArrowRight className="w-4 h-4" />
+              </Link>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Marquee logo strip */}
-      <section className="border-y border-white/[0.05] py-5 overflow-hidden bg-white/[0.01]">
-        <div className="flex animate-marquee whitespace-nowrap">
-          {[...COMPANIES, ...COMPANIES].map((c, i) => (
-            <span key={i} className="mx-8 text-sm text-white/20 font-medium tracking-wide">{c}</span>
-          ))}
+      {/* ── TRUST LAYER ── */}
+      <section className="py-20 px-6 border-t border-white/[0.05]">
+        <div className="max-w-5xl mx-auto">
+          <h2 className="text-center font-serif text-3xl text-white mb-4">
+            Built for Indian Clinics. Ready Today.
+          </h2>
+          <p className="text-center text-white/40 text-sm mb-14">
+            No integration hell. No months of setup. Just plug in and recover revenue.
+          </p>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {TRUST_POINTS.map(({ icon: Icon, text }) => (
+              <div key={text} className="flex items-start gap-3 px-5 py-4 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                <div className="w-8 h-8 rounded-lg bg-brand-600/15 border border-brand-500/20 flex items-center justify-center shrink-0 mt-0.5">
+                  <Icon className="w-4 h-4 text-brand-400" />
+                </div>
+                <p className="text-white/65 text-sm leading-relaxed">{text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── FINAL CTA ── */}
+      <section className="py-24 px-6 border-t border-white/[0.05]">
+        <div className="max-w-3xl mx-auto text-center">
+          <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-brand-500 to-violet-600 flex items-center justify-center mb-8 shadow-2xl shadow-brand-500/30">
+            <PhoneMissed className="w-8 h-8 text-white" />
+          </div>
+          <h2 className="font-serif text-4xl md:text-5xl text-white mb-6">
+            Stop Losing Patients<br />to Missed Calls
+          </h2>
+          <p className="text-white/40 mb-10 text-lg leading-relaxed max-w-lg mx-auto">
+            Every missed call is a lost appointment. Bolo recovers them automatically —
+            in the patient's own language, in seconds.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <button
+              onClick={() => setShowSim(true)}
+              className="flex items-center gap-2.5 px-8 py-4 rounded-xl font-semibold text-white text-[15px] transition-all"
+              style={{ background: "linear-gradient(135deg,#FF6B00,#f97316)", boxShadow: "0 4px 24px rgba(255,107,0,0.35)" }}
+            >
+              <Play className="w-4 h-4" />
+              See Live Demo
+            </button>
+            <Link
+              href="/register"
+              className="flex items-center gap-2.5 px-8 py-4 glass-dark hover:bg-white/[0.07] text-white/70 hover:text-white font-medium rounded-xl transition-all text-[15px]"
+            >
+              Start free today
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -254,6 +391,7 @@ export default function LandingPage() {
               <Mic className="w-3.5 h-3.5 text-white" />
             </div>
             <span className="font-serif text-white text-[16px]">Bolo</span>
+            <span className="text-white/25 text-xs ml-1">— Missed Call Revenue Recovery</span>
           </div>
           <div className="flex items-center gap-8 text-sm text-white/30">
             <a href="#" className="hover:text-white/60 transition-colors">Privacy</a>
@@ -263,7 +401,6 @@ export default function LandingPage() {
           <p className="text-xs text-white/20">© 2026 Bolo. Made for Bharat.</p>
         </div>
       </footer>
-
     </div>
   );
 }
