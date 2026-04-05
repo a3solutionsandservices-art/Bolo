@@ -83,6 +83,10 @@ class Settings(BaseSettings):
     TWILIO_WEBHOOK_SECRET: str = ""
     TWILIO_DEFAULT_TENANT_ID: str = ""
 
+    MISSED_CALL_RESULTS_DIR: str = "/app/media/missed_calls"
+    GOOGLE_SHEETS_ID: str = ""
+    GOOGLE_SERVICE_ACCOUNT_JSON: str = ""
+
     FASTTEXT_MODEL_PATH: str = "models/lid.176.bin"
 
     INDICTRANS_DEVICE: str = "cpu"
