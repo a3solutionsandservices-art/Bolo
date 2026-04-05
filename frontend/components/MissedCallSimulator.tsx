@@ -43,6 +43,14 @@ export default function MissedCallSimulator({ onClose }: { onClose?: () => void 
   const chatRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") { reset(); onClose?.(); }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [onClose]);
+
+  useEffect(() => {
     if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight;
   }, [chatLines]);
 
@@ -233,7 +241,7 @@ export default function MissedCallSimulator({ onClose }: { onClose?: () => void 
                 <span className="text-xs text-emerald-400 font-mono">Call Connected · AI speaking in Hindi/English</span>
               </div>
 
-              <div ref={chatRef} className="space-y-3 max-h-52 overflow-y-auto pr-1 scrollbar-thin">
+              <div ref={chatRef} className="space-y-3 max-h-52 overflow-y-auto pr-1 sidebar-scroll">
                 {chatLines.map((line, i) => (
                   <div key={i} className={`flex gap-2 animate-fade-in ${line.role === "ai" ? "flex-row" : "flex-row-reverse"}`}>
                     <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-bold shrink-0 ${line.role === "ai" ? "bg-brand-600/30 text-brand-300 border border-brand-500/30" : "bg-white/10 text-white/50"}`}>

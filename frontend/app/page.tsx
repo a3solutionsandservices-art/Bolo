@@ -309,7 +309,7 @@ export default function LandingPage() {
                 <p className="text-2xl font-bold text-emerald-300">
                   ₹{monthlyRecoverable.toLocaleString("en-IN")}
                 </p>
-                <p className="text-xs text-white/30 mt-1">At 65% conversion rate</p>
+                <p className="text-xs text-white/30 mt-1">At 65% callback-to-booking rate*</p>
               </div>
             </div>
 
@@ -323,6 +323,10 @@ export default function LandingPage() {
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
+
+            <p className="text-center text-white/20 text-xs">
+              * Based on 65% average callback-to-appointment conversion across early clinic deployments. Actual results vary.
+            </p>
           </div>
         </div>
       </section>

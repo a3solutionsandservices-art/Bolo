@@ -162,6 +162,7 @@ async def _handle_missed_call(payload: dict, db: AsyncSession, background_tasks:
 async def unified_missed_call_webhook(
     request: Request,
     background_tasks: BackgroundTasks,
+    x_twilio_signature: str = Header(default=""),
     db: AsyncSession = Depends(get_db),
 ):
     form_data = dict(await request.form())
@@ -179,6 +180,12 @@ async def unified_missed_call_webhook(
     except Exception as exc:
         logger.error("Webhook payload validation failed: %s | raw=%s", exc, form_data)
         raise HTTPException(status_code=422, detail=f"Payload validation error: {exc}")
+
+    if event.provider == "twilio":
+        if not _verify_twilio_signature(str(request.url), form_data, x_twilio_signature):
+            raise HTTPException(status_code=403, detail="Invalid Twilio signature")
+    # TODO: add Exotel HMAC-SHA256 signature validation once Exotel credentials are configured
+    # Exotel signs with a different header (X-Exotel-Signature) and SHA256 — skip for now
 
     logger.info(
         "Webhook received | provider=%s | sid=%s | caller=%s | called=%s | status=%s | ts=%s",
