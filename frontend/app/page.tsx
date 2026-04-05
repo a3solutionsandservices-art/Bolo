@@ -365,7 +365,7 @@ export default function LandingPage() {
           </h2>
           <p className="text-white/40 mb-10 text-lg leading-relaxed max-w-lg mx-auto">
             Every missed call is a lost appointment. Bolo recovers them automatically —
-            in the patient's own language, in seconds.
+            in the patient&apos;s own language, in seconds.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <button
