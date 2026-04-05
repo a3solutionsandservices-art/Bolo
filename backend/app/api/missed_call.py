@@ -1,8 +1,10 @@
 import uuid
 import logging
+from datetime import datetime, timezone
 from typing import Optional
 
-from fastapi import APIRouter, BackgroundTasks, Depends, Form, Query, Request, Response
+from fastapi import APIRouter, BackgroundTasks, Depends, Form, Query, Request, Response, HTTPException
+from pydantic import BaseModel, field_validator
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -19,13 +21,71 @@ from app.services.missed_call_service import (
     finalize_call,
     trigger_outbound_call,
 )
-from app.api.telephony import TWILIO_LANG_MAP, _twiml_gather, _twiml_say_and_gather, _twiml_say_and_hangup
+from app.api.telephony import TWILIO_LANG_MAP, _twiml_say_and_gather, _twiml_say_and_hangup
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/missed-call", tags=["missed-call-callback"])
 
 _MISSED_STATUSES = {"no-answer", "busy", "failed", "canceled", "missed", "no_answer"}
+
+_TWILIO_FIELDS = {"CallSid", "CallStatus", "From", "To"}
+_EXOTEL_FIELDS = {"CallSid", "Status", "From", "To", "ExoPhoneNumber"}
+
+
+class NormalizedWebhookEvent(BaseModel):
+    provider: str
+    call_sid: str
+    caller_number: str
+    called_number: str
+    call_status: str
+    call_timestamp: datetime
+    raw: dict
+
+    @field_validator("caller_number", "called_number")
+    @classmethod
+    def must_be_nonempty(cls, v: str) -> str:
+        v = v.strip()
+        if not v:
+            raise ValueError("phone number must not be empty")
+        return v
+
+    @field_validator("call_status")
+    @classmethod
+    def normalise_status(cls, v: str) -> str:
+        return v.lower().replace("-", "_")
+
+    @property
+    def is_missed(self) -> bool:
+        return self.call_status in {s.replace("-", "_") for s in _MISSED_STATUSES}
+
+
+def _detect_and_parse(form: dict) -> NormalizedWebhookEvent:
+    now = datetime.now(timezone.utc)
+
+    if "CallStatus" in form:
+        return NormalizedWebhookEvent(
+            provider="twilio",
+            call_sid=form.get("CallSid", ""),
+            caller_number=form.get("From", ""),
+            called_number=form.get("To", ""),
+            call_status=form.get("CallStatus", ""),
+            call_timestamp=now,
+            raw=form,
+        )
+
+    if "Status" in form:
+        return NormalizedWebhookEvent(
+            provider="exotel",
+            call_sid=form.get("CallSid") or form.get("CallId", ""),
+            caller_number=form.get("From", ""),
+            called_number=form.get("To") or form.get("ExoPhoneNumber", ""),
+            call_status=form.get("Status", ""),
+            call_timestamp=now,
+            raw=form,
+        )
+
+    raise HTTPException(status_code=422, detail="Unrecognised webhook payload — expected Twilio or Exotel format")
 
 
 async def _handle_missed_call(payload: dict, db: AsyncSession, background_tasks: BackgroundTasks) -> None:
@@ -54,6 +114,75 @@ async def _handle_missed_call(payload: dict, db: AsyncSession, background_tasks:
 
     background_tasks.add_task(trigger_outbound_call, log, db)
     logger.info("Missed call logged (id=%s) from %s — callback queued", log.id, log.caller_number)
+
+
+@router.post("/webhooks/missed-call")
+async def unified_missed_call_webhook(
+    request: Request,
+    background_tasks: BackgroundTasks,
+    db: AsyncSession = Depends(get_db),
+):
+    form_data = dict(await request.form())
+
+    logger.debug(
+        "Incoming webhook | headers=%s | fields=%s",
+        dict(request.headers),
+        list(form_data.keys()),
+    )
+
+    try:
+        event = _detect_and_parse(form_data)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error("Webhook payload validation failed: %s | raw=%s", exc, form_data)
+        raise HTTPException(status_code=422, detail=f"Payload validation error: {exc}")
+
+    logger.info(
+        "Webhook received | provider=%s | sid=%s | caller=%s | called=%s | status=%s | ts=%s",
+        event.provider,
+        event.call_sid,
+        event.caller_number,
+        event.called_number,
+        event.call_status,
+        event.call_timestamp.isoformat(),
+    )
+
+    if not event.is_missed:
+        logger.debug("Skipping non-missed call status=%s sid=%s", event.call_status, event.call_sid)
+        return {"received": True, "action": "skipped", "reason": f"status '{event.call_status}' is not a missed call"}
+
+    default_tenant_id: uuid.UUID | None = None
+    if settings.TWILIO_DEFAULT_TENANT_ID:
+        try:
+            default_tenant_id = uuid.UUID(settings.TWILIO_DEFAULT_TENANT_ID)
+        except ValueError:
+            logger.warning("TWILIO_DEFAULT_TENANT_ID is not a valid UUID: %s", settings.TWILIO_DEFAULT_TENANT_ID)
+
+    log = MissedCallLog(
+        tenant_id=default_tenant_id,
+        caller_number=event.caller_number,
+        called_number=event.called_number,
+        provider=event.provider,
+        call_sid=event.call_sid,
+        raw_webhook_payload=event.raw,
+        status=MissedCallStatus.RECEIVED,
+    )
+    db.add(log)
+    await db.commit()
+    await db.refresh(log)
+
+    logger.info("Missed call persisted | id=%s | caller=%s | queuing callback", log.id, log.caller_number)
+    background_tasks.add_task(trigger_outbound_call, log, db)
+
+    return {
+        "received": True,
+        "action": "callback_queued",
+        "log_id": str(log.id),
+        "caller": event.caller_number,
+        "provider": event.provider,
+        "timestamp": event.call_timestamp.isoformat(),
+    }
 
 
 @router.post("/webhook/twilio")
