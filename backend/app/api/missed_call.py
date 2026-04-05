@@ -1,17 +1,21 @@
+import base64
+import hashlib
+import hmac
 import uuid
 import logging
 from datetime import datetime, timezone
 from typing import Optional
 
-from fastapi import APIRouter, BackgroundTasks, Depends, Form, Query, Request, Response, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, Form, Header, Query, Request, Response, HTTPException
 from pydantic import BaseModel, field_validator
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.db.base import get_db
+from app.middleware.auth import get_current_user
 from app.models.missed_call import CallIntent, MissedCallLog, MissedCallStatus
-from app.models.message import Message, MessageRole
+from app.models.user import User
 from app.services.missed_call_service import (
     build_exotel_payload,
     build_twilio_payload,
@@ -24,6 +28,20 @@ from app.services.missed_call_service import (
     _classify_intent,
 )
 from app.api.telephony import TWILIO_LANG_MAP
+
+
+def _verify_twilio_signature(request_url: str, params: dict, signature: str) -> bool:
+    if not settings.TWILIO_AUTH_TOKEN:
+        return True
+    sorted_params = "".join(f"{k}{v}" for k, v in sorted(params.items()))
+    message = request_url + sorted_params
+    computed = hmac.new(
+        settings.TWILIO_AUTH_TOKEN.encode(),
+        message.encode(),
+        hashlib.sha1,
+    ).digest()
+    expected = base64.b64encode(computed).decode()
+    return hmac.compare_digest(expected, signature)
 
 
 def _mc_say_and_gather(text: str, action_url: str, language: str = "hi-IN", timeout: int = 6) -> str:
@@ -213,10 +231,14 @@ async def unified_missed_call_webhook(
 async def twilio_missed_call_webhook(
     request: Request,
     background_tasks: BackgroundTasks,
+    x_twilio_signature: str = Header(default=""),
     db: AsyncSession = Depends(get_db),
 ):
     form = await request.form()
-    payload = build_twilio_payload(dict(form))
+    form_dict = dict(form)
+    if not _verify_twilio_signature(str(request.url), form_dict, x_twilio_signature):
+        raise HTTPException(status_code=403, detail="Invalid Twilio signature")
+    payload = build_twilio_payload(form_dict)
     await _handle_missed_call(payload, db, background_tasks)
     return Response(status_code=204)
 
@@ -242,8 +264,12 @@ async def callback_gather(
     request: Request,
     SpeechResult: str = Form(default=""),
     Confidence: str = Form(default="0.0"),
+    x_twilio_signature: str = Header(default=""),
     db: AsyncSession = Depends(get_db),
 ):
+    form_dict = dict(await request.form())
+    if not _verify_twilio_signature(str(request.url), form_dict, x_twilio_signature):
+        raise HTTPException(status_code=403, detail="Invalid Twilio signature")
     result = await db.execute(select(MissedCallLog).where(MissedCallLog.id == log_id))
     log = result.scalar_one_or_none()
     if not log:
@@ -294,13 +320,6 @@ async def callback_gather(
         log.conversation_transcript = transcript
         await db.commit()
 
-        _store_message(db, log, conv_session_id=f"missed-call-{log_id}",
-                       role="user", content=speech, confidence=float(Confidence or 0))
-        _store_message(db, log, conv_session_id=f"missed-call-{log_id}",
-                       role="assistant", content=response_text)
-        await db.flush()
-        await db.commit()
-
         return Response(
             content=_mc_say_and_gather(response_text, action_url, lang_code, timeout=6),
             media_type="application/xml",
@@ -323,36 +342,17 @@ async def callback_gather(
     )
 
 
-def _store_message(
-    db: AsyncSession,
-    log: MissedCallLog,
-    conv_session_id: str,
-    role: str,
-    content: str,
-    confidence: float = 0.0,
-) -> None:
-    from sqlalchemy import select as _select
-    msg_role = MessageRole.USER if role == "user" else MessageRole.ASSISTANT
-    msg = Message(
-        conversation_id=None,
-        role=msg_role,
-        content_original=content,
-        detected_language=log.language_detected,
-        source_language=log.language_detected,
-        target_language="en",
-        stt_confidence=confidence,
-        caller_metadata={"missed_call_log_id": str(log.id), "session_id": conv_session_id},
-    )
-    db.add(msg)
-
-
 @router.post("/callback-status/{log_id}")
 async def callback_status(
     log_id: uuid.UUID,
     request: Request,
     CallStatus: str = Form(default=""),
+    x_twilio_signature: str = Header(default=""),
     db: AsyncSession = Depends(get_db),
 ):
+    form_dict = dict(await request.form())
+    if not _verify_twilio_signature(str(request.url), form_dict, x_twilio_signature):
+        raise HTTPException(status_code=403, detail="Invalid Twilio signature")
     result = await db.execute(select(MissedCallLog).where(MissedCallLog.id == log_id))
     log = result.scalar_one_or_none()
     if not log:
@@ -380,9 +380,12 @@ async def list_missed_call_logs(
     intent: Optional[str] = Query(None),
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     stmt = select(MissedCallLog).order_by(MissedCallLog.received_at.desc())
+    if current_user.tenant_id:
+        stmt = stmt.where(MissedCallLog.tenant_id == current_user.tenant_id)
     if status:
         try:
             stmt = stmt.where(MissedCallLog.status == MissedCallStatus(status))
@@ -420,11 +423,17 @@ async def list_missed_call_logs(
 
 
 @router.get("/logs/{log_id}")
-async def get_missed_call_log(log_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(MissedCallLog).where(MissedCallLog.id == log_id))
+async def get_missed_call_log(
+    log_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    stmt = select(MissedCallLog).where(MissedCallLog.id == log_id)
+    if current_user.tenant_id:
+        stmt = stmt.where(MissedCallLog.tenant_id == current_user.tenant_id)
+    result = await db.execute(stmt)
     log = result.scalar_one_or_none()
     if not log:
-        from fastapi import HTTPException
         raise HTTPException(status_code=404, detail="Missed call log not found")
     return {
         "id": str(log.id),

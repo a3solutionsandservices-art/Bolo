@@ -40,7 +40,10 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     if not settings.DEBUG and settings.SECRET_KEY == "change-me-in-production":
-        logger.warning("SECRET_KEY is using the default value. Set a strong SECRET_KEY in production.")
+        raise RuntimeError(
+            "SECRET_KEY is set to the default value. "
+            "Set a strong SECRET_KEY environment variable before running in production."
+        )
     _MEDIA_DIR.mkdir(parents=True, exist_ok=True)
     logger.info("Starting %s v%s", settings.APP_NAME, settings.APP_VERSION)
     yield

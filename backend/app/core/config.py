@@ -100,7 +100,6 @@ class Settings(BaseSettings):
         "http://localhost:8000",
         "https://app.bolo.com",
         "https://frontend-two-mocha-50.vercel.app",
-        "https://*.vercel.app",
     ]
 
     RATE_LIMIT_DEFAULT: str = "100/minute"
