@@ -42,12 +42,19 @@ export default function MissedCallSimulator({ onClose }: { onClose?: () => void 
   const [chatLines, setChatLines] = useState<{ role: "ai" | "user"; text: string }[]>([]);
   const chatRef = useRef<HTMLDivElement>(null);
 
+  const reset = () => {
+    setPhase("idle");
+    setCount(3);
+    setChatLines([]);
+  };
+
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") { reset(); onClose?.(); }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onClose]);
 
   useEffect(() => {
@@ -125,12 +132,6 @@ export default function MissedCallSimulator({ onClose }: { onClose?: () => void 
         }, delay);
       });
     }
-  };
-
-  const reset = () => {
-    setPhase("idle");
-    setCount(3);
-    setChatLines([]);
   };
 
   return (
