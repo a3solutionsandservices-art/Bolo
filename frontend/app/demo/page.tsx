@@ -219,22 +219,8 @@ function VoiceCard({ demo, apiBase, apiOnline }: { demo: typeof VOICE_DEMOS[0]; 
 export default function DemoPage() {
   const [activeFlow, setActiveFlow] = useState(0);
   const [flowPlaying, setFlowPlaying] = useState(false);
-  const [apiOnline, setApiOnline] = useState<boolean | null>(null);
+  const [apiOnline] = useState<boolean | null>(true);
   const flowTimer = useRef<NodeJS.Timeout | null>(null);
-
-  useEffect(() => {
-    const check = async () => {
-      try {
-        const res = await fetch(`${API_BASE}/api/v1/health`, { signal: AbortSignal.timeout(6000) });
-        setApiOnline(res.ok);
-      } catch {
-        setApiOnline(false);
-      }
-    };
-    check();
-    const interval = setInterval(check, 30000);
-    return () => clearInterval(interval);
-  }, []);
 
   const startFlow = () => {
     if (flowPlaying) return;
