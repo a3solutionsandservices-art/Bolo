@@ -148,45 +148,17 @@ function VoiceCard({ demo, apiBase, apiOnline }: { demo: typeof VOICE_DEMOS[0]; 
     setState("loading");
 
     const langCode = demo.code.split("-")[0];
-    const shortText = demo.text.substring(0, 180);
-    const gttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(shortText)}&tl=${langCode}&client=gtx&ttsspeed=0.9`;
+    const proxyUrl = `/api/tts-proxy?text=${encodeURIComponent(demo.text.substring(0, 200))}&lang=${langCode}`;
 
-    const audio = new Audio(gttsUrl);
+    const audio = new Audio(proxyUrl);
     audioRef.current = audio;
-
-    audio.oncanplay = () => {
+    audio.oncanplaythrough = () => {
       setState("playing");
-      audio.play().catch(() => {
-        tryBackend();
-      });
+      audio.play().catch(() => setState("idle"));
     };
-
     audio.onended = () => setState("idle");
-
-    audio.onerror = () => {
-      tryBackend();
-    };
-
+    audio.onerror = () => setState("idle");
     audio.load();
-
-    const tryBackend = () => {
-      fetch(`${apiBase}/api/v1/demo/speak`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: demo.text, language: demo.code }),
-        signal: AbortSignal.timeout(8000),
-      })
-        .then((r) => r.ok ? r.json() : Promise.reject())
-        .then((data) => {
-          const a = new Audio(`data:audio/${data.audio_format};base64,${data.audio_base64}`);
-          audioRef.current = a;
-          a.onended = () => setState("idle");
-          a.onerror = () => setState("idle");
-          setState("playing");
-          a.play().catch(() => setState("idle"));
-        })
-        .catch(() => setState("idle"));
-    };
   };
 
   const statusLabel = state === "playing"
