@@ -150,7 +150,7 @@ export default function MissedCallSimulator({ onClose }: { onClose?: () => void 
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.07]">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-xs font-mono text-white/40">Pallavi · Bolo AI Agent · Live Simulation</span>
+            <span className="text-xs font-mono text-white/40">Pallavi · City Clinic · Live Simulation</span>
           </div>
           <button onClick={() => { reset(); onClose?.(); }} className="text-white/30 hover:text-white/70 transition-colors">
             <X className="w-4 h-4" />
