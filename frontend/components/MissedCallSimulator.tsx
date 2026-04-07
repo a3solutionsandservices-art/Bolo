@@ -98,10 +98,10 @@ export default function MissedCallSimulator({ onClose }: { onClose?: () => void 
   useEffect(() => {
     if (phase !== "calling") return;
     const t = setTimeout(() => {
-      const greeting = "Namaste! Bolo AI calling from City Clinic. We noticed your call was missed. How can we help you today?";
+      const greeting = "Namaste! Bolo AI City Clinic se call kar raha hai. Aapka call miss ho gaya tha. Hum aapki kya madad kar sakte hain?";
       setPhase("conversation");
-      setChatLines([{ role: "ai", text: greeting }]);
-      playTTS(greeting, "en");
+      setChatLines([{ role: "ai", text: "Namaste! Bolo AI calling from City Clinic. We noticed your call was missed. How can we help you today?" }]);
+      playTTS(greeting, "hi");
     }, 2000);
     return () => clearTimeout(t);
   }, [phase]);
@@ -119,14 +119,14 @@ export default function MissedCallSimulator({ onClose }: { onClose?: () => void 
         delay += i === 0 ? 0 : 900;
         setTimeout(() => {
           setChatLines((prev) => [...prev, line]);
-          if (line.role === "ai") playTTS(line.text, "en");
+          if (line.role === "ai") playTTS(line.text, "hi");
           if (i === lines.length - 1) setTimeout(() => setPhase("booked"), 1200);
         }, delay);
       });
     } else {
       const lines: typeof chatLines = [
         { role: "user", text: "I wanted to ask about the OPD charges." },
-        { role: "ai", text: "OPD consultation is 300 rupees for general and 500 rupees for specialist. Would you like to book an appointment as well?" },
+        { role: "ai", text: "OPD consultation is ₹300 for general and ₹500 for specialist. Would you like to book an appointment as well?" },
         { role: "user", text: "No, that's all. Thank you." },
         { role: "ai", text: "Happy to help! Feel free to call us anytime. Have a healthy day!" },
       ];
@@ -135,7 +135,7 @@ export default function MissedCallSimulator({ onClose }: { onClose?: () => void 
         delay += i === 0 ? 0 : 900;
         setTimeout(() => {
           setChatLines((prev) => [...prev, line]);
-          if (line.role === "ai") playTTS(line.text, "en");
+          if (line.role === "ai") playTTS(line.text, "hi");
           if (i === lines.length - 1) setTimeout(() => setPhase("inquiry_done"), 1200);
         }, delay);
       });
