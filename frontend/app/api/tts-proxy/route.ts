@@ -84,25 +84,25 @@ export async function GET(req: NextRequest) {
   const text = searchParams.get("text") || "";
   const lang = searchParams.get("lang") || "hi";
 
-  try {
-    let result: { bytes: ArrayBuffer; type: string };
+  const attempts: (() => Promise<{ bytes: ArrayBuffer; type: string }>)[] = [];
+  if (SARVAM_API_KEY) attempts.push(() => sarvamTTS(text, lang));
+  if (ELEVENLABS_API_KEY) attempts.push(() => elevenLabsTTS(text, lang));
+  attempts.push(() => googleTTS(text, lang));
 
-    if (SARVAM_API_KEY) {
-      result = await sarvamTTS(text, lang);
-    } else if (ELEVENLABS_API_KEY) {
-      result = await elevenLabsTTS(text, lang);
-    } else {
-      result = await googleTTS(text, lang);
+  for (const attempt of attempts) {
+    try {
+      const result = await attempt();
+      return new NextResponse(result.bytes, {
+        status: 200,
+        headers: {
+          "Content-Type": result.type,
+          "Cache-Control": "public, max-age=3600",
+        },
+      });
+    } catch {
+      continue;
     }
-
-    return new NextResponse(result.bytes, {
-      status: 200,
-      headers: {
-        "Content-Type": result.type,
-        "Cache-Control": "public, max-age=3600",
-      },
-    });
-  } catch {
-    return NextResponse.json({ error: "TTS unavailable" }, { status: 503 });
   }
+
+  return NextResponse.json({ error: "TTS unavailable" }, { status: 503 });
 }
