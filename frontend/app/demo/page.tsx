@@ -137,50 +137,56 @@ const REVENUE_MODELS = [
 function VoiceCard({ demo, apiBase, apiOnline }: { demo: typeof VOICE_DEMOS[0]; apiBase: string; apiOnline: boolean }) {
   const [state, setState] = useState<"idle" | "loading" | "playing" | "error">("idle");
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const uttRef = useRef<SpeechSynthesisUtterance | null>(null);
 
   const stop = () => {
-    audioRef.current?.pause();
-    audioRef.current = null;
-    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
     setState("idle");
   };
 
   const play = () => {
     if (state === "loading" || state === "playing") { stop(); return; }
-
-    if (!("speechSynthesis" in window)) { setState("error"); return; }
-
     setState("loading");
-    window.speechSynthesis.cancel();
 
-    const utt = new SpeechSynthesisUtterance(demo.text);
-    utt.lang = demo.code;
-    utt.rate = 0.92;
-    uttRef.current = utt;
+    const langCode = demo.code.split("-")[0];
+    const shortText = demo.text.substring(0, 180);
+    const gttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(shortText)}&tl=${langCode}&client=gtx&ttsspeed=0.9`;
 
-    utt.onstart = () => setState("playing");
-    utt.onend = () => setState("idle");
-    utt.onerror = () => { setState("error"); setTimeout(() => setState("idle"), 2000); };
+    const audio = new Audio(gttsUrl);
+    audioRef.current = audio;
 
-    window.speechSynthesis.speak(utt);
+    audio.oncanplay = () => {
+      setState("playing");
+      audio.play().catch(() => {
+        tryBackend();
+      });
+    };
 
-    fetch(`${apiBase}/api/v1/demo/speak`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: demo.text, language: demo.code }),
-      signal: AbortSignal.timeout(8000),
-    })
-      .then((r) => r.ok ? r.json() : Promise.reject())
-      .then((data) => {
-        window.speechSynthesis.cancel();
-        const audio = new Audio(`data:audio/${data.audio_format};base64,${data.audio_base64}`);
-        audioRef.current = audio;
-        audio.onended = () => setState("idle");
-        audio.onerror = () => setState("idle");
-        audio.play().catch(() => {});
+    audio.onended = () => setState("idle");
+
+    audio.onerror = () => {
+      tryBackend();
+    };
+
+    audio.load();
+
+    const tryBackend = () => {
+      fetch(`${apiBase}/api/v1/demo/speak`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: demo.text, language: demo.code }),
+        signal: AbortSignal.timeout(8000),
       })
-      .catch(() => {});
+        .then((r) => r.ok ? r.json() : Promise.reject())
+        .then((data) => {
+          const a = new Audio(`data:audio/${data.audio_format};base64,${data.audio_base64}`);
+          audioRef.current = a;
+          a.onended = () => setState("idle");
+          a.onerror = () => setState("idle");
+          setState("playing");
+          a.play().catch(() => setState("idle"));
+        })
+        .catch(() => setState("idle"));
+    };
   };
 
   const statusLabel = state === "playing"
