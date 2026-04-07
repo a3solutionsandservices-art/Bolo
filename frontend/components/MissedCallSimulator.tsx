@@ -98,9 +98,9 @@ export default function MissedCallSimulator({ onClose }: { onClose?: () => void 
   useEffect(() => {
     if (phase !== "calling") return;
     const t = setTimeout(() => {
-      const greeting = "నమస్కారం! నేను బోలో AI, City Clinic నుండి మాట్లాడుతున్నాను. మీ call miss అయింది. మేము మీకు ఎలా సహాయపడగలము?";
+      const greeting = "నమస్కారం! నేను పల్లవిని, City Clinic నుండి మాట్లాడుతున్నాను. మీ call miss అయింది. మేము మీకు ఎలా సహాయపడగలము?";
       setPhase("conversation");
-      setChatLines([{ role: "ai", text: "నమస్కారం! Bolo AI, City Clinic నుండి call చేస్తోంది. మీ call miss అయింది. మేము మీకు ఎలా సహాయపడగలము?" }]);
+      setChatLines([{ role: "ai", text: "నమస్కారం! నేను పల్లవిని, City Clinic నుండి call చేస్తున్నాను. మీ call miss అయింది. మేము మీకు ఎలా సహాయపడగలము?" }]);
       playTTS(greeting, "te");
     }, 2000);
     return () => clearTimeout(t);
@@ -150,7 +150,7 @@ export default function MissedCallSimulator({ onClose }: { onClose?: () => void 
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.07]">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-xs font-mono text-white/40">Bolo Missed Call Recovery · Live Simulation</span>
+            <span className="text-xs font-mono text-white/40">Pallavi · Bolo AI Agent · Live Simulation</span>
           </div>
           <button onClick={() => { reset(); onClose?.(); }} className="text-white/30 hover:text-white/70 transition-colors">
             <X className="w-4 h-4" />
@@ -247,14 +247,14 @@ export default function MissedCallSimulator({ onClose }: { onClose?: () => void 
             <div className="w-full space-y-4">
               <div className="flex items-center gap-2 mb-2">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="text-xs text-emerald-400 font-mono">Call Connected · AI speaking in Hindi/English</span>
+                <span className="text-xs text-emerald-400 font-mono">Call Connected · Pallavi speaking in Telugu</span>
               </div>
 
               <div ref={chatRef} className="space-y-3 max-h-52 overflow-y-auto pr-1 sidebar-scroll">
                 {chatLines.map((line, i) => (
                   <div key={i} className={`flex gap-2 animate-fade-in ${line.role === "ai" ? "flex-row" : "flex-row-reverse"}`}>
                     <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-bold shrink-0 ${line.role === "ai" ? "bg-brand-600/30 text-brand-300 border border-brand-500/30" : "bg-white/10 text-white/50"}`}>
-                      {line.role === "ai" ? "AI" : "P"}
+                      {line.role === "ai" ? "Pa" : "P"}
                     </div>
                     <div className={`max-w-[80%] px-3 py-2 rounded-xl text-xs leading-relaxed ${line.role === "ai" ? "bg-brand-600/15 border border-brand-500/20 text-white/85" : "bg-white/[0.07] border border-white/[0.08] text-white/70"}`}>
                       {line.text}
