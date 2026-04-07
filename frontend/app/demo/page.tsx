@@ -136,54 +136,55 @@ const REVENUE_MODELS = [
 
 function VoiceCard({ demo, apiBase, apiOnline }: { demo: typeof VOICE_DEMOS[0]; apiBase: string; apiOnline: boolean }) {
   const [state, setState] = useState<"idle" | "loading" | "playing" | "error">("idle");
-  const [usingBrowser, setUsingBrowser] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const uttRef = useRef<SpeechSynthesisUtterance | null>(null);
 
-  const playViaBrowser = () => {
-    if (!("speechSynthesis" in window)) { setState("error"); return; }
-    window.speechSynthesis.cancel();
-    const utt = new SpeechSynthesisUtterance(demo.text);
-    utt.lang = demo.code;
-    utt.rate = 0.95;
-    utt.onstart = () => { setUsingBrowser(true); setState("playing"); };
-    utt.onend = () => { setUsingBrowser(false); setState("idle"); };
-    utt.onerror = () => { setUsingBrowser(false); setState("error"); setTimeout(() => setState("idle"), 2000); };
-    window.speechSynthesis.speak(utt);
+  const stop = () => {
+    audioRef.current?.pause();
+    audioRef.current = null;
+    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+    setState("idle");
   };
 
-  const play = async () => {
-    if (state === "loading") return;
-    if (state === "playing") {
-      if (audioRef.current) { audioRef.current.pause(); }
-      window.speechSynthesis?.cancel();
-      setUsingBrowser(false);
-      setState("idle");
-      return;
-    }
+  const play = () => {
+    if (state === "loading" || state === "playing") { stop(); return; }
+
+    if (!("speechSynthesis" in window)) { setState("error"); return; }
+
     setState("loading");
-    try {
-      const res = await fetch(`${apiBase}/api/v1/demo/speak`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: demo.text, language: demo.code }),
-        signal: AbortSignal.timeout(10000),
-      });
-      if (!res.ok) throw new Error("TTS failed");
-      const data = await res.json();
-      const audio = new Audio(`data:audio/${data.audio_format};base64,${data.audio_base64}`);
-      audioRef.current = audio;
-      audio.onended = () => setState("idle");
-      audio.onerror = () => setState("error");
-      setUsingBrowser(false);
-      await audio.play();
-      setState("playing");
-    } catch {
-      playViaBrowser();
-    }
+    window.speechSynthesis.cancel();
+
+    const utt = new SpeechSynthesisUtterance(demo.text);
+    utt.lang = demo.code;
+    utt.rate = 0.92;
+    uttRef.current = utt;
+
+    utt.onstart = () => setState("playing");
+    utt.onend = () => setState("idle");
+    utt.onerror = () => { setState("error"); setTimeout(() => setState("idle"), 2000); };
+
+    window.speechSynthesis.speak(utt);
+
+    fetch(`${apiBase}/api/v1/demo/speak`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: demo.text, language: demo.code }),
+      signal: AbortSignal.timeout(8000),
+    })
+      .then((r) => r.ok ? r.json() : Promise.reject())
+      .then((data) => {
+        window.speechSynthesis.cancel();
+        const audio = new Audio(`data:audio/${data.audio_format};base64,${data.audio_base64}`);
+        audioRef.current = audio;
+        audio.onended = () => setState("idle");
+        audio.onerror = () => setState("idle");
+        audio.play().catch(() => {});
+      })
+      .catch(() => {});
   };
 
   const statusLabel = state === "playing"
-    ? usingBrowser ? "Playing via browser voice…" : "Playing Bolo AI voice…"
+    ? "Playing AI voice…"
     : state === "error"
     ? "Playback failed — tap to retry"
     : "Click to hear live AI voice";
