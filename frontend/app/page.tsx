@@ -74,9 +74,9 @@ export default function LandingPage() {
 
           {/* Headline */}
           <h1 className="font-serif text-4xl md:text-6xl lg:text-7xl text-white leading-[1.05] tracking-tight mb-6">
-            Turn Every Missed Call Into a<br />
+            Turn Every Missed Call Into an<br />
             <span className="bg-gradient-to-r from-saffron-400 via-turmeric-400 to-fire-400 bg-clip-text text-transparent">
-              Booked Appointment in 5 Seconds
+              Appointment or a Real Enquiry
             </span>
           </h1>
 
