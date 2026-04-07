@@ -50,7 +50,8 @@ async function sarvamTTS(text: string, lang: string): Promise<{ bytes: ArrayBuff
   const data = await res.json();
   const audioB64: string = data.audios[0];
   const binary = Buffer.from(audioB64, "base64");
-  return { bytes: binary.buffer, type: "audio/wav" };
+  const ab = binary.buffer.slice(binary.byteOffset, binary.byteOffset + binary.byteLength);
+  return { bytes: ab, type: "audio/wav" };
 }
 
 async function elevenLabsTTS(text: string, lang: string): Promise<{ bytes: ArrayBuffer; type: string }> {

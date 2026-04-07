@@ -1,22 +1,41 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Phone, PhoneOff, PhoneMissed, PhoneIncoming, CheckCircle2, Calendar, HelpCircle, X } from "lucide-react";
+import { Phone, PhoneMissed, PhoneIncoming, CheckCircle2, Calendar, HelpCircle, X } from "lucide-react";
 
 let _currentAudio: HTMLAudioElement | null = null;
 
-function playTTS(text: string, lang = "en") {
+function stopCurrent() {
   if (_currentAudio) {
     _currentAudio.pause();
-    _currentAudio.src = "";
+    _currentAudio.currentTime = 0;
     _currentAudio = null;
   }
-  const audio = new Audio(
-    `/api/tts-proxy?text=${encodeURIComponent(text.substring(0, 200))}&lang=${lang}`
-  );
+}
+
+function playBlob(audio: HTMLAudioElement | null) {
+  stopCurrent();
+  if (!audio) return;
   _currentAudio = audio;
-  audio.onended = () => { _currentAudio = null; };
   audio.play().catch(() => {});
+}
+
+async function fetchAudio(text: string, lang: string): Promise<HTMLAudioElement | null> {
+  try {
+    const url = `/api/tts-proxy?text=${encodeURIComponent(text.substring(0, 200))}&lang=${lang}`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const audio = new Audio(blobUrl);
+    audio.onended = () => {
+      URL.revokeObjectURL(blobUrl);
+      _currentAudio = null;
+    };
+    return audio;
+  } catch {
+    return null;
+  }
 }
 
 type SimPhase =
@@ -30,6 +49,22 @@ type SimPhase =
   | "inquiry_done";
 
 const MASKED_NUMBER = "+91 98XXX XXXXX";
+
+const GREETING_TE = "నమస్కారం! నేను పల్లవిని, City Clinic నుండి మాట్లాడుతున్నాను. మీ call miss అయింది. మేము మీకు ఎలా సహాయపడగలము?";
+
+const BOOKING_LINES = [
+  { role: "user" as const, text: "నాకు Dr. Mehta తో appointment కావాలి." },
+  { role: "ai" as const,   text: "అర్థమైంది! Dr. Mehta రేపు 10 AM మరియు 3 PM కి slots available గా ఉన్నాయి. మీకు ఏది convenient గా ఉంటుంది?" },
+  { role: "user" as const, text: "10 AM అయితే బాగుంటుంది." },
+  { role: "ai" as const,   text: "చాలా బాగుంది! రేపు 10 AM కి Dr. Mehta తో appointment confirm అయింది. మీకు confirmation SMS వస్తుంది." },
+];
+
+const INQUIRY_LINES = [
+  { role: "user" as const, text: "OPD charges ఎంత అవుతాయి?" },
+  { role: "ai" as const,   text: "General OPD ₹300 మరియు specialist కి ₹500 అవుతుంది. మీకు appointment కూడా book చేయాలా?" },
+  { role: "user" as const, text: "వద్దు, అంతే. ధన్యవాదాలు." },
+  { role: "ai" as const,   text: "సహాయం చేయడం సంతోషంగా ఉంది! ఎప్పుడైనా call చేయండి. మీరు ఆరోగ్యంగా ఉండండి!" },
+];
 
 function Ring() {
   return (
@@ -58,10 +93,25 @@ export default function MissedCallSimulator({ onClose }: { onClose?: () => void 
   const [chatLines, setChatLines] = useState<{ role: "ai" | "user"; text: string }[]>([]);
   const chatRef = useRef<HTMLDivElement>(null);
 
+  const greetingAudio = useRef<HTMLAudioElement | null>(null);
+  const bookingAudios = useRef<(HTMLAudioElement | null)[]>([]);
+  const inquiryAudios = useRef<(HTMLAudioElement | null)[]>([]);
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  const clearTimers = () => {
+    timers.current.forEach(clearTimeout);
+    timers.current = [];
+  };
+
   const reset = () => {
+    clearTimers();
+    stopCurrent();
     setPhase("idle");
     setCount(3);
     setChatLines([]);
+    greetingAudio.current = null;
+    bookingAudios.current = [];
+    inquiryAudios.current = [];
   };
 
   useEffect(() => {
@@ -78,8 +128,8 @@ export default function MissedCallSimulator({ onClose }: { onClose?: () => void 
   }, [chatLines]);
 
   const start = () => {
+    reset();
     setPhase("incoming");
-    setChatLines([]);
     setCount(3);
   };
 
@@ -96,10 +146,22 @@ export default function MissedCallSimulator({ onClose }: { onClose?: () => void 
 
   useEffect(() => {
     if (phase !== "countdown") return;
-    if (count === 0) {
-      setPhase("calling");
-      return;
-    }
+    fetchAudio(GREETING_TE, "te").then(a => { greetingAudio.current = a; });
+    const aiTexts = [
+      BOOKING_LINES[1].text, BOOKING_LINES[3].text,
+      INQUIRY_LINES[1].text, INQUIRY_LINES[3].text,
+    ];
+    const langCode = "te";
+    fetchAudio(aiTexts[0], langCode).then(a => { bookingAudios.current[1] = a; });
+    fetchAudio(aiTexts[1], langCode).then(a => { bookingAudios.current[3] = a; });
+    fetchAudio(aiTexts[2], langCode).then(a => { inquiryAudios.current[1] = a; });
+    fetchAudio(aiTexts[3], langCode).then(a => { inquiryAudios.current[3] = a; });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase]);
+
+  useEffect(() => {
+    if (phase !== "countdown") return;
+    if (count === 0) { setPhase("calling"); return; }
     const t = setTimeout(() => setCount((c) => c - 1), 1000);
     return () => clearTimeout(t);
   }, [phase, count]);
@@ -107,55 +169,46 @@ export default function MissedCallSimulator({ onClose }: { onClose?: () => void 
   useEffect(() => {
     if (phase !== "calling") return;
     const t = setTimeout(() => {
-      const greeting = "నమస్కారం! నేను పల్లవిని, City Clinic నుండి మాట్లాడుతున్నాను. మీ call miss అయింది. మేము మీకు ఎలా సహాయపడగలము?";
       setPhase("conversation");
-      setChatLines([{ role: "ai", text: "నమస్కారం! నేను పల్లవిని, City Clinic నుండి call చేస్తున్నాను. మీ call miss అయింది. మేము మీకు ఎలా సహాయపడగలము?" }]);
-      playTTS(greeting, "te");
+      setChatLines([{ role: "ai", text: GREETING_TE }]);
+      playBlob(greetingAudio.current);
     }, 2000);
     return () => clearTimeout(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
 
   const choose = (intent: "booking" | "inquiry") => {
-    if (intent === "booking") {
-      const lines: typeof chatLines = [
-        { role: "user", text: "నాకు Dr. Mehta తో appointment కావాలి." },
-        { role: "ai", text: "అర్థమైంది! Dr. Mehta రేపు 10 AM మరియు 3 PM కి slots available గా ఉన్నాయి. మీకు ఏది convenient గా ఉంటుంది?" },
-        { role: "user", text: "10 AM అయితే బాగుంటుంది." },
-        { role: "ai", text: "చాలా బాగుంది! రేపు 10 AM కి Dr. Mehta తో appointment confirm అయింది. మీకు confirmation SMS వస్తుంది." },
-      ];
-      let delay = 0;
-      lines.forEach((line, i) => {
-        delay += i === 0 ? 0 : 900;
-        setTimeout(() => {
-          setChatLines((prev) => [...prev, line]);
-          if (line.role === "ai") playTTS(line.text, "te");
-          if (i === lines.length - 1) setTimeout(() => setPhase("booked"), 1200);
-        }, delay);
-      });
-    } else {
-      const lines: typeof chatLines = [
-        { role: "user", text: "OPD charges ఎంత అవుతాయి?" },
-        { role: "ai", text: "General OPD ₹300 మరియు specialist కి ₹500 అవుతుంది. మీకు appointment కూడా book చేయాలా?" },
-        { role: "user", text: "వద్దు, అంతే. ధన్యవాదాలు." },
-        { role: "ai", text: "సహాయం చేయడం సంతోషంగా ఉంది! ఎప్పుడైనా call చేయండి. మీరు ఆరోగ్యంగా ఉండండి!" },
-      ];
-      let delay = 0;
-      lines.forEach((line, i) => {
-        delay += i === 0 ? 0 : 900;
-        setTimeout(() => {
-          setChatLines((prev) => [...prev, line]);
-          if (line.role === "ai") playTTS(line.text, "te");
-          if (i === lines.length - 1) setTimeout(() => setPhase("inquiry_done"), 1200);
-        }, delay);
-      });
-    }
+    const lines = intent === "booking" ? BOOKING_LINES : INQUIRY_LINES;
+    const preloaded = intent === "booking" ? bookingAudios.current : inquiryAudios.current;
+
+    let delay = 0;
+    lines.forEach((line, i) => {
+      delay += i === 0 ? 0 : 1000;
+      const d = delay;
+      const t = setTimeout(() => {
+        setChatLines((prev) => [...prev, line]);
+        if (line.role === "ai") {
+          playBlob(preloaded[i] ?? null);
+        }
+        if (i === lines.length - 1) {
+          const end = setTimeout(
+            () => setPhase(intent === "booking" ? "booked" : "inquiry_done"),
+            1400
+          );
+          timers.current.push(end);
+        }
+      }, d);
+      timers.current.push(t);
+    });
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={(e) => { if (e.target === e.currentTarget) { reset(); onClose?.(); } }}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+      onClick={(e) => { if (e.target === e.currentTarget) { reset(); onClose?.(); } }}
+    >
       <div className="relative w-full max-w-md bg-[#0d1117] border border-white/10 rounded-3xl overflow-hidden shadow-2xl">
 
-        {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.07]">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
@@ -166,10 +219,8 @@ export default function MissedCallSimulator({ onClose }: { onClose?: () => void 
           </button>
         </div>
 
-        {/* Body */}
         <div className="px-6 py-8 min-h-[420px] flex flex-col items-center justify-center">
 
-          {/* IDLE */}
           {phase === "idle" && (
             <div className="text-center space-y-6">
               <div className="w-20 h-20 mx-auto rounded-2xl bg-brand-600/20 border border-brand-500/30 flex items-center justify-center">
@@ -189,7 +240,6 @@ export default function MissedCallSimulator({ onClose }: { onClose?: () => void 
             </div>
           )}
 
-          {/* INCOMING */}
           {phase === "incoming" && (
             <div className="text-center space-y-5">
               <Ring />
@@ -205,7 +255,6 @@ export default function MissedCallSimulator({ onClose }: { onClose?: () => void 
             </div>
           )}
 
-          {/* MISSED */}
           {phase === "missed" && (
             <div className="text-center space-y-5">
               <div className="w-16 h-16 mx-auto rounded-full bg-red-500/20 border border-red-500/30 flex items-center justify-center">
@@ -219,7 +268,6 @@ export default function MissedCallSimulator({ onClose }: { onClose?: () => void 
             </div>
           )}
 
-          {/* COUNTDOWN */}
           {phase === "countdown" && (
             <div className="text-center space-y-5">
               <div className="relative flex items-center justify-center">
@@ -235,7 +283,6 @@ export default function MissedCallSimulator({ onClose }: { onClose?: () => void 
             </div>
           )}
 
-          {/* CALLING */}
           {phase === "calling" && (
             <div className="text-center space-y-5">
               <div className="relative flex items-center justify-center">
@@ -251,7 +298,6 @@ export default function MissedCallSimulator({ onClose }: { onClose?: () => void 
             </div>
           )}
 
-          {/* CONVERSATION */}
           {phase === "conversation" && (
             <div className="w-full space-y-4">
               <div className="flex items-center gap-2 mb-2">
@@ -294,7 +340,6 @@ export default function MissedCallSimulator({ onClose }: { onClose?: () => void 
             </div>
           )}
 
-          {/* BOOKED */}
           {phase === "booked" && (
             <div className="text-center space-y-5">
               <div className="w-20 h-20 mx-auto rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center">
@@ -314,7 +359,6 @@ export default function MissedCallSimulator({ onClose }: { onClose?: () => void 
             </div>
           )}
 
-          {/* INQUIRY DONE */}
           {phase === "inquiry_done" && (
             <div className="text-center space-y-5">
               <div className="w-20 h-20 mx-auto rounded-full bg-brand-500/20 border border-brand-500/30 flex items-center justify-center">
