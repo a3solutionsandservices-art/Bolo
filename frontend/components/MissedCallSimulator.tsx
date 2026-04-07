@@ -3,10 +3,19 @@
 import { useState, useEffect, useRef } from "react";
 import { Phone, PhoneOff, PhoneMissed, PhoneIncoming, CheckCircle2, Calendar, HelpCircle, X } from "lucide-react";
 
+let _currentAudio: HTMLAudioElement | null = null;
+
 function playTTS(text: string, lang = "en") {
+  if (_currentAudio) {
+    _currentAudio.pause();
+    _currentAudio.src = "";
+    _currentAudio = null;
+  }
   const audio = new Audio(
     `/api/tts-proxy?text=${encodeURIComponent(text.substring(0, 200))}&lang=${lang}`
   );
+  _currentAudio = audio;
+  audio.onended = () => { _currentAudio = null; };
   audio.play().catch(() => {});
 }
 
