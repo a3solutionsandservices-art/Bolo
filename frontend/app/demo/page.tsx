@@ -237,8 +237,24 @@ function VoiceCard({ demo, apiBase, apiOnline }: { demo: typeof VOICE_DEMOS[0]; 
 export default function DemoPage() {
   const [activeFlow, setActiveFlow] = useState(0);
   const [flowPlaying, setFlowPlaying] = useState(false);
-  const [apiOnline] = useState<boolean | null>(true);
+  const [apiOnline, setApiOnline] = useState<boolean | null>(null);
   const flowTimer = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || "";
+    const healthUrl = backendUrl ? `${backendUrl}/health` : "/api/health-proxy";
+    const check = async () => {
+      try {
+        const res = await fetch(healthUrl, { signal: AbortSignal.timeout(6000) });
+        setApiOnline(res.ok);
+      } catch {
+        setApiOnline(false);
+      }
+    };
+    check();
+    const id = setInterval(check, 30000);
+    return () => clearInterval(id);
+  }, []);
 
   const startFlow = () => {
     if (flowPlaying) return;
