@@ -98,10 +98,10 @@ export default function MissedCallSimulator({ onClose }: { onClose?: () => void 
   useEffect(() => {
     if (phase !== "calling") return;
     const t = setTimeout(() => {
-      const greeting = "Namaste! Bolo AI City Clinic se call kar raha hai. Aapka call miss ho gaya tha. Hum aapki kya madad kar sakte hain?";
+      const greeting = "నమస్కారం! నేను బోలో AI, City Clinic నుండి మాట్లాడుతున్నాను. మీ call miss అయింది. మేము మీకు ఎలా సహాయపడగలము?";
       setPhase("conversation");
-      setChatLines([{ role: "ai", text: "Namaste! Bolo AI calling from City Clinic. We noticed your call was missed. How can we help you today?" }]);
-      playTTS(greeting, "hi");
+      setChatLines([{ role: "ai", text: "నమస్కారం! Bolo AI, City Clinic నుండి call చేస్తోంది. మీ call miss అయింది. మేము మీకు ఎలా సహాయపడగలము?" }]);
+      playTTS(greeting, "te");
     }, 2000);
     return () => clearTimeout(t);
   }, [phase]);
@@ -109,33 +109,33 @@ export default function MissedCallSimulator({ onClose }: { onClose?: () => void 
   const choose = (intent: "booking" | "inquiry") => {
     if (intent === "booking") {
       const lines: typeof chatLines = [
-        { role: "user", text: "I wanted to book an appointment with Dr. Mehta." },
-        { role: "ai", text: "Of course! Dr. Mehta has slots available tomorrow at 10 AM and 3 PM. Which works for you?" },
-        { role: "user", text: "10 AM please." },
-        { role: "ai", text: "Perfect! Appointment booked for tomorrow, 10 AM with Dr. Mehta. You will receive a confirmation SMS shortly." },
+        { role: "user", text: "నాకు Dr. Mehta తో appointment కావాలి." },
+        { role: "ai", text: "అర్థమైంది! Dr. Mehta రేపు 10 AM మరియు 3 PM కి slots available గా ఉన్నాయి. మీకు ఏది convenient గా ఉంటుంది?" },
+        { role: "user", text: "10 AM అయితే బాగుంటుంది." },
+        { role: "ai", text: "చాలా బాగుంది! రేపు 10 AM కి Dr. Mehta తో appointment confirm అయింది. మీకు confirmation SMS వస్తుంది." },
       ];
       let delay = 0;
       lines.forEach((line, i) => {
         delay += i === 0 ? 0 : 900;
         setTimeout(() => {
           setChatLines((prev) => [...prev, line]);
-          if (line.role === "ai") playTTS(line.text, "hi");
+          if (line.role === "ai") playTTS(line.text, "te");
           if (i === lines.length - 1) setTimeout(() => setPhase("booked"), 1200);
         }, delay);
       });
     } else {
       const lines: typeof chatLines = [
-        { role: "user", text: "I wanted to ask about the OPD charges." },
-        { role: "ai", text: "OPD consultation is ₹300 for general and ₹500 for specialist. Would you like to book an appointment as well?" },
-        { role: "user", text: "No, that's all. Thank you." },
-        { role: "ai", text: "Happy to help! Feel free to call us anytime. Have a healthy day!" },
+        { role: "user", text: "OPD charges ఎంత అవుతాయి?" },
+        { role: "ai", text: "General OPD ₹300 మరియు specialist కి ₹500 అవుతుంది. మీకు appointment కూడా book చేయాలా?" },
+        { role: "user", text: "వద్దు, అంతే. ధన్యవాదాలు." },
+        { role: "ai", text: "సహాయం చేయడం సంతోషంగా ఉంది! ఎప్పుడైనా call చేయండి. మీరు ఆరోగ్యంగా ఉండండి!" },
       ];
       let delay = 0;
       lines.forEach((line, i) => {
         delay += i === 0 ? 0 : 900;
         setTimeout(() => {
           setChatLines((prev) => [...prev, line]);
-          if (line.role === "ai") playTTS(line.text, "hi");
+          if (line.role === "ai") playTTS(line.text, "te");
           if (i === lines.length - 1) setTimeout(() => setPhase("inquiry_done"), 1200);
         }, delay);
       });
