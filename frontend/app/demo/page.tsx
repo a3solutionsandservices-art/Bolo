@@ -152,13 +152,12 @@ function VoiceCard({ demo, apiBase, apiOnline }: { demo: typeof VOICE_DEMOS[0]; 
 
     const audio = new Audio(proxyUrl);
     audioRef.current = audio;
-    audio.oncanplaythrough = () => {
-      setState("playing");
-      audio.play().catch(() => setState("idle"));
-    };
     audio.onended = () => setState("idle");
     audio.onerror = () => setState("idle");
-    audio.load();
+
+    audio.play()
+      .then(() => setState("playing"))
+      .catch(() => setState("idle"));
   };
 
   const statusLabel = state === "playing"
