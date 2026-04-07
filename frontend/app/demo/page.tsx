@@ -136,13 +136,27 @@ const REVENUE_MODELS = [
 
 function VoiceCard({ demo, apiBase, apiOnline }: { demo: typeof VOICE_DEMOS[0]; apiBase: string; apiOnline: boolean }) {
   const [state, setState] = useState<"idle" | "loading" | "playing" | "error">("idle");
+  const [usingBrowser, setUsingBrowser] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
+  const playViaBrowser = () => {
+    if (!("speechSynthesis" in window)) { setState("error"); return; }
+    window.speechSynthesis.cancel();
+    const utt = new SpeechSynthesisUtterance(demo.text);
+    utt.lang = demo.code;
+    utt.rate = 0.95;
+    utt.onstart = () => { setUsingBrowser(true); setState("playing"); };
+    utt.onend = () => { setUsingBrowser(false); setState("idle"); };
+    utt.onerror = () => { setUsingBrowser(false); setState("error"); setTimeout(() => setState("idle"), 2000); };
+    window.speechSynthesis.speak(utt);
+  };
+
   const play = async () => {
-    if (!apiOnline) return;
     if (state === "loading") return;
-    if (state === "playing" && audioRef.current) {
-      audioRef.current.pause();
+    if (state === "playing") {
+      if (audioRef.current) { audioRef.current.pause(); }
+      window.speechSynthesis?.cancel();
+      setUsingBrowser(false);
       setState("idle");
       return;
     }
@@ -152,7 +166,7 @@ function VoiceCard({ demo, apiBase, apiOnline }: { demo: typeof VOICE_DEMOS[0]; 
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: demo.text, language: demo.code }),
-        signal: AbortSignal.timeout(15000),
+        signal: AbortSignal.timeout(10000),
       });
       if (!res.ok) throw new Error("TTS failed");
       const data = await res.json();
@@ -160,25 +174,23 @@ function VoiceCard({ demo, apiBase, apiOnline }: { demo: typeof VOICE_DEMOS[0]; 
       audioRef.current = audio;
       audio.onended = () => setState("idle");
       audio.onerror = () => setState("error");
+      setUsingBrowser(false);
       await audio.play();
       setState("playing");
     } catch {
-      setState("error");
-      setTimeout(() => setState("idle"), 3000);
+      playViaBrowser();
     }
   };
 
-  const statusLabel = !apiOnline
-    ? "Backend starting up — try again shortly"
+  const statusLabel = state === "playing"
+    ? usingBrowser ? "Playing via browser voice…" : "Playing Bolo AI voice…"
     : state === "error"
     ? "Playback failed — tap to retry"
-    : state === "playing"
-    ? "Playing live AI voice…"
-    : "Click to hear real AI voice";
+    : "Click to hear live AI voice";
 
   return (
     <div
-      className={`rounded-2xl p-5 transition-all duration-200 ${apiOnline ? "cursor-pointer hover:-translate-y-0.5" : "opacity-60 cursor-not-allowed"}`}
+      className="rounded-2xl p-5 transition-all duration-200 cursor-pointer hover:-translate-y-0.5"
       style={{ background: demo.bg, border: `1px solid ${state === "error" ? "#ef444440" : demo.color + "30"}` }}
       onClick={play}
     >
@@ -193,7 +205,6 @@ function VoiceCard({ demo, apiBase, apiOnline }: { demo: typeof VOICE_DEMOS[0]; 
         <button
           className="w-10 h-10 rounded-xl flex items-center justify-center transition-all"
           style={{ background: `${demo.color}25`, border: `1px solid ${demo.color}40` }}
-          disabled={!apiOnline}
         >
           {state === "loading"
             ? <Loader2 className="w-4 h-4 animate-spin" style={{ color: demo.color }} />
@@ -208,7 +219,7 @@ function VoiceCard({ demo, apiBase, apiOnline }: { demo: typeof VOICE_DEMOS[0]; 
       <div className="flex items-center gap-1.5 mt-3">
         <span
           className={`w-1.5 h-1.5 rounded-full ${state === "playing" ? "animate-pulse" : ""}`}
-          style={{ background: state === "error" ? "#ef4444" : !apiOnline ? "#6b7280" : demo.color }}
+          style={{ background: state === "error" ? "#ef4444" : demo.color }}
         />
         <span className="text-[10px] text-white/30">{statusLabel}</span>
       </div>
