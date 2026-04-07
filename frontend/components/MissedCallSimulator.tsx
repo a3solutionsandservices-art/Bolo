@@ -3,6 +3,13 @@
 import { useState, useEffect, useRef } from "react";
 import { Phone, PhoneOff, PhoneMissed, PhoneIncoming, CheckCircle2, Calendar, HelpCircle, X } from "lucide-react";
 
+function playTTS(text: string, lang = "en") {
+  const audio = new Audio(
+    `/api/tts-proxy?text=${encodeURIComponent(text.substring(0, 200))}&lang=${lang}`
+  );
+  audio.play().catch(() => {});
+}
+
 type SimPhase =
   | "idle"
   | "incoming"
@@ -91,11 +98,10 @@ export default function MissedCallSimulator({ onClose }: { onClose?: () => void 
   useEffect(() => {
     if (phase !== "calling") return;
     const t = setTimeout(() => {
+      const greeting = "Namaste! Bolo AI calling from City Clinic. We noticed your call was missed. How can we help you today?";
       setPhase("conversation");
-      setChatLines([{
-        role: "ai",
-        text: "Namaste! Bolo AI calling from City Clinic. We noticed your call was missed. How can we help you today?",
-      }]);
+      setChatLines([{ role: "ai", text: greeting }]);
+      playTTS(greeting, "en");
     }, 2000);
     return () => clearTimeout(t);
   }, [phase]);
@@ -106,20 +112,21 @@ export default function MissedCallSimulator({ onClose }: { onClose?: () => void 
         { role: "user", text: "I wanted to book an appointment with Dr. Mehta." },
         { role: "ai", text: "Of course! Dr. Mehta has slots available tomorrow at 10 AM and 3 PM. Which works for you?" },
         { role: "user", text: "10 AM please." },
-        { role: "ai", text: "✅ Perfect! Appointment booked for tomorrow, 10 AM with Dr. Mehta. You'll receive a confirmation SMS shortly." },
+        { role: "ai", text: "Perfect! Appointment booked for tomorrow, 10 AM with Dr. Mehta. You will receive a confirmation SMS shortly." },
       ];
       let delay = 0;
       lines.forEach((line, i) => {
         delay += i === 0 ? 0 : 900;
         setTimeout(() => {
           setChatLines((prev) => [...prev, line]);
+          if (line.role === "ai") playTTS(line.text, "en");
           if (i === lines.length - 1) setTimeout(() => setPhase("booked"), 1200);
         }, delay);
       });
     } else {
       const lines: typeof chatLines = [
         { role: "user", text: "I wanted to ask about the OPD charges." },
-        { role: "ai", text: "OPD consultation is ₹300 for general and ₹500 for specialist. Would you like to book an appointment as well?" },
+        { role: "ai", text: "OPD consultation is 300 rupees for general and 500 rupees for specialist. Would you like to book an appointment as well?" },
         { role: "user", text: "No, that's all. Thank you." },
         { role: "ai", text: "Happy to help! Feel free to call us anytime. Have a healthy day!" },
       ];
@@ -128,6 +135,7 @@ export default function MissedCallSimulator({ onClose }: { onClose?: () => void 
         delay += i === 0 ? 0 : 900;
         setTimeout(() => {
           setChatLines((prev) => [...prev, line]);
+          if (line.role === "ai") playTTS(line.text, "en");
           if (i === lines.length - 1) setTimeout(() => setPhase("inquiry_done"), 1200);
         }, delay);
       });
