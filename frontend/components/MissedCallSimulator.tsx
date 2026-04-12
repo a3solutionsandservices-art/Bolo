@@ -26,6 +26,7 @@ function playAndWait(audio: HTMLAudioElement | null, fallbackMs = 4000): Promise
   stopAll();
   if (!audio) return new Promise(r => setTimeout(r, fallbackMs));
   audio.currentTime = 0;
+  audio.playbackRate = 1.4;
   _cur = audio;
   return new Promise(resolve => {
     const done = () => { _cur = null; resolve(); };
