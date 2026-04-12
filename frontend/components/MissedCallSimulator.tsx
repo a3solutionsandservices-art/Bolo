@@ -9,6 +9,90 @@ function stopAll() {
   if (_cur) { _cur.pause(); _cur.currentTime = 0; _cur = null; }
 }
 
+// ─── Web Audio sound effects ──────────────────────────────────────────────────
+let _sfxCtx: AudioContext | null = null;
+let _sfxNodes: AudioNode[] = [];
+
+function getAudioCtx(): AudioContext | null {
+  try {
+    if (!_sfxCtx || _sfxCtx.state === "closed") {
+      _sfxCtx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+    }
+    return _sfxCtx;
+  } catch { return null; }
+}
+
+function stopSfx() {
+  _sfxNodes.forEach(n => { try { (n as OscillatorNode).stop?.(); } catch { /* ignore */ } });
+  _sfxNodes = [];
+}
+
+// Indian phone ring: 400 Hz + 450 Hz, 0.4 s on / 0.2 s off
+function playIncomingRing(durationMs: number) {
+  stopSfx();
+  const ctx = getAudioCtx();
+  if (!ctx) return;
+  const gain = ctx.createGain();
+  gain.connect(ctx.destination);
+  const now = ctx.currentTime;
+  const total = durationMs / 1000;
+  [400, 450].forEach(freq => {
+    const osc = ctx.createOscillator();
+    osc.type = "sine";
+    osc.frequency.value = freq;
+    osc.connect(gain);
+    osc.start(now);
+    osc.stop(now + total);
+    _sfxNodes.push(osc);
+  });
+  gain.gain.value = 0;
+  const cycles = Math.floor(total / 0.6);
+  for (let i = 0; i < cycles; i++) {
+    gain.gain.setValueAtTime(0.25, now + i * 0.6);
+    gain.gain.setValueAtTime(0,    now + i * 0.6 + 0.4);
+  }
+  _sfxNodes.push(gain);
+}
+
+// Disconnect: short descending beep
+function playDisconnectSfx() {
+  stopSfx();
+  const ctx = getAudioCtx();
+  if (!ctx) return;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain); gain.connect(ctx.destination);
+  const now = ctx.currentTime;
+  osc.frequency.setValueAtTime(480, now);
+  osc.frequency.linearRampToValueAtTime(280, now + 0.35);
+  gain.gain.setValueAtTime(0.35, now);
+  gain.gain.linearRampToValueAtTime(0, now + 0.35);
+  osc.start(now); osc.stop(now + 0.35);
+  _sfxNodes.push(osc, gain);
+}
+
+// Outbound ring: single 425 Hz pulse (UK/Indian outbound tone)
+function playOutboundRing(durationMs: number) {
+  stopSfx();
+  const ctx = getAudioCtx();
+  if (!ctx) return;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain); gain.connect(ctx.destination);
+  osc.type = "sine";
+  osc.frequency.value = 425;
+  const now = ctx.currentTime;
+  const total = durationMs / 1000;
+  gain.gain.value = 0;
+  const cycles = Math.floor(total / 0.8);
+  for (let i = 0; i < cycles; i++) {
+    gain.gain.setValueAtTime(0.2, now + i * 0.8);
+    gain.gain.setValueAtTime(0,   now + i * 0.8 + 0.4);
+  }
+  osc.start(now); osc.stop(now + total);
+  _sfxNodes.push(osc, gain);
+}
+
 // Fetch audio → store as blob-backed Audio element (zero latency at play time)
 async function loadBlob(text: string, lang: string): Promise<HTMLAudioElement | null> {
   try {
@@ -106,6 +190,7 @@ export default function MissedCallSimulator({ onClose }: { onClose?: () => void 
   const reset = () => {
     cancelled.current = true;
     stopAll();
+    stopSfx();
     setPhase("idle"); setCount(3); setLines([]); setShowChoice(false);
   };
 
@@ -131,10 +216,18 @@ export default function MissedCallSimulator({ onClose }: { onClose?: () => void 
     if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight;
   }, [lines]);
 
-  // incoming → missed → countdown
+  // incoming → missed → countdown (with sound effects)
   useEffect(() => {
-    if (phase === "incoming") { const t = setTimeout(() => setPhase("missed"),     1500); return () => clearTimeout(t); }
-    if (phase === "missed")   { const t = setTimeout(() => setPhase("countdown"),   600); return () => clearTimeout(t); }
+    if (phase === "incoming") {
+      playIncomingRing(1400);
+      const t = setTimeout(() => setPhase("missed"), 1500);
+      return () => { clearTimeout(t); stopSfx(); };
+    }
+    if (phase === "missed") {
+      playDisconnectSfx();
+      const t = setTimeout(() => setPhase("countdown"), 600);
+      return () => clearTimeout(t);
+    }
   }, [phase]);
 
   // countdown tick → calling
@@ -145,11 +238,12 @@ export default function MissedCallSimulator({ onClose }: { onClose?: () => void 
     return () => clearTimeout(t);
   }, [phase, count]);
 
-  // calling → conversation
+  // calling → conversation (with outbound ring)
   useEffect(() => {
     if (phase !== "calling") return;
-    const t = setTimeout(() => setPhase("conversation"), 1500);
-    return () => clearTimeout(t);
+    playOutboundRing(1400);
+    const t = setTimeout(() => { stopSfx(); setPhase("conversation"); }, 1500);
+    return () => { clearTimeout(t); stopSfx(); };
   }, [phase]);
 
   // conversation: play greeting then show choice
