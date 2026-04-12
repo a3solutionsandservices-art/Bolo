@@ -37,9 +37,9 @@ async function sarvamTTS(text: string, lang: string): Promise<{ bytes: ArrayBuff
       target_language_code: langCode,
       speaker,
       model: "bulbul:v1",
-      pitch: 0,
-      pace: 1.1,
-      loudness: 1.5,
+      pitch: 0.15,
+      pace: 1.35,
+      loudness: 2.0,
       speech_sample_rate: 22050,
       enable_preprocessing: true,
     }),
@@ -62,7 +62,7 @@ async function elevenLabsTTS(text: string, lang: string): Promise<{ bytes: Array
     body: JSON.stringify({
       text,
       model_id: "eleven_multilingual_v2",
-      voice_settings: { stability: 0.5, similarity_boost: 0.75 },
+      voice_settings: { stability: 0.3, similarity_boost: 0.85, style: 0.4, use_speaker_boost: true },
     }),
     signal: AbortSignal.timeout(12000),
   });
@@ -85,19 +85,20 @@ export async function GET(req: NextRequest) {
   const text = searchParams.get("text") || "";
   const lang = searchParams.get("lang") || "hi";
 
-  const attempts: (() => Promise<{ bytes: ArrayBuffer; type: string }>)[] = [];
-  if (SARVAM_API_KEY) attempts.push(() => sarvamTTS(text, lang));
-  if (ELEVENLABS_API_KEY) attempts.push(() => elevenLabsTTS(text, lang));
-  attempts.push(() => googleTTS(text, lang));
+  const attempts: { name: string; fn: () => Promise<{ bytes: ArrayBuffer; type: string }> }[] = [];
+  if (SARVAM_API_KEY) attempts.push({ name: "sarvam", fn: () => sarvamTTS(text, lang) });
+  if (ELEVENLABS_API_KEY) attempts.push({ name: "elevenlabs", fn: () => elevenLabsTTS(text, lang) });
+  attempts.push({ name: "google", fn: () => googleTTS(text, lang) });
 
-  for (const attempt of attempts) {
+  for (const { name, fn } of attempts) {
     try {
-      const result = await attempt();
+      const result = await fn();
       return new NextResponse(result.bytes, {
         status: 200,
         headers: {
           "Content-Type": result.type,
           "Cache-Control": "public, max-age=3600",
+          "X-TTS-Provider": name,
         },
       });
     } catch {
