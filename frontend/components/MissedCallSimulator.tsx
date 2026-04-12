@@ -49,14 +49,14 @@ const BOOKING_LINES: { role: "ai" | "pt"; text: string }[] = [
   { role: "pt", text: "Dr. Mehta తో రేపు appointment కావాలి." },
   { role: "ai", text: "అర్థమైంది! రేపు 10 AM లేదా 3 PM slot ఉంది. ఏది convenient గా ఉంటుంది?" },
   { role: "pt", text: "10 AM బాగుంటుంది." },
-  { role: "ai", text: "Confirmed! రేపు 10 AM — Dr. Mehta. Confirmation SMS వస్తుంది. ✅" },
+  { role: "ai", text: "Confirmed! రేపు 10 AM, Dr. Mehta. Confirmation SMS వస్తుంది. మా clinic ని choose చేసినందుకు చాలా ధన్యవాదాలు!" },
 ];
 
 const INQUIRY_LINES: { role: "ai" | "pt"; text: string }[] = [
   { role: "pt", text: "OPD charges ఎంత అవుతాయి?" },
-  { role: "ai", text: "General OPD ₹300, Specialist ₹500. Appointment కూడా book చేయాలా?" },
+  { role: "ai", text: "General OPD 300 rupees, specialist కి 500 rupees అవుతుంది. Appointment కూడా book చేయాలా?" },
   { role: "pt", text: "వద్దు, చాలు. ధన్యవాదాలు." },
-  { role: "ai", text: "సహాయం చేయడం సంతోషంగా ఉంది! ఆరోగ్యంగా ఉండండి! 😊" },
+  { role: "ai", text: "సహాయం చేయడం సంతోషంగా ఉంది! మా clinic ని choose చేసినందుకు చాలా ధన్యవాదాలు!" },
 ];
 
 // All AI texts that need audio
