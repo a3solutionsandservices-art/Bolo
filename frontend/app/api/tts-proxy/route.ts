@@ -38,7 +38,7 @@ async function sarvamTTS(text: string, lang: string): Promise<{ bytes: ArrayBuff
       speaker,
       model: "bulbul:v1",
       pitch: 0.2,
-      pace: 1.55,
+      pace: 1.6,
       loudness: 2.0,
       speech_sample_rate: 22050,
       enable_preprocessing: true,
