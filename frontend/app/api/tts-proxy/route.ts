@@ -82,7 +82,8 @@ async function googleTTS(text: string, lang: string): Promise<{ bytes: ArrayBuff
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const text = searchParams.get("text") || "";
+  const raw  = searchParams.get("text") || "";
+  const text = raw.replace(/\p{Extended_Pictographic}/gu, "").replace(/\s+/g, " ").trim();
   const lang = searchParams.get("lang") || "hi";
 
   const attempts: { name: string; fn: () => Promise<{ bytes: ArrayBuffer; type: string }> }[] = [];
