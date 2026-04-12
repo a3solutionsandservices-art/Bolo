@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import PublicNav from "@/components/layout/PublicNav";
 import MissedCallSimulator from "@/components/MissedCallSimulator";
+import LeadCaptureForm from "@/components/LeadCaptureForm";
 
 const LANGUAGES = [
   "हिंदी", "தமிழ்", "తెలుగు", "বাংলা", "ਪੰਜਾਬੀ", "ಕನ್ನಡ", "മലയാളം", "ଓଡ଼ିଆ", "English",
@@ -350,6 +351,27 @@ export default function LandingPage() {
                 <p className="text-white/65 text-sm leading-relaxed">{text}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── LEAD CAPTURE ── */}
+      <section className="py-24 px-6 border-t border-white/[0.05]">
+        <div className="max-w-2xl mx-auto">
+          <div className="text-center mb-10">
+            <span className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-brand-500/15 border border-brand-500/25 text-brand-300 mb-4">
+              Free Demo for Clinics
+            </span>
+            <h2 className="font-serif text-3xl md:text-4xl text-white mb-4">
+              See Bolo Live on Your<br />Clinic&apos;s Phone Number
+            </h2>
+            <p className="text-white/40 text-base leading-relaxed">
+              We will call you back within 24 hours and show you a live demo
+              using your actual clinic number — completely free.
+            </p>
+          </div>
+          <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-6 md:p-8">
+            <LeadCaptureForm />
           </div>
         </div>
       </section>
