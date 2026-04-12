@@ -13,7 +13,7 @@ function stopAll() {
 async function loadBlob(text: string, lang: string): Promise<HTMLAudioElement | null> {
   try {
     const r = await fetch(
-      `/api/tts-proxy?text=${encodeURIComponent(text.slice(0, 200))}&lang=${lang}&v=4`
+      `/api/tts-proxy?text=${encodeURIComponent(text.slice(0, 200))}&lang=${lang}&v=5`
     );
     if (!r.ok) return null;
     const blob = await r.blob();

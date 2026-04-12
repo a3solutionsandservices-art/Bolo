@@ -63,6 +63,7 @@ async function elevenLabsTTS(text: string, lang: string): Promise<{ bytes: Array
       text,
       model_id: "eleven_multilingual_v2",
       voice_settings: { stability: 0.3, similarity_boost: 0.85, style: 0.4, use_speaker_boost: true },
+      speed: 1.25,
     }),
     signal: AbortSignal.timeout(12000),
   });
@@ -71,7 +72,7 @@ async function elevenLabsTTS(text: string, lang: string): Promise<{ bytes: Array
 }
 
 async function googleTTS(text: string, lang: string): Promise<{ bytes: ArrayBuffer; type: string }> {
-  const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text.substring(0, 200))}&tl=${lang}&client=gtx&ttsspeed=0.9`;
+  const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text.substring(0, 200))}&tl=${lang}&client=gtx&ttsspeed=1.3`;
   const res = await fetch(url, {
     headers: { "User-Agent": "Mozilla/5.0", "Referer": "https://translate.google.com/" },
     signal: AbortSignal.timeout(8000),
