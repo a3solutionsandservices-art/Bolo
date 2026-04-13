@@ -225,12 +225,10 @@ export default function AboutPage() {
         {/* CTA */}
         <div className="text-center rounded-2xl p-10" style={{ background: "linear-gradient(135deg, rgba(255,107,0,0.1) 0%, rgba(251,191,36,0.05) 100%)", border: "1px solid rgba(255,107,0,0.18)" }}>
           <h3 className="font-serif text-3xl text-white mb-3">Ready to speak their language?</h3>
-          <p className="text-white/45 text-base mb-8">Start for free — no engineering team required.</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link href="/register" className="inline-flex items-center justify-center gap-2 px-7 py-3.5 text-white font-semibold rounded-xl transition-all hover:-translate-y-0.5 text-[15px]" style={{ background: "linear-gradient(135deg, #FF6B00, #f97316)", boxShadow: "0 4px 20px rgba(255,107,0,0.3)" }}>
-              Start building free
-              <ArrowRight className="w-4 h-4" />
-            </Link>
+            <a href="mailto:support@bolospeak.com" className="inline-flex items-center justify-center gap-2 px-7 py-3.5 text-white font-semibold rounded-xl transition-all hover:-translate-y-0.5 text-[15px]" style={{ background: "linear-gradient(135deg, #FF6B00, #f97316)", boxShadow: "0 4px 20px rgba(255,107,0,0.3)" }}>
+              Contact us at support@bolospeak.com
+            </a>
             <Link href="/" className="inline-flex items-center justify-center gap-2 px-7 py-3.5 text-white/70 hover:text-white font-medium rounded-xl transition-all text-[15px]" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>
               Back to home
             </Link>
