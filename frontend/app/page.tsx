@@ -115,13 +115,7 @@ export default function LandingPage() {
               <Play className="w-4 h-4" />
               See Live Demo
             </button>
-            <Link
-              href="/register"
-              className="group flex items-center gap-2.5 px-8 py-4 glass-dark hover:bg-white/[0.07] text-white/70 hover:text-white font-medium rounded-xl transition-all text-[15px]"
-            >
-              Start free — no card needed
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </Link>
+
           </div>
         </div>
       </section>
@@ -398,13 +392,7 @@ export default function LandingPage() {
               <Play className="w-4 h-4" />
               See Live Demo
             </button>
-            <Link
-              href="/register"
-              className="flex items-center gap-2.5 px-8 py-4 glass-dark hover:bg-white/[0.07] text-white/70 hover:text-white font-medium rounded-xl transition-all text-[15px]"
-            >
-              Start free today
-              <ArrowRight className="w-4 h-4" />
-            </Link>
+
           </div>
         </div>
       </section>
