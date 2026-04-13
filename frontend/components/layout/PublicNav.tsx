@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Mic, Menu, X, ArrowRight } from "lucide-react";
+import { Mic, Menu, X } from "lucide-react";
 
 const NAV_LINKS = [
   { href: "/", label: "Home" },
@@ -70,25 +70,8 @@ export default function PublicNav({ active }: PublicNavProps) {
             ))}
           </div>
 
-          {/* Desktop CTAs */}
-          <div className="hidden md:flex items-center gap-3">
-            <Link href="/login" className="px-4 py-2 text-sm text-white/60 hover:text-white transition-colors font-medium">
-              Sign in
-            </Link>
-            <Link
-              href="/register"
-              className="px-4 py-2.5 text-white text-sm font-semibold rounded-lg transition-all hover:-translate-y-px"
-              style={{ background: "linear-gradient(135deg, #FF6B00, #f97316)", boxShadow: "0 4px 16px rgba(255,107,0,0.3)" }}
-            >
-              Start free
-            </Link>
-          </div>
-
-          {/* Mobile: Sign in + hamburger */}
+          {/* Mobile: hamburger only */}
           <div className="flex md:hidden items-center gap-2">
-            <Link href="/login" className="px-3 py-1.5 text-sm text-white/60 hover:text-white transition-colors font-medium">
-              Sign in
-            </Link>
             <button
               onClick={() => setOpen((o) => !o)}
               className="w-9 h-9 flex items-center justify-center rounded-lg border border-white/[0.1] text-white/60 hover:text-white hover:border-white/20 transition-all"
@@ -117,15 +100,6 @@ export default function PublicNav({ active }: PublicNavProps) {
                 {label}
               </Link>
             ))}
-            <Link
-              href="/register"
-              onClick={() => setOpen(false)}
-              className="mt-3 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-white transition-all"
-              style={{ background: "linear-gradient(135deg, #FF6B00, #f97316)", boxShadow: "0 4px 16px rgba(255,107,0,0.25)" }}
-            >
-              Start free
-              <ArrowRight className="w-4 h-4" />
-            </Link>
           </div>
         )}
       </nav>
