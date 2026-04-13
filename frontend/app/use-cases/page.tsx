@@ -182,10 +182,9 @@ export default function UseCasesPage() {
           <div className="mt-12 text-center rounded-2xl p-10" style={{ background: "linear-gradient(135deg, rgba(255,107,0,0.08) 0%, rgba(79,70,229,0.06) 100%)", border: "1px solid rgba(255,255,255,0.07)" }}>
             <h3 className="font-serif text-3xl text-white mb-3">Don&apos;t see your industry?</h3>
             <p className="text-white/40 text-base mb-8 max-w-md mx-auto">Every business that talks to customers in India has a use case. Let&apos;s figure yours out together.</p>
-            <Link href="/register" className="inline-flex items-center gap-2 px-7 py-3.5 text-white font-semibold rounded-xl transition-all hover:-translate-y-0.5 text-[15px]" style={{ background: "linear-gradient(135deg, #FF6B00, #f97316)", boxShadow: "0 4px 20px rgba(255,107,0,0.3)" }}>
-              Talk to us
-              <ArrowRight className="w-4 h-4" />
-            </Link>
+            <a href="mailto:support@bolospeak.com" className="inline-flex items-center gap-2 px-7 py-3.5 text-white font-semibold rounded-xl transition-all hover:-translate-y-0.5 text-[15px]" style={{ background: "linear-gradient(135deg, #FF6B00, #f97316)", boxShadow: "0 4px 20px rgba(255,107,0,0.3)" }}>
+              Contact us at support@bolospeak.com
+            </a>
           </div>
         </div>
       </section>

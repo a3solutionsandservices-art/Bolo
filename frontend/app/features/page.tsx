@@ -198,10 +198,7 @@ export default function FeaturesPage() {
                 </span>
               ))}
             </div>
-            <Link href="/register" className="inline-flex items-center gap-2 px-7 py-3.5 bg-brand-600 hover:bg-brand-500 text-white font-semibold rounded-xl transition-all shadow-xl shadow-brand-600/30 hover:-translate-y-0.5">
-              Start for free
-              <ArrowRight className="w-4 h-4" />
-            </Link>
+
           </div>
         </div>
       </section>
