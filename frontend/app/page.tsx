@@ -238,6 +238,59 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── 3-STEP SETUP ── */}
+      <section className="py-20 px-6 border-t border-white/[0.05]">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-12">
+            <span className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/15 border border-emerald-500/25 text-emerald-300 mb-4">
+              No hardware. No number change. No IT team.
+            </span>
+            <h2 className="font-serif text-3xl md:text-4xl text-white mb-4">
+              Setup in 3 Simple Steps
+            </h2>
+            <p className="text-white/40 text-sm max-w-md mx-auto">
+              Works with your existing clinic phone. No new devices. No training needed for staff.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {[
+              {
+                step: "1",
+                emoji: "📞",
+                title: "Link Your Existing Clinic Number",
+                desc: "We connect Bolo to the same phone number your patients already call. You keep your number — nothing changes for patients.",
+                note: "Takes 10 minutes",
+              },
+              {
+                step: "2",
+                emoji: "🗓️",
+                title: "Tell Us Your Timings & Services",
+                desc: "Share your clinic hours, doctor names, and consultation types. Bolo learns your clinic — no technical setup required.",
+                note: "A quick WhatsApp chat with our team",
+              },
+              {
+                step: "3",
+                emoji: "✔️",
+                title: "Start Recovering Missed Appointments",
+                desc: "From this moment, every missed call triggers an automatic AI callback. Patients get served. You get bookings.",
+                note: "Live within 30 minutes",
+              },
+            ].map(({ step, emoji, title, desc, note }) => (
+              <div key={step} className="relative rounded-2xl bg-white/[0.03] border border-white/[0.07] p-7">
+                <span className="absolute top-5 right-6 font-mono text-white/8 text-4xl font-bold select-none">{step}</span>
+                <div className="text-3xl mb-4">{emoji}</div>
+                <h3 className="text-white font-semibold mb-2 text-[15px]">{title}</h3>
+                <p className="text-white/45 text-sm leading-relaxed mb-4">{desc}</p>
+                <span className="inline-block px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[11px] font-medium">
+                  {note}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ── REVENUE CALCULATOR ── */}
       <section className="py-20 px-6 border-t border-white/[0.05]">
         <div className="max-w-3xl mx-auto">
