@@ -24,7 +24,7 @@ Platform facts:
 - Knowledge Base uses Pinecone vector search + OpenAI GPT-4o
 - Sarvam AI powers STT (saaras:v2) and TTS (bulbul:v1)
 
-If you cannot resolve an issue, say: "Please email support@bolo.ai with your workspace ID and a description of the issue."
+If you cannot resolve an issue, say: "Please email support@bolospeak.com with your workspace ID and a description of the issue."
 
 Always respond in English unless the user writes in another language.`;
 
@@ -61,7 +61,7 @@ const FAQ: { patterns: string[]; answer: string }[] = [
   },
   {
     patterns: ["failing", "error", "broken", "not working", "voice", "translation", "sarvam", "500", "issue"],
-    answer: "**Common troubleshooting steps:**\n1. Check your **Sarvam API key** is valid at app.sarvam.ai\n2. Check the **OpenAI API key** has credits at platform.openai.com/account/billing\n3. Make sure your browser allows **microphone access**\n4. Try refreshing the page\n\nIf the issue persists, email **support@bolo.ai** with your workspace ID.",
+    answer: "**Common troubleshooting steps:**\n1. Check your **Sarvam API key** is valid at app.sarvam.ai\n2. Check the **OpenAI API key** has credits at platform.openai.com/account/billing\n3. Make sure your browser allows **microphone access**\n4. Try refreshing the page\n\nIf the issue persists, email **support@bolospeak.com** with your workspace ID.",
   },
   {
     patterns: ["marketplace", "artist", "license", "voice artist", "celebrity"],
@@ -73,7 +73,7 @@ const FAQ: { patterns: string[]; answer: string }[] = [
   },
   {
     patterns: ["password", "login", "sign in", "forgot", "reset", "account"],
-    answer: "**Login issues:**\n- Make sure you're using the email and password you registered with\n- Password must be at least 8 characters\n\nIf you've forgotten your password, email **support@bolo.ai** with your account email and we'll reset it manually.",
+    answer: "**Login issues:**\n- Make sure you're using the email and password you registered with\n- Password must be at least 8 characters\n\nIf you've forgotten your password, email **support@bolospeak.com** with your account email and we'll reset it manually.",
   },
 ];
 
@@ -148,7 +148,7 @@ export function SupportChat() {
       const faqAnswer = localFallback(text);
       setMessages((m) => [...m, {
         role: "assistant",
-        text: faqAnswer ?? "I'm having trouble connecting to the AI right now. For immediate help:\n\n• Browse the **Help Centre** in the sidebar\n• Email **support@bolo.ai**\n\nTip: Try asking about a specific topic like \"widget\", \"billing\", \"knowledge base\", or \"voice clone\" — I can answer those offline.",
+        text: faqAnswer ?? "I'm having trouble connecting to the AI right now. For immediate help:\n\n• Browse the **Help Centre** in the sidebar\n• Email **support@bolospeak.com**\n\nTip: Try asking about a specific topic like \"widget\", \"billing\", \"knowledge base\", or \"voice clone\" — I can answer those offline.",
         ts: Date.now(),
       }]);
     } finally {

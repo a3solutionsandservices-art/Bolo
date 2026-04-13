@@ -403,7 +403,7 @@ export default function LandingPage() {
           <div className="flex items-center gap-8 text-sm text-white/30">
             <a href="#" className="hover:text-white/60 transition-colors">Privacy</a>
             <a href="#" className="hover:text-white/60 transition-colors">Terms</a>
-            <a href="mailto:support@bolo.ai" className="hover:text-white/60 transition-colors">support@bolo.ai</a>
+            <a href="mailto:support@bolospeak.com" className="hover:text-white/60 transition-colors">support@bolospeak.com</a>
           </div>
           <p className="text-xs text-white/20">© 2026 Bolo. Made for Bharat.</p>
         </div>
