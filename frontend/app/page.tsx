@@ -309,14 +309,7 @@ export default function LandingPage() {
             </div>
 
             <div className="text-center pt-2">
-              <Link
-                href="/register"
-                className="inline-flex items-center gap-2.5 px-8 py-3.5 rounded-xl font-semibold text-white text-sm transition-all"
-                style={{ background: "linear-gradient(135deg,#FF6B00,#f97316)", boxShadow: "0 4px 20px rgba(255,107,0,0.3)" }}
-              >
-                Recover This Revenue Automatically
-                <ArrowRight className="w-4 h-4" />
-              </Link>
+
             </div>
 
             <p className="text-center text-white/20 text-xs">
