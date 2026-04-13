@@ -134,6 +134,7 @@ interface LangScript {
   greeting: string;
   booking: Line[];
   inquiry: Line[];
+  evening: Line[];
 }
 
 const SCRIPTS: Record<"te" | "hi", LangScript> = {
@@ -154,6 +155,12 @@ const SCRIPTS: Record<"te" | "hi", LangScript> = {
       { role: "pt", text: "వద్దు, చాలు. ధన్యవాదాలు." },
       { role: "ai", text: "సహాయం చేయడం సంతోషంగా ఉంది! మా clinic ని choose చేసినందుకు చాలా ధన్యవాదాలు!" },
     ],
+    evening: [
+      { role: "pt", text: "Dr. Reddy ఈరోజు evening clinic కి వస్తారా?" },
+      { role: "ai", text: "అవును! Dr. Reddy ఈరోజు సాయంత్రం 6:30 PM కి clinic లో ఉంటారు. మీకు ముందే token reserve చేయాలా, wait చేయకుండా?" },
+      { role: "pt", text: "అవును, please reserve చేయండి." },
+      { role: "ai", text: "Token 7 reserve అయింది! సాయంత్రం 7:15 PM కి రండి. Confirmation SMS వస్తుంది. మా clinic ని choose చేసినందుకు చాలా ధన్యవాదాలు!" },
+    ],
   },
   hi: {
     code: "hi",
@@ -172,11 +179,22 @@ const SCRIPTS: Record<"te" | "hi", LangScript> = {
       { role: "pt", text: "नहीं, बस इतना काफी है। धन्यवाद।" },
       { role: "ai", text: "मदद करके खुशी हुई! हमारे clinic को choose करने के लिए बहुत धन्यवाद!" },
     ],
+    evening: [
+      { role: "pt", text: "Dr. Reddy आज evening clinic में आएंगे?" },
+      { role: "ai", text: "जी हाँ! Dr. Reddy आज शाम 6:30 बजे clinic में होंगे। क्या मैं आपके लिए पहले से token reserve कर दूं ताकि इंतज़ार न करना पड़े?" },
+      { role: "pt", text: "हाँ, please reserve करें।" },
+      { role: "ai", text: "Token number 7 reserve हो गया! शाम 7:15 बजे आ जाइए। Confirmation SMS भेज रहे हैं। हमारे clinic को choose करने के लिए बहुत धन्यवाद!" },
+    ],
   },
 };
 
 function aiTexts(s: LangScript) {
-  return [s.greeting, ...s.booking.filter(l => l.role === "ai").map(l => l.text), ...s.inquiry.filter(l => l.role === "ai").map(l => l.text)];
+  return [
+    s.greeting,
+    ...s.booking.filter(l => l.role === "ai").map(l => l.text),
+    ...s.inquiry.filter(l => l.role === "ai").map(l => l.text),
+    ...s.evening.filter(l => l.role === "ai").map(l => l.text),
+  ];
 }
 
 // ─── sub-components ──────────────────────────────────────────────────────────
@@ -202,7 +220,7 @@ function Orb({ cls }: { cls: string }) {
 }
 
 // ─── main component ───────────────────────────────────────────────────────────
-type Phase = "idle" | "incoming" | "missed" | "countdown" | "calling" | "conversation" | "booked" | "inquiry_done";
+type Phase = "idle" | "incoming" | "missed" | "countdown" | "calling" | "conversation" | "booked" | "inquiry_done" | "evening_done";
 
 export default function MissedCallSimulator({ onClose }: { onClose?: () => void }) {
   const [phase,      setPhase]      = useState<Phase>("idle");
@@ -290,10 +308,10 @@ export default function MissedCallSimulator({ onClose }: { onClose?: () => void 
   }, [phase]);
 
   // ── choice handler ─────────────────────────────────────────────────────────
-  const choose = async (intent: "booking" | "inquiry") => {
+  const choose = async (intent: "booking" | "inquiry" | "evening") => {
     if (cancelled.current) return;
     setShowChoice(false);
-    const scriptLines = intent === "booking" ? script.booking : script.inquiry;
+    const scriptLines = intent === "booking" ? script.booking : intent === "inquiry" ? script.inquiry : script.evening;
 
     for (const line of scriptLines) {
       if (cancelled.current) return;
@@ -307,7 +325,7 @@ export default function MissedCallSimulator({ onClose }: { onClose?: () => void 
     }
 
     if (!cancelled.current) {
-      setPhase(intent === "booking" ? "booked" : "inquiry_done");
+      setPhase(intent === "booking" ? "booked" : intent === "inquiry" ? "inquiry_done" : "evening_done");
     }
   };
 
@@ -481,6 +499,13 @@ export default function MissedCallSimulator({ onClose }: { onClose?: () => void 
                     <HelpCircle className="w-4 h-4 text-white/40 shrink-0" />
                     General Inquiry
                   </button>
+                  <button
+                    onClick={() => choose("evening")}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/20 text-amber-300/80 text-sm transition-all"
+                  >
+                    <Phone className="w-4 h-4 text-amber-400/70 shrink-0" />
+                    Evening Clinic Enquiry
+                  </button>
                 </div>
               )}
             </div>
@@ -499,6 +524,26 @@ export default function MissedCallSimulator({ onClose }: { onClose?: () => void 
               </div>
               <div className="px-4 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-300/60 font-mono">
                 Missed call → booked in under 30 seconds
+              </div>
+              <button onClick={reset} className="text-xs text-white/25 hover:text-white/50 transition-colors underline underline-offset-2">
+                Run again
+              </button>
+            </div>
+          )}
+
+          {/* EVENING DONE */}
+          {phase === "evening_done" && (
+            <div className="text-center space-y-5">
+              <div className="w-20 h-20 mx-auto rounded-full bg-amber-500/20 border border-amber-500/30 flex items-center justify-center">
+                <CheckCircle2 className="w-10 h-10 text-amber-400" />
+              </div>
+              <div>
+                <p className="text-amber-300 font-bold text-2xl">Token Reserved ✔</p>
+                <p className="text-white/45 text-sm mt-2">Dr. Reddy · Tonight 6:30 PM · Token #7</p>
+                <p className="text-white/25 text-xs mt-1">SMS sent · No waiting · Zero staff needed</p>
+              </div>
+              <div className="px-4 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300/60 font-mono">
+                2 PM inquiry → evening slot secured in 30s
               </div>
               <button onClick={reset} className="text-xs text-white/25 hover:text-white/50 transition-colors underline underline-offset-2">
                 Run again
