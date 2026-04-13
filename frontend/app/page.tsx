@@ -445,7 +445,14 @@ export default function LandingPage() {
 
       {/* ── FOOTER ── */}
       <footer className="border-t border-white/[0.05] py-12 px-6">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="max-w-6xl mx-auto flex flex-col items-center gap-6">
+          <div className="flex justify-center">
+            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs">
+              <Shield className="w-3.5 h-3.5 shrink-0" />
+              Patient data is encrypted &amp; DPDP-compliant. We store only call logs — never medical records.
+            </span>
+          </div>
+          <div className="w-full flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-brand-500 to-violet-600 flex items-center justify-center">
               <Mic className="w-3.5 h-3.5 text-white" />
@@ -459,6 +466,7 @@ export default function LandingPage() {
             <a href="mailto:support@bolospeak.com" className="hover:text-white/60 transition-colors">support@bolospeak.com</a>
           </div>
           <p className="text-xs text-white/20">© 2026 Bolo. Made for Bharat.</p>
+          </div>
         </div>
       </footer>
     </div>
