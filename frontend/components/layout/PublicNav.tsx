@@ -8,13 +8,13 @@ const NAV_LINKS = [
   { href: "/", label: "Home" },
   { href: "/features", label: "Features" },
   { href: "/use-cases", label: "Use Cases" },
-  { href: "/pricing", label: "Pricing" },
+
   { href: "/about", label: "About" },
   { href: "/demo", label: "Demo", highlight: true },
 ];
 
 interface PublicNavProps {
-  active?: "home" | "features" | "use-cases" | "pricing" | "about" | "demo";
+  active?: "home" | "features" | "use-cases" | "about" | "demo";
 }
 
 export default function PublicNav({ active }: PublicNavProps) {
@@ -24,7 +24,7 @@ export default function PublicNav({ active }: PublicNavProps) {
     active === "home" ? "/" :
     active === "features" ? "/features" :
     active === "use-cases" ? "/use-cases" :
-    active === "pricing" ? "/pricing" :
+
     active === "about" ? "/about" :
     active === "demo" ? "/demo" : null;
 

@@ -85,7 +85,7 @@ export default function PricingPage() {
   return (
     <div className="min-h-screen text-white" style={{ background: "#050a14" }}>
 
-      <PublicNav active="pricing" />
+      <PublicNav  />
 
       {/* Hero */}
       <section className="relative pt-40 pb-16 px-6 text-center overflow-hidden">
