@@ -123,33 +123,61 @@ function playAndWait(audio: HTMLAudioElement | null, fallbackMs = 4000): Promise
 
 function sleep(ms: number) { return new Promise<void>(r => setTimeout(r, ms)); }
 
-// ─── script ──────────────────────────────────────────────────────────────────
-const LANG = "te";
+// ─── scripts ─────────────────────────────────────────────────────────────────
 const NUMBER = "+91 98XXX XXXXX";
 
-const GREETING =
-  "నమస్కారం! నేను పల్లవిని, City Clinic నుండి. మీ call miss అయింది — ఎలా సహాయపడగలను?";
+type Line = { role: "ai" | "pt"; text: string };
+interface LangScript {
+  code: string;
+  label: string;
+  sublabel: string;
+  greeting: string;
+  booking: Line[];
+  inquiry: Line[];
+}
 
-const BOOKING_LINES: { role: "ai" | "pt"; text: string }[] = [
-  { role: "pt", text: "Dr. Mehta తో రేపు appointment కావాలి." },
-  { role: "ai", text: "అర్థమైంది! రేపు 10 AM లేదా 3 PM slot ఉంది. ఏది convenient గా ఉంటుంది?" },
-  { role: "pt", text: "10 AM బాగుంటుంది." },
-  { role: "ai", text: "Confirmed! రేపు 10 AM, Dr. Mehta. Confirmation SMS వస్తుంది. మా clinic ని choose చేసినందుకు చాలా ధన్యవాదాలు!" },
-];
+const SCRIPTS: Record<"te" | "hi", LangScript> = {
+  te: {
+    code: "te",
+    label: "తెలుగు",
+    sublabel: "Telugu",
+    greeting: "నమస్కారం! నేను పల్లవిని, City Clinic నుండి. మీ call miss అయింది — ఎలా సహాయపడగలను?",
+    booking: [
+      { role: "pt", text: "Dr. Mehta తో రేపు appointment కావాలి." },
+      { role: "ai", text: "అర్థమైంది! రేపు 10 AM లేదా 3 PM slot ఉంది. ఏది convenient గా ఉంటుంది?" },
+      { role: "pt", text: "10 AM బాగుంటుంది." },
+      { role: "ai", text: "Confirmed! రేపు 10 AM, Dr. Mehta. Confirmation SMS వస్తుంది. మా clinic ని choose చేసినందుకు చాలా ధన్యవాదాలు!" },
+    ],
+    inquiry: [
+      { role: "pt", text: "OPD charges ఎంత అవుతాయి?" },
+      { role: "ai", text: "General OPD 300 rupees, specialist కి 500 rupees అవుతుంది. Appointment కూడా book చేయాలా?" },
+      { role: "pt", text: "వద్దు, చాలు. ధన్యవాదాలు." },
+      { role: "ai", text: "సహాయం చేయడం సంతోషంగా ఉంది! మా clinic ని choose చేసినందుకు చాలా ధన్యవాదాలు!" },
+    ],
+  },
+  hi: {
+    code: "hi",
+    label: "हिंदी",
+    sublabel: "Hindi",
+    greeting: "नमस्ते! मैं पल्लवी हूँ, City Clinic से। आपका call miss हो गया — मैं कैसे मदद कर सकती हूँ?",
+    booking: [
+      { role: "pt", text: "Dr. Mehta से कल appointment चाहिए।" },
+      { role: "ai", text: "बिल्कुल! कल 10 AM या 3 PM slot available है। कौनसा time convenient रहेगा?" },
+      { role: "pt", text: "10 AM ठीक रहेगा।" },
+      { role: "ai", text: "Confirmed! कल 10 AM, Dr. Mehta के साथ। Confirmation SMS आएगा। हमारे clinic को choose करने के लिए बहुत धन्यवाद!" },
+    ],
+    inquiry: [
+      { role: "pt", text: "OPD charges कितने हैं?" },
+      { role: "ai", text: "General OPD 300 rupees, specialist के लिए 500 rupees है। Appointment भी book करना है?" },
+      { role: "pt", text: "नहीं, बस इतना काफी है। धन्यवाद।" },
+      { role: "ai", text: "मदद करके खुशी हुई! हमारे clinic को choose करने के लिए बहुत धन्यवाद!" },
+    ],
+  },
+};
 
-const INQUIRY_LINES: { role: "ai" | "pt"; text: string }[] = [
-  { role: "pt", text: "OPD charges ఎంత అవుతాయి?" },
-  { role: "ai", text: "General OPD 300 rupees, specialist కి 500 rupees అవుతుంది. Appointment కూడా book చేయాలా?" },
-  { role: "pt", text: "వద్దు, చాలు. ధన్యవాదాలు." },
-  { role: "ai", text: "సహాయం చేయడం సంతోషంగా ఉంది! మా clinic ని choose చేసినందుకు చాలా ధన్యవాదాలు!" },
-];
-
-// All AI texts that need audio
-const AI_TEXTS = [
-  GREETING,
-  ...BOOKING_LINES.filter(l => l.role === "ai").map(l => l.text),
-  ...INQUIRY_LINES.filter(l => l.role === "ai").map(l => l.text),
-];
+function aiTexts(s: LangScript) {
+  return [s.greeting, ...s.booking.filter(l => l.role === "ai").map(l => l.text), ...s.inquiry.filter(l => l.role === "ai").map(l => l.text)];
+}
 
 // ─── sub-components ──────────────────────────────────────────────────────────
 function Ring() {
@@ -175,13 +203,14 @@ function Orb({ cls }: { cls: string }) {
 
 // ─── main component ───────────────────────────────────────────────────────────
 type Phase = "idle" | "incoming" | "missed" | "countdown" | "calling" | "conversation" | "booked" | "inquiry_done";
-type Line  = { role: "ai" | "pt"; text: string };
 
 export default function MissedCallSimulator({ onClose }: { onClose?: () => void }) {
   const [phase,      setPhase]      = useState<Phase>("idle");
   const [count,      setCount]      = useState(3);
   const [lines,      setLines]      = useState<Line[]>([]);
   const [showChoice, setShowChoice] = useState(false);
+  const [langKey,    setLangKey]    = useState<"te" | "hi">("te");
+  const script   = SCRIPTS[langKey];
   const chatRef  = useRef<HTMLDivElement>(null);
   const cache    = useRef<Map<string, HTMLAudioElement>>(new Map());
   const cancelled = useRef(false);
@@ -195,10 +224,10 @@ export default function MissedCallSimulator({ onClose }: { onClose?: () => void 
   };
 
   // Kick off parallel pre-loading of all AI audio immediately
-  const preloadAll = () => {
+  const preloadAll = (s: LangScript) => {
     cache.current.clear();
-    AI_TEXTS.forEach(text =>
-      loadBlob(text, LANG).then(a => { if (a) cache.current.set(text, a); })
+    aiTexts(s).forEach(text =>
+      loadBlob(text, s.code).then(a => { if (a) cache.current.set(text, a); })
     );
   };
 
@@ -252,8 +281,8 @@ export default function MissedCallSimulator({ onClose }: { onClose?: () => void 
     cancelled.current = false;
 
     (async () => {
-      setLines([{ role: "ai", text: GREETING }]);
-      await playAndWait(getAudio(GREETING));
+      setLines([{ role: "ai", text: script.greeting }]);
+      await playAndWait(getAudio(script.greeting));
       if (cancelled.current) return;
       setShowChoice(true);
     })();
@@ -264,9 +293,9 @@ export default function MissedCallSimulator({ onClose }: { onClose?: () => void 
   const choose = async (intent: "booking" | "inquiry") => {
     if (cancelled.current) return;
     setShowChoice(false);
-    const script = intent === "booking" ? BOOKING_LINES : INQUIRY_LINES;
+    const scriptLines = intent === "booking" ? script.booking : script.inquiry;
 
-    for (const line of script) {
+    for (const line of scriptLines) {
       if (cancelled.current) return;
       setLines(prev => [...prev, line]);
 
@@ -314,17 +343,37 @@ export default function MissedCallSimulator({ onClose }: { onClose?: () => void 
                 <p className="text-white font-semibold text-lg mb-1">Missed Call → Booking</p>
                 <p className="text-white/40 text-sm">Simulate a real AI callback in under 30 seconds</p>
               </div>
+
+              {/* Language toggle */}
+              <div className="flex items-center justify-center gap-2">
+                <span className="text-white/30 text-xs mr-1">Try in:</span>
+                {(["te", "hi"] as const).map(k => (
+                  <button
+                    key={k}
+                    onClick={() => setLangKey(k)}
+                    className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                      langKey === k
+                        ? "bg-brand-600/40 border border-brand-500/60 text-white"
+                        : "bg-white/[0.04] border border-white/[0.08] text-white/40 hover:text-white/70"
+                    }`}
+                  >
+                    {SCRIPTS[k].label}
+                    <span className="ml-1.5 text-[10px] opacity-60">{SCRIPTS[k].sublabel}</span>
+                  </button>
+                ))}
+              </div>
+
               <button
                 onClick={() => {
                   reset();
                   cancelled.current = false;
-                  preloadAll();         // start loading audio immediately
+                  preloadAll(SCRIPTS[langKey]);
                   setPhase("incoming");
                 }}
                 className="px-8 py-3.5 rounded-xl font-semibold text-white text-sm"
                 style={{ background: "linear-gradient(135deg,#FF6B00,#f97316)", boxShadow: "0 4px 20px rgba(255,107,0,0.35)" }}
               >
-                ▶ Start
+                ▶ Start in {SCRIPTS[langKey].sublabel}
               </button>
             </div>
           )}
@@ -393,7 +442,7 @@ export default function MissedCallSimulator({ onClose }: { onClose?: () => void 
             <div className="w-full space-y-3">
               <div className="flex items-center gap-2 mb-3">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="text-[11px] text-emerald-400 font-mono">Connected · Pallavi speaking Telugu</span>
+                <span className="text-[11px] text-emerald-400 font-mono">Connected · Pallavi speaking {script.sublabel}</span>
               </div>
 
               <div ref={chatRef} className="space-y-2.5 max-h-44 overflow-y-auto pr-1">
