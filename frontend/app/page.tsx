@@ -238,6 +238,52 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── AFTER-HOURS ── */}
+      <section className="py-20 px-6 border-t border-white/[0.05]">
+        <div className="max-w-4xl mx-auto">
+          <div className="rounded-2xl bg-white/[0.02] border border-white/[0.07] p-8 md:p-12 flex flex-col md:flex-row gap-10 items-center">
+
+            {/* Clock visual */}
+            <div className="shrink-0 flex flex-col items-center gap-3">
+              <div className="w-28 h-28 rounded-full border-2 border-white/10 flex items-center justify-center relative bg-white/[0.02]">
+                <Timer className="w-10 h-10 text-white/20" />
+                <span className="absolute top-3 text-[10px] text-white/20 font-mono">22:00</span>
+                <span className="absolute bottom-3 text-[10px] text-emerald-400 font-mono font-bold animate-pulse">LIVE</span>
+              </div>
+              <span className="text-[11px] text-white/25 font-mono">After hours · Sundays · Lunch</span>
+            </div>
+
+            {/* Text */}
+            <div className="flex-1">
+              <span className="inline-block px-3 py-1 rounded-full text-[11px] font-medium bg-violet-500/15 border border-violet-500/25 text-violet-300 mb-4">
+                Fills the gap — does not replace your receptionist
+              </span>
+              <h2 className="font-serif text-2xl md:text-3xl text-white mb-3">
+                Your Clinic Never Sleeps.<br />Even When You Do.
+              </h2>
+              <p className="text-white/40 text-sm leading-relaxed mb-6">
+                40% of clinic calls come after hours — evenings, Sundays, lunch breaks.
+                No staff. No answer. Patient moves on. Bolo handles every one of them,
+                in their language, automatically.
+              </p>
+              <ul className="space-y-2.5">
+                {[
+                  "Monday–Sunday, 6 AM to midnight",
+                  "Speaks Hindi, Telugu, and 9 more Indian languages",
+                  "Books, informs, and reserves tokens — without a receptionist",
+                ].map(item => (
+                  <li key={item} className="flex items-start gap-2.5 text-sm text-white/55">
+                    <span className="text-emerald-400 mt-0.5 shrink-0">✓</span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
       {/* ── 3-STEP SETUP ── */}
       <section className="py-20 px-6 border-t border-white/[0.05]">
         <div className="max-w-4xl mx-auto">
