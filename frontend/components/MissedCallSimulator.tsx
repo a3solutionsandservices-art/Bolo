@@ -157,9 +157,9 @@ const SCRIPTS: Record<"te" | "hi", LangScript> = {
     ],
     evening: [
       { role: "pt", text: "Dr. Reddy ఈరోజు evening clinic కి వస్తారా?" },
-      { role: "ai", text: "అవును! Dr. Reddy ఈరోజు 18:30 కి clinic లో ఉంటారు. మీకు ముందే token reserve చేయాలా, wait చేయకుండా?" },
+      { role: "ai", text: "అవును! Dr. Reddy ఈరోజు సాయంత్రం ఆరున్నర కి clinic లో ఉంటారు. మీకు ముందే token reserve చేయాలా, wait చేయకుండా?" },
       { role: "pt", text: "అవును, please reserve చేయండి." },
-      { role: "ai", text: "Token 7 reserve అయింది! 19:15 కి రండి. Confirmation SMS వస్తుంది. మా clinic ని choose చేసినందుకు చాలా ధన్యవాదాలు!" },
+      { role: "ai", text: "Token 7 reserve అయింది! సాయంత్రం ఏడు పదిహేను కి రండి. Confirmation SMS వస్తుంది. మా clinic ని choose చేసినందుకు చాలా ధన్యవాదాలు!" },
     ],
   },
   hi: {
@@ -181,9 +181,9 @@ const SCRIPTS: Record<"te" | "hi", LangScript> = {
     ],
     evening: [
       { role: "pt", text: "Dr. Reddy आज evening clinic में आएंगे?" },
-      { role: "ai", text: "जी हाँ! Dr. Reddy आज 18:30 बजे clinic में होंगे। क्या मैं आपके लिए पहले से token reserve कर दूं ताकि इंतज़ार न करना पड़े?" },
+      { role: "ai", text: "जी हाँ! Dr. Reddy आज शाम साढ़े छह बजे clinic में होंगे। क्या मैं आपके लिए पहले से token reserve कर दूं ताकि इंतज़ार न करना पड़े?" },
       { role: "pt", text: "हाँ, please reserve करें।" },
-      { role: "ai", text: "Token number 7 reserve हो गया! 19:15 बजे आ जाइए। Confirmation SMS भेज रहे हैं। हमारे clinic को choose करने के लिए बहुत धन्यवाद!" },
+      { role: "ai", text: "Token number 7 reserve हो गया! शाम सवा सात बजे आ जाइए। Confirmation SMS भेज रहे हैं। हमारे clinic को choose करने के लिए बहुत धन्यवाद!" },
     ],
   },
 };
