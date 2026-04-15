@@ -555,7 +555,7 @@ export default function MissedCallSimulator({ onClose }: { onClose?: () => void 
                   <span className="text-[10px] text-white/35 font-mono">SMS sent to patient</span>
                 </div>
                 <div className="bg-green-500/15 border border-green-500/20 rounded-xl rounded-tl-sm px-3 py-2.5 text-[11px] text-white/70 leading-relaxed">
-                  Your appointment with Dr. Mehta is confirmed for tomorrow at 10:00 AM at City Clinic. Reply CANCEL to reschedule. — Bolo
+                  Your appointment with Dr. Mehta is confirmed for tomorrow at 10:00 AM at City Clinic. Reply CANCEL to reschedule. — City Clinic
                 </div>
               </div>
 
@@ -629,7 +629,7 @@ export default function MissedCallSimulator({ onClose }: { onClose?: () => void 
                   <span className="text-[10px] text-white/35 font-mono">SMS sent to patient</span>
                 </div>
                 <div className="bg-green-500/15 border border-green-500/20 rounded-xl rounded-tl-sm px-3 py-2.5 text-[11px] text-white/70 leading-relaxed">
-                  Token #7 reserved for Dr. Reddy&apos;s evening clinic tonight. Arrive by 7:15 PM. City Clinic, Kukatpally. — Bolo
+                  Token #7 reserved for Dr. Reddy&apos;s evening clinic tonight. Arrive by 7:15 PM. City Clinic, Kukatpally. — City Clinic
                 </div>
               </div>
 
@@ -673,7 +673,7 @@ export default function MissedCallSimulator({ onClose }: { onClose?: () => void 
                   <span className="text-[10px] text-white/35 font-mono">WhatsApp summary sent</span>
                 </div>
                 <div className="bg-green-500/15 border border-green-500/20 rounded-xl rounded-tl-sm px-3 py-2.5 text-[11px] text-white/70 leading-relaxed">
-                  Hi! Here is the fee summary from City Clinic — General OPD: 300 | Specialist: 500. To book, call us or reply here. — Bolo
+                  Hi! Here is the fee summary from City Clinic — General OPD: 300 | Specialist: 500. To book, call us or reply here. — City Clinic
                 </div>
               </div>
 
