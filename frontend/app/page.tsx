@@ -214,7 +214,7 @@ export default function LandingPage() {
                 color: "text-brand-400",
                 bg: "bg-brand-600/10 border-brand-500/20",
                 title: "AI Calls Back in 3–5 Seconds",
-                desc: "Bolo dials the patient automatically — faster than any human — and greets them in their language.",
+                desc: "Bolo dials the patient automatically — faster than any human — and greets them in Hindi or Telugu.",
               },
               {
                 step: "03",
