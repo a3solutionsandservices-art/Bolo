@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Phone, PhoneMissed, PhoneIncoming, CheckCircle2, Calendar, HelpCircle, X } from "lucide-react";
+import { Phone, PhoneMissed, PhoneIncoming, CheckCircle2, Calendar, HelpCircle, X, MessageSquare, Clock, Users } from "lucide-react";
 
 // ─── module-level audio state ────────────────────────────────────────────────
 let _cur: HTMLAudioElement | null = null;
@@ -513,19 +513,56 @@ export default function MissedCallSimulator({ onClose }: { onClose?: () => void 
 
           {/* BOOKED */}
           {phase === "booked" && (
-            <div className="text-center space-y-5">
-              <div className="w-20 h-20 mx-auto rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center">
-                <CheckCircle2 className="w-10 h-10 text-emerald-400" />
+            <div className="w-full space-y-3 animate-[fadeSlideUp_0.4s_ease_both]">
+              <p className="text-center text-[11px] text-emerald-400 font-mono flex items-center justify-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5" /> Appointment confirmed
+              </p>
+
+              {/* Calendar card */}
+              <div className="rounded-2xl bg-emerald-500/10 border border-emerald-500/25 overflow-hidden">
+                <div className="bg-emerald-500/20 px-4 py-2.5 flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-emerald-300" />
+                  <span className="text-emerald-200 text-xs font-semibold tracking-wide">BOOKING CONFIRMED</span>
+                </div>
+                <div className="px-4 py-4 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-white/45 text-[11px]">Patient</span>
+                    <span className="text-white text-[11px] font-medium">{NUMBER}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-white/45 text-[11px]">Doctor</span>
+                    <span className="text-white text-[11px] font-medium">Dr. Mehta</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-white/45 text-[11px]">Date & Time</span>
+                    <span className="text-emerald-300 text-[11px] font-bold">Tomorrow · 10:00 AM</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-white/45 text-[11px]">Clinic</span>
+                    <span className="text-white text-[11px] font-medium">City Clinic, OPD</span>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-emerald-500/20 flex items-center gap-1.5">
+                    <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    <span className="text-emerald-400 text-[10px]">Added to clinic calendar automatically</span>
+                  </div>
+                </div>
               </div>
-              <div>
-                <p className="text-emerald-400 font-bold text-2xl">Appointment Booked ✔</p>
-                <p className="text-white/45 text-sm mt-2">Dr. Mehta · Tomorrow 10 AM</p>
-                <p className="text-white/25 text-xs mt-1">SMS confirmation sent · Zero human involvement</p>
+
+              {/* SMS bubble */}
+              <div className="rounded-2xl bg-white/[0.04] border border-white/[0.08] px-4 py-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <MessageSquare className="w-3.5 h-3.5 text-green-400" />
+                  <span className="text-[10px] text-white/35 font-mono">SMS sent to patient</span>
+                </div>
+                <div className="bg-green-500/15 border border-green-500/20 rounded-xl rounded-tl-sm px-3 py-2.5 text-[11px] text-white/70 leading-relaxed">
+                  Your appointment with Dr. Mehta is confirmed for tomorrow at 10:00 AM at City Clinic. Reply CANCEL to reschedule. — Bolo
+                </div>
               </div>
-              <div className="px-4 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-300/60 font-mono">
-                Missed call → booked in under 30 seconds
+
+              <div className="text-center pt-1">
+                <span className="text-[10px] text-white/20 font-mono">Missed call → booked in under 30 seconds</span>
               </div>
-              <button onClick={reset} className="text-xs text-white/25 hover:text-white/50 transition-colors underline underline-offset-2">
+              <button onClick={reset} className="w-full text-xs text-white/25 hover:text-white/50 transition-colors underline underline-offset-2 pt-1">
                 Run again
               </button>
             </div>
@@ -533,19 +570,70 @@ export default function MissedCallSimulator({ onClose }: { onClose?: () => void 
 
           {/* EVENING DONE */}
           {phase === "evening_done" && (
-            <div className="text-center space-y-5">
-              <div className="w-20 h-20 mx-auto rounded-full bg-amber-500/20 border border-amber-500/30 flex items-center justify-center">
-                <CheckCircle2 className="w-10 h-10 text-amber-400" />
+            <div className="w-full space-y-3 animate-[fadeSlideUp_0.4s_ease_both]">
+              <p className="text-center text-[11px] text-amber-400 font-mono flex items-center justify-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5" /> Token reserved
+              </p>
+
+              {/* Token card */}
+              <div className="rounded-2xl bg-amber-500/10 border border-amber-500/25 overflow-hidden">
+                <div className="bg-amber-500/20 px-4 py-2.5 flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-amber-300" />
+                  <span className="text-amber-200 text-xs font-semibold tracking-wide">EVENING CLINIC · TOKEN RESERVED</span>
+                </div>
+                <div className="px-4 py-4 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-white/45 text-[11px]">Doctor</span>
+                    <span className="text-white text-[11px] font-medium">Dr. Reddy</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-white/45 text-[11px]">Clinic opens</span>
+                    <span className="text-white text-[11px] font-medium">Tonight 6:30 PM</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-white/45 text-[11px]">Your slot</span>
+                    <span className="text-amber-300 text-[11px] font-bold">~7:15 PM</span>
+                  </div>
+
+                  {/* Queue visualiser */}
+                  <div className="mt-3 pt-3 border-t border-amber-500/20">
+                    <div className="flex items-center gap-1.5 mb-1.5">
+                      <Users className="w-3 h-3 text-white/30" />
+                      <span className="text-[10px] text-white/30">Queue position</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {Array.from({ length: 10 }).map((_, i) => (
+                        <div
+                          key={i}
+                          className={`w-6 h-6 rounded-md flex items-center justify-center text-[9px] font-bold transition-all ${
+                            i < 6
+                              ? "bg-white/10 text-white/30"
+                              : i === 6
+                              ? "bg-amber-500 text-white shadow-lg shadow-amber-500/40 scale-110"
+                              : "bg-white/[0.04] text-white/15 border border-dashed border-white/10"
+                          }`}
+                        >
+                          {i + 1}
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-[10px] text-amber-300/60 mt-1.5">You are #7 — 6 patients ahead</p>
+                  </div>
+                </div>
               </div>
-              <div>
-                <p className="text-amber-300 font-bold text-2xl">Token Reserved ✔</p>
-                <p className="text-white/45 text-sm mt-2">Dr. Reddy · Tonight 6:30 PM · Token #7</p>
-                <p className="text-white/25 text-xs mt-1">SMS sent · No waiting · Zero staff needed</p>
+
+              {/* SMS bubble */}
+              <div className="rounded-2xl bg-white/[0.04] border border-white/[0.08] px-4 py-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <MessageSquare className="w-3.5 h-3.5 text-green-400" />
+                  <span className="text-[10px] text-white/35 font-mono">SMS sent to patient</span>
+                </div>
+                <div className="bg-green-500/15 border border-green-500/20 rounded-xl rounded-tl-sm px-3 py-2.5 text-[11px] text-white/70 leading-relaxed">
+                  Token #7 reserved for Dr. Reddy&apos;s evening clinic tonight. Arrive by 7:15 PM. City Clinic, Kukatpally. — Bolo
+                </div>
               </div>
-              <div className="px-4 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300/60 font-mono">
-                2 PM inquiry → evening slot secured in 30s
-              </div>
-              <button onClick={reset} className="text-xs text-white/25 hover:text-white/50 transition-colors underline underline-offset-2">
+
+              <button onClick={reset} className="w-full text-xs text-white/25 hover:text-white/50 transition-colors underline underline-offset-2 pt-1">
                 Run again
               </button>
             </div>
@@ -553,16 +641,43 @@ export default function MissedCallSimulator({ onClose }: { onClose?: () => void 
 
           {/* INQUIRY DONE */}
           {phase === "inquiry_done" && (
-            <div className="text-center space-y-5">
-              <div className="w-20 h-20 mx-auto rounded-full bg-brand-500/20 border border-brand-500/30 flex items-center justify-center">
-                <CheckCircle2 className="w-10 h-10 text-brand-400" />
+            <div className="w-full space-y-3 animate-[fadeSlideUp_0.4s_ease_both]">
+              <p className="text-center text-[11px] text-brand-400 font-mono flex items-center justify-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5" /> Query resolved
+              </p>
+
+              {/* Info card */}
+              <div className="rounded-2xl bg-brand-600/10 border border-brand-500/25 px-4 py-4 space-y-2">
+                <div className="flex items-center gap-2 mb-1">
+                  <HelpCircle className="w-4 h-4 text-brand-400" />
+                  <span className="text-brand-200 text-xs font-semibold tracking-wide">INFORMATION PROVIDED</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-white/45 text-[11px]">General OPD</span>
+                  <span className="text-white text-[11px] font-bold">300</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-white/45 text-[11px]">Specialist</span>
+                  <span className="text-white text-[11px] font-bold">500</span>
+                </div>
+                <div className="mt-2 pt-2 border-t border-brand-500/20 flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full bg-brand-400 animate-pulse" />
+                  <span className="text-brand-400 text-[10px]">Patient satisfied · call ended naturally</span>
+                </div>
               </div>
-              <div>
-                <p className="text-brand-300 font-bold text-2xl">Query Resolved ✔</p>
-                <p className="text-white/45 text-sm mt-2">Patient received full information</p>
-                <p className="text-white/25 text-xs mt-1">No hold time · No missed opportunity</p>
+
+              {/* WhatsApp bubble */}
+              <div className="rounded-2xl bg-white/[0.04] border border-white/[0.08] px-4 py-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <MessageSquare className="w-3.5 h-3.5 text-green-400" />
+                  <span className="text-[10px] text-white/35 font-mono">WhatsApp summary sent</span>
+                </div>
+                <div className="bg-green-500/15 border border-green-500/20 rounded-xl rounded-tl-sm px-3 py-2.5 text-[11px] text-white/70 leading-relaxed">
+                  Hi! Here is the fee summary from City Clinic — General OPD: 300 | Specialist: 500. To book, call us or reply here. — Bolo
+                </div>
               </div>
-              <button onClick={reset} className="text-xs text-white/25 hover:text-white/50 transition-colors underline underline-offset-2">
+
+              <button onClick={reset} className="w-full text-xs text-white/25 hover:text-white/50 transition-colors underline underline-offset-2 pt-1">
                 Run again
               </button>
             </div>
