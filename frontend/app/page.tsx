@@ -256,21 +256,21 @@ export default function LandingPage() {
             {/* Text */}
             <div className="flex-1">
               <span className="inline-block px-3 py-1 rounded-full text-[11px] font-medium bg-violet-500/15 border border-violet-500/25 text-violet-300 mb-4">
-                Fills the gap — does not replace your receptionist
+                Your receptionist's best support
               </span>
               <h2 className="font-serif text-2xl md:text-3xl text-white mb-3">
                 Your Clinic Never Sleeps.<br />Even When You Do.
               </h2>
               <p className="text-white/40 text-sm leading-relaxed mb-6">
-                40% of clinic calls come after hours — evenings, Sundays, lunch breaks.
-                No staff. No answer. Patient moves on. Bolo handles every one of them,
-                in their language, automatically.
+                Bolo handles the calls that come in after hours, on Sundays, and during
+                lunch — so your receptionist arrives each morning to a clean, organised
+                appointment list rather than a pile of missed calls to chase.
               </p>
               <ul className="space-y-2.5">
                 {[
-                  "Monday–Sunday, 6 AM to midnight",
-                  "Speaks Hindi, Telugu, and 9 more Indian languages",
-                  "Books, informs, and reserves tokens — without a receptionist",
+                  "Every missed call answered — your receptionist follows up with confidence",
+                  "No more start-of-day backlog or frantic rescheduling",
+                  "Patients feel heard, even before the clinic opens",
                 ].map(item => (
                   <li key={item} className="flex items-start gap-2.5 text-sm text-white/55">
                     <span className="text-emerald-400 mt-0.5 shrink-0">✓</span>
