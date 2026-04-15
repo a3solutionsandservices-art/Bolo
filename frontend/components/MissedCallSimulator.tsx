@@ -157,9 +157,9 @@ const SCRIPTS: Record<"te" | "hi", LangScript> = {
     ],
     evening: [
       { role: "pt", text: "Dr. Reddy ఈరోజు evening clinic కి వస్తారా?" },
-      { role: "ai", text: "అవును! Dr. Reddy ఈరోజు సాయంత్రం 6:30 PM కి clinic లో ఉంటారు. మీకు ముందే token reserve చేయాలా, wait చేయకుండా?" },
+      { role: "ai", text: "అవును! Dr. Reddy ఈరోజు సాయంత్రం 6:30 కి clinic లో ఉంటారు. మీకు ముందే token reserve చేయాలా, wait చేయకుండా?" },
       { role: "pt", text: "అవును, please reserve చేయండి." },
-      { role: "ai", text: "Token 7 reserve అయింది! సాయంత్రం 7:15 PM కి రండి. Confirmation SMS వస్తుంది. మా clinic ని choose చేసినందుకు చాలా ధన్యవాదాలు!" },
+      { role: "ai", text: "Token 7 reserve అయింది! సాయంత్రం 7:15 కి రండి. Confirmation SMS వస్తుంది. మా clinic ని choose చేసినందుకు చాలా ధన్యవాదాలు!" },
     ],
   },
   hi: {
