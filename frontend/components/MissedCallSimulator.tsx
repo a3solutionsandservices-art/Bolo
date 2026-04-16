@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Phone, PhoneMissed, PhoneIncoming, CheckCircle2, Calendar, HelpCircle, X, MessageSquare, Clock, Users } from "lucide-react";
+import { Phone, PhoneMissed, PhoneIncoming, CheckCircle2, Calendar, HelpCircle, X, MessageSquare, Clock, Users, Send } from "lucide-react";
 
 // ─── module-level audio state ────────────────────────────────────────────────
 let _cur: HTMLAudioElement | null = null;
@@ -215,6 +215,63 @@ function Orb({ cls }: { cls: string }) {
     <div className="relative flex items-center justify-center">
       <span className={`absolute h-20 w-20 rounded-full ${cls} opacity-20 animate-ping`} />
       <span className={`absolute h-14 w-14 rounded-full ${cls} opacity-30 animate-ping`} style={{ animationDelay: "150ms" }} />
+    </div>
+  );
+}
+
+// ─── WhatsApp send widget ─────────────────────────────────────────────────────
+function WhatsAppSend({ intent }: { intent: "booking" | "evening" | "inquiry" }) {
+  const [phone,  setPhone]  = useState("");
+  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+
+  const send = async () => {
+    const clean = phone.replace(/\D/g, "");
+    if (clean.length < 10) return;
+    setStatus("sending");
+    try {
+      const res = await fetch("/api/whatsapp-demo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: clean, intent }),
+      });
+      setStatus(res.ok ? "sent" : "error");
+    } catch {
+      setStatus("error");
+    }
+  };
+
+  if (status === "sent") {
+    return (
+      <div className="flex items-center gap-2 justify-center py-2">
+        <CheckCircle2 className="w-4 h-4 text-green-400" />
+        <span className="text-green-400 text-xs font-medium">WhatsApp sent! Check your phone.</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-xl bg-green-500/10 border border-green-500/20 p-3">
+      <p className="text-[10px] text-green-400 font-medium mb-2 flex items-center gap-1.5">
+        <MessageSquare className="w-3 h-3" /> Send this to your WhatsApp
+      </p>
+      <div className="flex gap-2">
+        <input
+          type="tel"
+          placeholder="98XXXXXXXX"
+          value={phone}
+          onChange={e => setPhone(e.target.value)}
+          className="flex-1 px-3 py-2 rounded-lg bg-white/[0.06] border border-white/[0.10] text-white text-xs placeholder-white/25 focus:outline-none focus:border-green-500/50"
+        />
+        <button
+          onClick={send}
+          disabled={status === "sending" || phone.replace(/\D/g, "").length < 10}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-green-500 hover:bg-green-400 disabled:opacity-40 text-white text-xs font-semibold transition-colors"
+        >
+          <Send className="w-3 h-3" />
+          {status === "sending" ? "Sending…" : "Send"}
+        </button>
+      </div>
+      {status === "error" && <p className="text-red-400 text-[10px] mt-1.5">Failed — check your number and try again.</p>}
     </div>
   );
 }
@@ -562,6 +619,7 @@ export default function MissedCallSimulator({ onClose }: { onClose?: () => void 
               <div className="text-center pt-1">
                 <span className="text-[10px] text-white/20 font-mono">Missed call → booked in under 30 seconds</span>
               </div>
+              <WhatsAppSend intent="booking" />
               <button onClick={reset} className="w-full text-xs text-white/25 hover:text-white/50 transition-colors underline underline-offset-2 pt-1">
                 Run again
               </button>
@@ -633,6 +691,7 @@ export default function MissedCallSimulator({ onClose }: { onClose?: () => void 
                 </div>
               </div>
 
+              <WhatsAppSend intent="evening" />
               <button onClick={reset} className="w-full text-xs text-white/25 hover:text-white/50 transition-colors underline underline-offset-2 pt-1">
                 Run again
               </button>
@@ -677,6 +736,7 @@ export default function MissedCallSimulator({ onClose }: { onClose?: () => void 
                 </div>
               </div>
 
+              <WhatsAppSend intent="inquiry" />
               <button onClick={reset} className="w-full text-xs text-white/25 hover:text-white/50 transition-colors underline underline-offset-2 pt-1">
                 Run again
               </button>
