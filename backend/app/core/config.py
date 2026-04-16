@@ -91,7 +91,7 @@ class Settings(BaseSettings):
 
     INDICTRANS_DEVICE: str = "cpu"
 
-    API_BASE_URL: str = "https://api.bolo.com"
+    API_BASE_URL: str = "https://backend-production-129a.up.railway.app"
 
     CORS_ORIGINS: List[str] = [
         "http://localhost",
