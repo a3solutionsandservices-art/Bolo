@@ -252,7 +252,7 @@ function WhatsAppSend({ intent }: { intent: "booking" | "evening" | "inquiry" })
   return (
     <div className="rounded-xl bg-green-500/10 border border-green-500/20 p-3">
       <p className="text-[10px] text-green-400 font-medium mb-2 flex items-center gap-1.5">
-        <MessageSquare className="w-3 h-3" /> Send this to your WhatsApp
+        <MessageSquare className="w-3 h-3" /> Experience what the patient receives
       </p>
       <div className="flex gap-2">
         <input

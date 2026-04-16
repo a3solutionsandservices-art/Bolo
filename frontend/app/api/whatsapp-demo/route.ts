@@ -18,9 +18,9 @@ export async function POST(req: NextRequest) {
   const to    = `whatsapp:+${clean.startsWith("91") ? clean : "91" + clean}`;
 
   const messages: Record<string, string> = {
-    booking: `Bolo just recovered a booking for City Clinic.\n\nPatient: ${clean}\nDoctor: Dr. Mehta\nSlot: Tomorrow 10:00 AM\n\nSMS sent to patient. No staff needed.\n\n— City Clinic (via Bolo)`,
-    evening: `Bolo just reserved an evening token for City Clinic.\n\nPatient: ${clean}\nDoctor: Dr. Reddy\nToken: #7 · Tonight ${detail || "6:30 PM"}\n\nSMS sent to patient.\n\n— City Clinic (via Bolo)`,
-    inquiry: `Bolo just handled a patient inquiry for City Clinic.\n\nPatient asked about OPD charges.\nFee summary sent via WhatsApp automatically.\n\n— City Clinic (via Bolo)`,
+    booking: `Hi! Your appointment with Dr. Mehta is confirmed.\n\n📅 Tomorrow · 10:00 AM\n🏥 City Clinic, OPD\n\nReply CANCEL if you need to reschedule.\n\n— City Clinic`,
+    evening: `Hi! Your token has been reserved at City Clinic.\n\n🎫 Token #7 — Dr. Reddy\n🕡 Arrive by 7:15 PM tonight\n📍 City Clinic, Kukatpally\n\nReply CANCEL to release your token.\n\n— City Clinic`,
+    inquiry: `Hi! Here is the fee summary you requested from City Clinic.\n\n💊 General OPD: ₹300\n🩺 Specialist: ₹500\n\nTo book an appointment reply BOOK or call us directly.\n\n— City Clinic`,
   };
 
   const body = messages[intent] || messages.inquiry;
