@@ -197,6 +197,37 @@ async def unified_missed_call_webhook(
         event.call_timestamp.isoformat(),
     )
 
+    # If Twilio fires on "ringing"/"initiated" (no status callback configured),
+    # treat it as a missed call immediately — return TwiML that hangs up
+    # and queue the callback in the background.
+    _INCOMING_STATUSES = {"ringing", "initiated", "in_progress", "in-progress"}
+    if event.provider == "twilio" and event.call_status in _INCOMING_STATUSES:
+        logger.info("Incoming call treated as missed call | sid=%s | caller=%s", event.call_sid, event.caller_number)
+        twiml = (
+            '<?xml version="1.0" encoding="UTF-8"?>'
+            "<Response><Reject reason=\"busy\"/></Response>"
+        )
+        default_tenant_id: uuid.UUID | None = None
+        if settings.TWILIO_DEFAULT_TENANT_ID:
+            try:
+                default_tenant_id = uuid.UUID(settings.TWILIO_DEFAULT_TENANT_ID)
+            except ValueError:
+                pass
+        log = MissedCallLog(
+            tenant_id=default_tenant_id,
+            caller_number=event.caller_number,
+            called_number=event.called_number,
+            provider=event.provider,
+            call_sid=event.call_sid,
+            raw_webhook_payload=event.raw,
+            status=MissedCallStatus.RECEIVED,
+        )
+        db.add(log)
+        await db.commit()
+        await db.refresh(log)
+        background_tasks.add_task(trigger_outbound_call, log, db)
+        return Response(content=twiml, media_type="application/xml")
+
     if not event.is_missed:
         logger.debug("Skipping non-missed call status=%s sid=%s", event.call_status, event.call_sid)
         return {"received": True, "action": "skipped", "reason": f"status '{event.call_status}' is not a missed call"}
