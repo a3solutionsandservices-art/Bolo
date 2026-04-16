@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/auth-store";
 import {
   PhoneMissed, ArrowRight, Mic, CheckCircle2, Phone,
-  TrendingUp, IndianRupee, Zap, Shield, Globe, Timer, Play,
+  TrendingUp, IndianRupee, Zap, Shield, Globe, Timer, Play, MessageSquare, Send,
 } from "lucide-react";
 import PublicNav from "@/components/layout/PublicNav";
 import MissedCallSimulator from "@/components/MissedCallSimulator";
@@ -24,6 +24,66 @@ const TRUST_POINTS = [
   { icon: Timer, text: "Average callback time: 3–5 seconds" },
   { icon: CheckCircle2, text: "No app required for clinic staff" },
 ];
+
+function WhatsAppTryWidget() {
+  const [phone,  setPhone]  = useState("");
+  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+
+  const send = async () => {
+    const clean = phone.replace(/\D/g, "");
+    if (clean.length < 10) return;
+    setStatus("sending");
+    try {
+      const res = await fetch("/api/whatsapp-demo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: clean, intent: "booking" }),
+      });
+      setStatus(res.ok ? "sent" : "error");
+    } catch {
+      setStatus("error");
+    }
+  };
+
+  if (status === "sent") {
+    return (
+      <div className="flex flex-col items-center gap-3 py-6">
+        <div className="w-14 h-14 rounded-full bg-green-500/20 border border-green-500/30 flex items-center justify-center">
+          <CheckCircle2 className="w-7 h-7 text-green-400" />
+        </div>
+        <p className="text-green-400 font-semibold">Message sent! Check your WhatsApp.</p>
+        <p className="text-white/30 text-xs">Didn&apos;t receive it? Make sure you joined the Twilio sandbox first.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-2xl bg-green-500/[0.06] border border-green-500/20 p-6 text-left">
+      <div className="flex gap-3">
+        <input
+          type="tel"
+          placeholder="Your WhatsApp number (e.g. 98XXXXXXXX)"
+          value={phone}
+          onChange={e => setPhone(e.target.value)}
+          onKeyDown={e => e.key === "Enter" && send()}
+          className="flex-1 px-4 py-3 rounded-xl bg-white/[0.05] border border-white/[0.10] text-white text-sm placeholder-white/25 focus:outline-none focus:border-green-500/50 transition-colors"
+        />
+        <button
+          onClick={send}
+          disabled={status === "sending" || phone.replace(/\D/g, "").length < 10}
+          className="flex items-center gap-2 px-5 py-3 rounded-xl bg-green-500 hover:bg-green-400 disabled:opacity-40 text-white text-sm font-semibold transition-colors shrink-0"
+        >
+          <Send className="w-4 h-4" />
+          {status === "sending" ? "Sending…" : "Send"}
+        </button>
+      </div>
+      {status === "error" && (
+        <p className="text-red-400 text-xs mt-2">Something went wrong. Try again.</p>
+      )}
+      <p className="text-white/20 text-[11px] mt-3">India numbers only · No spam · One message</p>
+    </div>
+  );
+}
 
 export default function LandingPage() {
   const { isAuthenticated } = useAuthStore();
@@ -415,6 +475,22 @@ export default function LandingPage() {
               * Based on 65% average callback-to-appointment conversion across early clinic deployments. Actual results vary.
             </p>
           </div>
+        </div>
+      </section>
+
+      {/* ── WHATSAPP EXPERIENCE ── */}
+      <section className="py-20 px-6 border-t border-white/[0.05]">
+        <div className="max-w-xl mx-auto text-center">
+          <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-medium bg-green-500/15 border border-green-500/25 text-green-300 mb-6">
+            <MessageSquare className="w-3 h-3" /> Live WhatsApp demo
+          </span>
+          <h2 className="font-serif text-2xl md:text-3xl text-white mb-3">
+            See What Your Patient Receives
+          </h2>
+          <p className="text-white/40 text-sm mb-8">
+            Enter your number and get the real booking confirmation on WhatsApp — right now.
+          </p>
+          <WhatsAppTryWidget />
         </div>
       </section>
 
