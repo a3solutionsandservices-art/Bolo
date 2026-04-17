@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 # ── Language data ─────────────────────────────────────────────────────────────
 
 _GREETINGS: dict[str, str] = {
-    "hi": "Namaste! Aapka call miss ho gaya tha. Hum aapki madad karna chahte hain. Kripya batayein — aap kis vishay mein baat karna chahte the?",
+    "hi": "Namaste! Main Pallavi hoon. Aapka call miss ho gaya tha. Main aapki madad karna chahti hoon. Appointment book karne ke liye 1 dabayein, jaankari ke liye 2 dabayein, ya evening clinic ke liye 3 dabayein.",
     "ta": "Vanakkam! Ungal call miss aiyirundathu. Nangal ungalukku udav virumbugirom. Enna vishayathil pesanum endru sollunga?",
     "te": "Namaskaram! Meeru chesina call miss aindi. Meeru entha vishayamlo matladali anukuntunnaru?",
     "bn": "Namaskar! Apnar call miss hoyeche. Amra apnake sahajya korte chai. Apni ki bishaye kotha bolte cheyechen?",
@@ -27,7 +27,7 @@ _GREETINGS: dict[str, str] = {
 
 _INTENT_RESPONSES: dict[CallIntent, dict[str, str]] = {
     CallIntent.BOOKING: {
-        "hi": "Samajh gaya. Aap ek appointment ya booking karna chahte hain. Main abhi aapki request note kar leta hoon. Koi preferred date ya time hai?",
+        "hi": "Samajh gayi. Aap appointment book karna chahte hain. Main abhi aapki request note kar leti hoon. Hamari team aapko jald confirm karegi.",
         "ta": "Purindukitten. Neenga oru appointment book pannanum nu ninaikireengala. Ungal request note pannugirom. Virupu patta naal athava neram irukka?",
         "te": "Ardhamayindi. Meeru oka appointment book chesukovalani anukuntunnaru. Meeru request note chesukuntam. Istamaina tarikh edo undi?",
         "bn": "Bujhechi. Apni ekta appointment ba booking korte chaan. Ami apnar request note korchi. Kono preferred date ba somoy ache ki?",
@@ -36,7 +36,7 @@ _INTENT_RESPONSES: dict[CallIntent, dict[str, str]] = {
         "en": "Understood. You'd like to make an appointment or booking. I've noted your request. Do you have a preferred date or time?",
     },
     CallIntent.INQUIRY: {
-        "hi": "Bilkul. Aapko kuch jaankaari chahiye thi. Main aapki query forward kar deta hoon. Koi specific sawaal hai jo aap poochhna chahte hain?",
+        "hi": "Bilkul. Main aapki query note kar leti hoon aur aapko jald jawaab milega. Koi specific sawaal hai?",
         "ta": "Sari. Ungalukkku sila thakaval thevaipadum. Ungal query forward pannugirom. Enna kurippitta kelvigal ketka virumpugireenga?",
         "te": "Sare. Meeru kొన్ని samacharam kavalistunnaru. Meeru query forward chestam. Meeru adagalanukunna specific question undo?",
         "bn": "Thik ache. Apnar kichhu tathya dorkar chilo. Ami apnar query forward korchi. Kono specific proshno jignasa korte chan?",
@@ -45,7 +45,7 @@ _INTENT_RESPONSES: dict[CallIntent, dict[str, str]] = {
         "en": "Of course. You had an inquiry. I've noted your question and will get back to you. Is there anything specific you'd like to know?",
     },
     CallIntent.COMPLAINT: {
-        "hi": "Mujhe khed hai ki aapko koi takleef hui. Main aapki shikayat darj kar leta hoon aur ek expert aapko jald hi contact karega.",
+        "hi": "Mujhe khed hai ki aapko takleef hui. Main aapki shikayat darj kar leti hoon aur ek expert aapko jald hi contact karega.",
         "ta": "Ungalukkku sirimai aachu nu kettu varudham. Ungal pukarai pathivu seikirom, oru expert ungalai vilaivil thodarbu kolluvaar.",
         "te": "Meeru oka samasya face chesaaru ani vinadam chala kastangaa undi. Meeru complaint register chestam, expert meeru tho tvaralo contact aavutaaru.",
         "bn": "Apnar kosto hoyeche shune dukhit holam. Ami apnar অভিযোগ nথibaddho korchi, ekjon expert shīghroi apnar sathe joগাযোগ korbe.",
@@ -59,7 +59,7 @@ _INTENT_RESPONSES: dict[CallIntent, dict[str, str]] = {
         "en": "We're here to help. Your request has been sent to our support team. Is there a specific issue you'd like to describe?",
     },
     CallIntent.OTHER: {
-        "hi": "Theek hai. Main aapki baat note kar leta hoon. Hamari team aapko jald hi callback karegi.",
+        "hi": "Theek hai. Main aapki baat note kar leti hoon. Hamari team aapko jald hi callback karegi.",
         "ta": "Sari. Ungal vishayathai note pannugirom. Engal team ungalai vilaivil callback pannum.",
         "te": "Sare. Meeru vishayam note chesukuntam. Maa team meeru ni tvaralo callback chestundi.",
         "bn": "Thik ache. Ami apnar bishoy note korchi. Amar team shīghroi apnake callback korbe.",

@@ -5,7 +5,9 @@ import uuid
 import logging
 from datetime import datetime, timezone
 from typing import Optional
+from urllib.parse import quote as urlquote
 
+import httpx
 from fastapi import APIRouter, BackgroundTasks, Depends, Form, Header, Query, Request, Response, HTTPException
 from pydantic import BaseModel, field_validator
 from sqlalchemy import select
@@ -28,6 +30,12 @@ from app.services.missed_call_service import (
     _classify_intent,
 )
 from app.api.telephony import TWILIO_LANG_MAP
+
+_SARVAM_LANG_MAP = {
+    "hi": "hi-IN", "te": "te-IN", "ta": "ta-IN", "kn": "kn-IN",
+    "bn": "bn-IN", "mr": "mr-IN", "gu": "gu-IN", "ml": "ml-IN", "en": "en-IN",
+}
+_SARVAM_SPEAKER = "anushka"
 
 
 def _verify_twilio_signature(request_url: str, params: dict, signature: str) -> bool:
@@ -57,23 +65,36 @@ def _verify_twilio_signature(request_url: str, params: dict, signature: str) -> 
     return True
 
 
-def _mc_say_and_gather(text: str, action_url: str, language: str = "hi-IN", timeout: int = 6) -> str:
+def _tts_url(text: str, lang: str) -> str:
+    return f"{settings.API_BASE_URL}/api/v1/missed-call/tts?text={urlquote(text[:400])}&lang={lang}"
+
+
+def _play_or_say(text: str, lang: str, language: str) -> str:
+    if settings.SARVAM_API_KEY:
+        return f'<Play>{_tts_url(text, lang)}</Play>'
+    return f'<Say language="{language}">{text}</Say>'
+
+
+def _mc_say_and_gather(text: str, action_url: str, language: str = "hi-IN",
+                       timeout: int = 8, lang: str = "hi", dtmf: bool = False) -> str:
+    input_types = "dtmf speech" if dtmf else "dtmf speech"
     return (
         '<?xml version="1.0" encoding="UTF-8"?>'
         "<Response>"
-        f'<Say language="{language}">{text}</Say>'
-        f'<Gather input="speech" action="{action_url}" method="POST" '
-        f'language="{language}" speechTimeout="auto" timeout="{timeout}"></Gather>'
+        f'<Gather input="{input_types}" action="{action_url}" method="POST" '
+        f'language="{language}" speechTimeout="auto" timeout="{timeout}" numDigits="1">'
+        f'{_play_or_say(text, lang, language)}'
+        "</Gather>"
         f'<Redirect method="POST">{action_url}</Redirect>'
         "</Response>"
     )
 
 
-def _mc_say_and_hangup(text: str, language: str = "hi-IN") -> str:
+def _mc_say_and_hangup(text: str, language: str = "hi-IN", lang: str = "hi") -> str:
     return (
         '<?xml version="1.0" encoding="UTF-8"?>'
         "<Response>"
-        f'<Say language="{language}">{text}</Say>'
+        f'{_play_or_say(text, lang, language)}'
         "<Hangup/>"
         "</Response>"
     )
@@ -281,6 +302,46 @@ async def unified_missed_call_webhook(
     }
 
 
+@router.get("/tts")
+async def tts_audio(text: str, lang: str = "hi"):
+    """Generate Sarvam TTS audio for Twilio <Play> — returns audio/wav"""
+    if not settings.SARVAM_API_KEY:
+        raise HTTPException(status_code=503, detail="TTS not configured")
+    clean = text.replace("&", "and").strip()[:400]
+    lang_code = _SARVAM_LANG_MAP.get(lang, "hi-IN")
+    try:
+        async with httpx.AsyncClient(timeout=12) as client:
+            resp = await client.post(
+                "https://api.sarvam.ai/text-to-speech",
+                headers={"api-subscription-key": settings.SARVAM_API_KEY, "Content-Type": "application/json"},
+                json={
+                    "inputs": [clean],
+                    "target_language_code": lang_code,
+                    "speaker": _SARVAM_SPEAKER,
+                    "model": settings.SARVAM_TTS_MODEL,
+                    "pitch": 0.1,
+                    "pace": 1.2,
+                    "loudness": 2.0,
+                    "speech_sample_rate": 8000,
+                    "enable_preprocessing": True,
+                },
+            )
+        if not resp.is_success:
+            raise HTTPException(status_code=502, detail=f"Sarvam TTS error {resp.status_code}")
+        audio_b64: str = resp.json()["audios"][0]
+        audio_bytes = base64.b64decode(audio_b64)
+        return Response(
+            content=audio_bytes,
+            media_type="audio/wav",
+            headers={"Cache-Control": "public, max-age=3600"},
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error("TTS endpoint error: %s", exc)
+        raise HTTPException(status_code=502, detail="TTS generation failed")
+
+
 @router.post("/webhook/twilio")
 async def twilio_missed_call_webhook(
     request: Request,
@@ -312,11 +373,20 @@ async def exotel_missed_call_webhook(
 _MAX_TURNS = 2
 
 
+_DTMF_INTENT_MAP = {"1": CallIntent.BOOKING, "2": CallIntent.INQUIRY, "3": CallIntent.BOOKING}
+_DTMF_EVENING_GREETING = {
+    "hi": "Aap Dr. Reddy ki evening clinic ke baare mein poochh rahe hain. Woh aaj shaam 6:30 baje se available hain. Kya main aapke liye token reserve kar doon?",
+    "te": "Meeru Dr. Reddy evening clinic gurinchi adugutunnaru. Ayana naadu sayantram 6:30 ki available ga untaru. Meeru token reserve cheyamana?",
+    "en": "You are asking about the evening clinic. Dr. Reddy is available from 6:30 PM today. Shall I reserve a token for you?",
+}
+
+
 @router.post("/callback-gather/{log_id}")
 async def callback_gather(
     log_id: uuid.UUID,
     request: Request,
     SpeechResult: str = Form(default=""),
+    Digits: str = Form(default=""),
     Confidence: str = Form(default="0.0"),
     x_twilio_signature: str = Header(default=""),
     db: AsyncSession = Depends(get_db),
@@ -328,7 +398,7 @@ async def callback_gather(
     log = result.scalar_one_or_none()
     if not log:
         return Response(
-            content=_mc_say_and_hangup("Sorry, we could not find your record. Please call us back.", "en-IN"),
+            content=_mc_say_and_hangup("Sorry, we could not find your record. Please call us back.", "en-IN", "en"),
             media_type="application/xml",
         )
 
@@ -336,10 +406,11 @@ async def callback_gather(
     transcript = log.conversation_transcript or []
     user_turns = [t for t in transcript if t.get("role") == "user"]
     turn_count = len(user_turns)
+    lang = log.language_detected
+    lang_code = TWILIO_LANG_MAP.get(lang, "hi-IN")
 
     # ── PHASE 0: GREET ────────────────────────────────────────────────────────
-    # First call with no speech — infer language from number, play greeting
-    if not SpeechResult.strip():
+    if not SpeechResult.strip() and not Digits.strip():
         lang = detect_language_from_number(log.caller_number)
         if lang != log.language_detected:
             log.language_detected = lang
@@ -348,50 +419,71 @@ async def callback_gather(
         greeting = get_greeting(lang)
         logger.info("PHASE=GREET | log=%s | lang=%s | caller=%s", log_id, lang, log.caller_number)
         return Response(
-            content=_mc_say_and_gather(greeting, action_url, lang_code, timeout=8),
+            content=_mc_say_and_gather(greeting, action_url, lang_code, timeout=10, lang=lang),
             media_type="application/xml",
         )
 
-    # ── Update language from first speech turn (Sarvam STT detects it) ────────
-    speech = SpeechResult.strip()
-    lang = log.language_detected
-    lang_code = TWILIO_LANG_MAP.get(lang, "hi-IN")
-
-    # ── PHASE 1: DETECT INTENT FROM REASON ───────────────────────────────────
-    if turn_count == 0:
-        intent, confidence = _classify_intent(speech)
-        logger.info(
-            "PHASE=REASON | log=%s | speech='%s' | intent=%s (%.0f%%)",
-            log_id, speech[:60], intent, confidence * 100,
+    # ── DTMF shortcut — map digit to intent directly ──────────────────────────
+    digit = Digits.strip()
+    if digit == "3":
+        evening_text = _DTMF_EVENING_GREETING.get(lang, _DTMF_EVENING_GREETING["hi"])
+        intent = CallIntent.INQUIRY
+        transcript.append({"role": "user", "content": "evening_clinic", "turn": 1, "dtmf": "3"})
+        transcript.append({"role": "assistant", "content": evening_text, "turn": 1, "intent": "evening_clinic"})
+        log.intent = intent
+        log.intent_confidence = 1.0
+        log.conversation_transcript = transcript
+        await db.commit()
+        return Response(
+            content=_mc_say_and_gather(evening_text, action_url, lang_code, timeout=8, lang=lang),
+            media_type="application/xml",
         )
 
+    if digit in ("1", "2"):
+        intent = _DTMF_INTENT_MAP[digit]
+        response_text = get_intent_response(intent, lang)
+        transcript.append({"role": "user", "content": f"dtmf_{digit}", "turn": 1, "dtmf": digit})
+        transcript.append({"role": "assistant", "content": response_text, "turn": 1, "intent": intent})
+        log.intent = intent
+        log.intent_confidence = 1.0
+        log.conversation_transcript = transcript
+        await db.commit()
+        logger.info("PHASE=DTMF | log=%s | digit=%s | intent=%s", log_id, digit, intent)
+        return Response(
+            content=_mc_say_and_gather(response_text, action_url, lang_code, timeout=6, lang=lang),
+            media_type="application/xml",
+        )
+
+    speech = SpeechResult.strip()
+
+    # ── PHASE 1: DETECT INTENT FROM SPEECH ───────────────────────────────────
+    if turn_count == 0:
+        intent, confidence = _classify_intent(speech)
+        logger.info("PHASE=REASON | log=%s | speech='%s' | intent=%s (%.0f%%)",
+                    log_id, speech[:60], intent, confidence * 100)
         log.intent = intent
         log.intent_confidence = confidence
-
         transcript.append({"role": "user", "content": speech, "turn": 1})
         response_text = get_intent_response(intent, lang)
         transcript.append({"role": "assistant", "content": response_text, "turn": 1, "intent": intent})
         log.conversation_transcript = transcript
         await db.commit()
-
         return Response(
-            content=_mc_say_and_gather(response_text, action_url, lang_code, timeout=6),
+            content=_mc_say_and_gather(response_text, action_url, lang_code, timeout=6, lang=lang),
             media_type="application/xml",
         )
 
     # ── PHASE 2: CLOSE ───────────────────────────────────────────────────────
-    transcript.append({"role": "user", "content": speech, "turn": turn_count + 1})
+    transcript.append({"role": "user", "content": speech or digit, "turn": turn_count + 1})
     closing = get_closing(lang)
     transcript.append({"role": "assistant", "content": closing, "turn": turn_count + 1, "phase": "close"})
     log.conversation_transcript = transcript
     log.status = MissedCallStatus.CALLBACK_COMPLETED
     log.callback_completed_at = datetime.now(timezone.utc)
     await db.commit()
-
     logger.info("PHASE=CLOSE | log=%s | total_turns=%d | intent=%s", log_id, turn_count + 1, log.intent)
-
     return Response(
-        content=_mc_say_and_hangup(closing, lang_code),
+        content=_mc_say_and_hangup(closing, lang_code, lang),
         media_type="application/xml",
     )
 
