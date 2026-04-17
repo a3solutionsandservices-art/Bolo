@@ -71,7 +71,7 @@ class SarvamTTS:
         loudness: float = 1.0,
         speech_sample_rate: int = 22050,
         enable_preprocessing: bool = True,
-        model: str = "bulbul:v1",
+        model: str = "bulbul:v2",
     ) -> SynthesisResult:
         start = time.perf_counter()
 

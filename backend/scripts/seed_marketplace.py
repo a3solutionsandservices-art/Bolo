@@ -198,7 +198,7 @@ async def generate_tts_sample(
                 "loudness": 1.2,
                 "speech_sample_rate": 22050,
                 "enable_preprocessing": True,
-                "model": "bulbul:v1",
+                "model": "bulbul:v2",
             },
             timeout=30.0,
         )
