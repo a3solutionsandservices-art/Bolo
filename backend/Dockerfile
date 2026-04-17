@@ -17,7 +17,6 @@ WORKDIR /app
 
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install --no-cache-dir twilio==9.3.3
 
 COPY . .
 

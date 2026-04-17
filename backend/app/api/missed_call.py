@@ -34,8 +34,10 @@ def _verify_twilio_signature(request_url: str, params: dict, signature: str) -> 
     if not settings.TWILIO_AUTH_TOKEN:
         return True
     if not signature:
-        logger.warning("No X-Twilio-Signature header — skipping validation (demo mode)")
-        return True
+        if settings.DEBUG:
+            logger.warning("No X-Twilio-Signature header — skipping validation (DEBUG mode)")
+            return True
+        return False
 
     def _check(url: str) -> bool:
         sorted_params = "".join(f"{k}{v}" for k, v in sorted(params.items()))
@@ -58,8 +60,8 @@ def _verify_twilio_signature(request_url: str, params: dict, signature: str) -> 
     if _check(http_url):
         return True
 
-    logger.warning("Twilio signature mismatch for URL=%s — allowing in demo mode", request_url)
-    return True  # allow in demo/single-tenant mode; harden for multi-tenant production
+    logger.warning("Twilio signature mismatch for URL=%s", request_url)
+    return False
 
 
 def _mc_say_and_gather(text: str, action_url: str, language: str = "hi-IN", timeout: int = 6) -> str:

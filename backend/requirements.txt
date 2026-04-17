@@ -32,7 +32,6 @@ pinecone-client==3.2.2
 
 # Billing / Cloud
 stripe==9.12.0
-twilio==9.3.3
 boto3==1.34.0
 
 # Task queue / Rate limit

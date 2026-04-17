@@ -91,7 +91,7 @@ class Settings(BaseSettings):
 
     INDICTRANS_DEVICE: str = "cpu"
 
-    API_BASE_URL: str = "https://backend-production-129a.up.railway.app"
+    API_BASE_URL: str = "http://localhost:8000"
 
     CORS_ORIGINS: List[str] = [
         "http://localhost",
