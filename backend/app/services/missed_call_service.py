@@ -205,31 +205,38 @@ async def trigger_outbound_call(log: MissedCallLog, db: AsyncSession) -> bool:
     await asyncio.sleep(delay)
 
     try:
-        from twilio.rest import Client as TwilioClient
-        client = await asyncio.to_thread(
-            TwilioClient, settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN
-        )
+        import httpx
         callback_url = f"{settings.API_BASE_URL}/api/v1/missed-call/callback-gather/{log.id}"
         status_url = f"{settings.API_BASE_URL}/api/v1/missed-call/callback-status/{log.id}"
-
         from_number = log.called_number or settings.TWILIO_PHONE_NUMBER
-        call = await asyncio.to_thread(
-            client.calls.create,
-            to=log.caller_number,
-            from_=from_number,
-            url=callback_url,
-            status_callback=status_url,
-            status_callback_method="POST",
-            timeout=30,
-            time_limit=90,
-        )
-        log.callback_call_sid = call.sid
+
+        twilio_url = f"https://api.twilio.com/2010-04-01/Accounts/{settings.TWILIO_ACCOUNT_SID}/Calls.json"
+        async with httpx.AsyncClient(timeout=15) as client:
+            resp = await client.post(
+                twilio_url,
+                auth=(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN),
+                data={
+                    "To": log.caller_number,
+                    "From": from_number,
+                    "Url": callback_url,
+                    "StatusCallback": status_url,
+                    "StatusCallbackMethod": "POST",
+                    "Timeout": "30",
+                    "TimeLimit": "90",
+                },
+            )
+
+        if resp.status_code not in (200, 201):
+            raise RuntimeError(f"Twilio API {resp.status_code}: {resp.text[:300]}")
+
+        call_data = resp.json()
+        log.callback_call_sid = call_data.get("sid")
         log.status = MissedCallStatus.CALLBACK_INITIATED
         log.callback_initiated_at = datetime.now(timezone.utc)
         await db.commit()
         logger.info(
             "Outbound callback SID=%s | %s → %s | delay=%.1fs",
-            call.sid, from_number, log.caller_number, delay,
+            log.callback_call_sid, from_number, log.caller_number, delay,
         )
         return True
     except Exception as exc:
