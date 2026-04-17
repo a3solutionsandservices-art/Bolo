@@ -101,6 +101,16 @@ def _mc_say_and_hangup(text: str, language: str = "hi-IN", lang: str = "hi") -> 
 
 logger = logging.getLogger(__name__)
 
+_VOICEMAIL_MESSAGES: dict[str, str] = {
+    "hi": "Namaste! Main Pallavi hoon, aapke clinic ki taraf se bol rahi hoon. Aapka missed call humein mila. Hamari team aapko 24 ghante mein callback karegi. Dhanyavaad!",
+    "te": "Namaskaram! Nenu Pallavi ni, mee clinic nundi matladutunnanu. Meeru chesina missed call andindi. Maa team 24 gantallo meeru ni contact chestundi. Dhanyavaadalu!",
+    "ta": "Vanakkam! Naan Pallavi, ungal clinic-il irundhu pesugiren. Ungal missed call engalukku kidaitthathu. Engal team 24 manikku ullae ungalai thodarbu kollum. Nandri!",
+    "bn": "Namaskar! Ami Pallavi, apnar clinic theke bolchi. Apnar missed call amra peyechi. Amar team 24 ghontar modhye apnake callback korbe. Dhonnobad!",
+    "kn": "Namaskara! Nanu Pallavi, nimma clinic-inda matnaduttiruve. Nimma missed call nammage sikkitu. Namma team 24 ganteyalli nimmannu sampark maaduttade. Dhanyavaadagalu!",
+    "mr": "Namaskar! Mi Pallavi, tumchya clinic-takadun bolte ahe. Tumcha missed call aamhala mila. Aamchi team 24 tasaanmadhe tumhala callback karel. Dhanyavaad!",
+    "en": "Hello! This is Pallavi from your clinic. We received your missed call and our team will call you back within 24 hours. Thank you!",
+}
+
 router = APIRouter(prefix="/missed-call", tags=["missed-call-callback"])
 
 _MISSED_STATUSES = {"no-answer", "busy", "failed", "canceled", "missed", "no_answer"}
@@ -342,6 +352,66 @@ async def tts_audio(text: str, lang: str = "hi"):
         raise HTTPException(status_code=502, detail="TTS generation failed")
 
 
+@router.post("/callback-amd/{log_id}")
+async def callback_amd(
+    log_id: uuid.UUID,
+    request: Request,
+    AnsweredBy: str = Form(default=""),
+    CallSid: str = Form(default=""),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(select(MissedCallLog).where(MissedCallLog.id == log_id))
+    log = result.scalar_one_or_none()
+    logger.info("AMD | log=%s | AnsweredBy=%s | CallSid=%s", log_id, AnsweredBy, CallSid)
+
+    if not log:
+        return Response(status_code=204)
+
+    answered_by = AnsweredBy.lower()
+    if "machine" in answered_by or "fax" in answered_by:
+        log.status = MissedCallStatus.VOICEMAIL_LEFT
+        await db.commit()
+        voicemail_url = f"{settings.API_BASE_URL}/api/v1/missed-call/callback-voicemail/{log_id}"
+        call_sid = CallSid or log.callback_call_sid
+        if call_sid and settings.TWILIO_ACCOUNT_SID and settings.TWILIO_AUTH_TOKEN:
+            try:
+                async with httpx.AsyncClient(timeout=10) as client:
+                    await client.post(
+                        f"https://api.twilio.com/2010-04-01/Accounts/{settings.TWILIO_ACCOUNT_SID}/Calls/{call_sid}.json",
+                        auth=(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN),
+                        data={"Url": voicemail_url, "Method": "POST"},
+                    )
+                logger.info("AMD | redirected call %s to voicemail TwiML", call_sid)
+            except Exception as exc:
+                logger.error("AMD | failed to redirect call to voicemail: %s", exc)
+
+    return Response(status_code=204)
+
+
+@router.post("/callback-voicemail/{log_id}")
+async def callback_voicemail(
+    log_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(select(MissedCallLog).where(MissedCallLog.id == log_id))
+    log = result.scalar_one_or_none()
+
+    lang = log.language_detected if log else "hi"
+    lang_code = TWILIO_LANG_MAP.get(lang, "hi-IN")
+    message = _VOICEMAIL_MESSAGES.get(lang, _VOICEMAIL_MESSAGES["hi"])
+
+    if log:
+        log.status = MissedCallStatus.VOICEMAIL_LEFT
+        log.callback_completed_at = datetime.now(timezone.utc)
+        await db.commit()
+
+    logger.info("VOICEMAIL | log=%s | lang=%s | msg='%s...'", log_id, lang, message[:40])
+    return Response(
+        content=_mc_say_and_hangup(message, lang_code, lang),
+        media_type="application/xml",
+    )
+
+
 @router.post("/webhook/twilio")
 async def twilio_missed_call_webhook(
     request: Request,
@@ -504,18 +574,32 @@ async def callback_status(
     if not log:
         return Response(status_code=204)
 
-    if CallStatus in ("completed",):
-        transcript = log.conversation_transcript or []
-        if transcript:
-            await finalize_call(log, transcript, db, call_succeeded=True)
+    status_lower = CallStatus.lower()
+
+    if status_lower == "completed":
+        if log.status == MissedCallStatus.VOICEMAIL_LEFT:
+            logger.info("CALLBACK-STATUS | log=%s | voicemail already recorded — skipping", log_id)
         else:
-            log.status = MissedCallStatus.CALLBACK_COMPLETED
-            await db.commit()
-    elif CallStatus in ("no-answer", "busy", "failed", "canceled"):
+            transcript = log.conversation_transcript or []
+            user_turns = [t for t in transcript if t.get("role") == "user"]
+            if user_turns:
+                await finalize_call(log, transcript, db, call_succeeded=True)
+            else:
+                log.status = MissedCallStatus.USER_DISCONNECTED
+                log.callback_completed_at = datetime.now(timezone.utc)
+                await db.commit()
+                logger.info("CALLBACK-STATUS | log=%s | completed with no speech → USER_DISCONNECTED", log_id)
+
+    elif status_lower in ("no-answer", "busy", "failed", "canceled"):
         transcript = log.conversation_transcript or []
-        await finalize_call(log, transcript, db, call_succeeded=False)
+        user_turns = [t for t in transcript if t.get("role") == "user"]
+        if user_turns:
+            await finalize_call(log, transcript, db, call_succeeded=False)
         log.status = MissedCallStatus.NO_ANSWER
+        log.callback_error = f"Twilio: {CallStatus}"
+        log.callback_completed_at = datetime.now(timezone.utc)
         await db.commit()
+        logger.info("CALLBACK-STATUS | log=%s | %s → NO_ANSWER", log_id, CallStatus)
 
     return Response(status_code=204)
 

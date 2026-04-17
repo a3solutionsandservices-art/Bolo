@@ -210,6 +210,7 @@ async def trigger_outbound_call(log: MissedCallLog, db: AsyncSession) -> bool:
         status_url = f"{settings.API_BASE_URL}/api/v1/missed-call/callback-status/{log.id}"
         from_number = log.called_number or settings.TWILIO_PHONE_NUMBER
 
+        amd_url = f"{settings.API_BASE_URL}/api/v1/missed-call/callback-amd/{log.id}"
         twilio_url = f"https://api.twilio.com/2010-04-01/Accounts/{settings.TWILIO_ACCOUNT_SID}/Calls.json"
         async with httpx.AsyncClient(timeout=15) as client:
             resp = await client.post(
@@ -223,6 +224,9 @@ async def trigger_outbound_call(log: MissedCallLog, db: AsyncSession) -> bool:
                     "StatusCallbackMethod": "POST",
                     "Timeout": "30",
                     "TimeLimit": "90",
+                    "MachineDetection": "Enable",
+                    "AsyncAmdStatusCallback": amd_url,
+                    "AsyncAmdStatusCallbackMethod": "POST",
                 },
             )
 

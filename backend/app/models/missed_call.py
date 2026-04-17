@@ -15,6 +15,8 @@ class MissedCallStatus(str, enum.Enum):
     CALLBACK_COMPLETED = "callback_completed"
     CALLBACK_FAILED = "callback_failed"
     NO_ANSWER = "no_answer"
+    VOICEMAIL_LEFT = "voicemail_left"
+    USER_DISCONNECTED = "user_disconnected"
 
 
 class CallIntent(str, enum.Enum):
