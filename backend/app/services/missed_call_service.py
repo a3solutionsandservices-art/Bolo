@@ -8,6 +8,7 @@ from typing import Any
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+from app.db.base import AsyncSessionLocal
 from app.models.missed_call import CallIntent, MissedCallLog, MissedCallStatus
 
 logger = logging.getLogger(__name__)
@@ -192,63 +193,74 @@ _CALLBACK_DELAY_SECONDS_MIN = 3
 _CALLBACK_DELAY_SECONDS_MAX = 5
 
 
-async def trigger_outbound_call(log: MissedCallLog, db: AsyncSession) -> bool:
-    if not settings.TWILIO_ACCOUNT_SID or not settings.TWILIO_AUTH_TOKEN:
-        logger.warning("Twilio not configured — skipping outbound callback for log %s", log.id)
-        log.status = MissedCallStatus.CALLBACK_FAILED
-        log.callback_error = "Twilio credentials not configured"
-        await db.commit()
-        return False
+async def trigger_outbound_call(log_id: "uuid.UUID", base_url: str = "") -> bool:
+    import uuid
+    from sqlalchemy import select as _sa_select
+    import httpx
 
-    delay = random.uniform(_CALLBACK_DELAY_SECONDS_MIN, _CALLBACK_DELAY_SECONDS_MAX)
-    logger.info("Waiting %.1fs before outbound callback for log %s", delay, log.id)
-    await asyncio.sleep(delay)
+    async with AsyncSessionLocal() as db:
+        result = await db.execute(_sa_select(MissedCallLog).where(MissedCallLog.id == log_id))
+        log = result.scalar_one_or_none()
+        if not log:
+            logger.error("trigger_outbound_call: log %s not found in DB", log_id)
+            return False
 
-    try:
-        import httpx
-        callback_url = f"{settings.API_BASE_URL}/api/v1/missed-call/callback-gather/{log.id}"
-        status_url = f"{settings.API_BASE_URL}/api/v1/missed-call/callback-status/{log.id}"
-        from_number = log.called_number or settings.TWILIO_PHONE_NUMBER
+        if not settings.TWILIO_ACCOUNT_SID or not settings.TWILIO_AUTH_TOKEN:
+            logger.warning("Twilio not configured — skipping outbound callback for log %s", log.id)
+            log.status = MissedCallStatus.CALLBACK_FAILED
+            log.callback_error = "Twilio credentials not configured"
+            await db.commit()
+            return False
 
-        amd_url = f"{settings.API_BASE_URL}/api/v1/missed-call/callback-amd/{log.id}"
-        twilio_url = f"https://api.twilio.com/2010-04-01/Accounts/{settings.TWILIO_ACCOUNT_SID}/Calls.json"
-        async with httpx.AsyncClient(timeout=15) as client:
-            resp = await client.post(
-                twilio_url,
-                auth=(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN),
-                data={
-                    "To": log.caller_number,
-                    "From": from_number,
-                    "Url": callback_url,
-                    "StatusCallback": status_url,
-                    "StatusCallbackMethod": "POST",
-                    "Timeout": "30",
-                    "TimeLimit": "90",
-                    "MachineDetection": "Enable",
-                    "AsyncAmdStatusCallback": amd_url,
-                    "AsyncAmdStatusCallbackMethod": "POST",
-                },
+        delay = random.uniform(_CALLBACK_DELAY_SECONDS_MIN, _CALLBACK_DELAY_SECONDS_MAX)
+        logger.info("Waiting %.1fs before outbound callback for log %s", delay, log.id)
+        await asyncio.sleep(delay)
+
+        try:
+            api_base = base_url or settings.API_BASE_URL
+            callback_url = f"{api_base}/api/v1/missed-call/callback-gather/{log.id}"
+            status_url = f"{api_base}/api/v1/missed-call/callback-status/{log.id}"
+            amd_url = f"{api_base}/api/v1/missed-call/callback-amd/{log.id}"
+            from_number = log.called_number or settings.TWILIO_PHONE_NUMBER
+            twilio_url = f"https://api.twilio.com/2010-04-01/Accounts/{settings.TWILIO_ACCOUNT_SID}/Calls.json"
+
+            async with httpx.AsyncClient(timeout=15) as client:
+                resp = await client.post(
+                    twilio_url,
+                    auth=(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN),
+                    data={
+                        "To": log.caller_number,
+                        "From": from_number,
+                        "Url": callback_url,
+                        "StatusCallback": status_url,
+                        "StatusCallbackMethod": "POST",
+                        "Timeout": "30",
+                        "TimeLimit": "90",
+                        "MachineDetection": "Enable",
+                        "AsyncAmdStatusCallback": amd_url,
+                        "AsyncAmdStatusCallbackMethod": "POST",
+                    },
+                )
+
+            if resp.status_code not in (200, 201):
+                raise RuntimeError(f"Twilio API {resp.status_code}: {resp.text[:300]}")
+
+            call_data = resp.json()
+            log.callback_call_sid = call_data.get("sid")
+            log.status = MissedCallStatus.CALLBACK_INITIATED
+            log.callback_initiated_at = datetime.now(timezone.utc)
+            await db.commit()
+            logger.info(
+                "Outbound callback SID=%s | %s → %s | delay=%.1fs",
+                log.callback_call_sid, from_number, log.caller_number, delay,
             )
-
-        if resp.status_code not in (200, 201):
-            raise RuntimeError(f"Twilio API {resp.status_code}: {resp.text[:300]}")
-
-        call_data = resp.json()
-        log.callback_call_sid = call_data.get("sid")
-        log.status = MissedCallStatus.CALLBACK_INITIATED
-        log.callback_initiated_at = datetime.now(timezone.utc)
-        await db.commit()
-        logger.info(
-            "Outbound callback SID=%s | %s → %s | delay=%.1fs",
-            log.callback_call_sid, from_number, log.caller_number, delay,
-        )
-        return True
-    except Exception as exc:
-        logger.error("Outbound call failed for log %s: %s", log.id, exc)
-        log.status = MissedCallStatus.CALLBACK_FAILED
-        log.callback_error = str(exc)[:500]
-        await db.commit()
-        return False
+            return True
+        except Exception as exc:
+            logger.error("Outbound call failed for log %s: %s", log.id, exc)
+            log.status = MissedCallStatus.CALLBACK_FAILED
+            log.callback_error = str(exc)[:500]
+            await db.commit()
+            return False
 
 
 # ── Structured entity extraction ──────────────────────────────────────────────

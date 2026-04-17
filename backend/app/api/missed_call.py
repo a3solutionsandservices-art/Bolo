@@ -65,36 +65,41 @@ def _verify_twilio_signature(request_url: str, params: dict, signature: str) -> 
     return True
 
 
-def _tts_url(text: str, lang: str) -> str:
-    return f"{settings.API_BASE_URL}/api/v1/missed-call/tts?text={urlquote(text[:400])}&lang={lang}"
+def _request_base_url(request: Request) -> str:
+    proto = request.headers.get("x-forwarded-proto") or request.url.scheme
+    host = request.headers.get("x-forwarded-host") or request.url.netloc
+    return f"{proto}://{host}"
 
 
-def _play_or_say(text: str, lang: str, language: str) -> str:
-    if settings.SARVAM_API_KEY:
-        return f'<Play>{_tts_url(text, lang)}</Play>'
+def _tts_url(text: str, lang: str, base: str) -> str:
+    return f"{base}/api/v1/missed-call/tts?text={urlquote(text[:400])}&lang={lang}"
+
+
+def _play_or_say(text: str, lang: str, language: str, base: str = "") -> str:
+    if settings.SARVAM_API_KEY and base:
+        return f'<Play>{_tts_url(text, lang, base)}</Play>'
     return f'<Say language="{language}">{text}</Say>'
 
 
 def _mc_say_and_gather(text: str, action_url: str, language: str = "hi-IN",
-                       timeout: int = 8, lang: str = "hi", dtmf: bool = False) -> str:
-    input_types = "dtmf speech" if dtmf else "dtmf speech"
+                       timeout: int = 8, lang: str = "hi", base: str = "") -> str:
     return (
         '<?xml version="1.0" encoding="UTF-8"?>'
         "<Response>"
-        f'<Gather input="{input_types}" action="{action_url}" method="POST" '
+        f'<Gather input="dtmf speech" action="{action_url}" method="POST" '
         f'language="{language}" speechTimeout="auto" timeout="{timeout}" numDigits="1">'
-        f'{_play_or_say(text, lang, language)}'
+        f'{_play_or_say(text, lang, language, base)}'
         "</Gather>"
         f'<Redirect method="POST">{action_url}</Redirect>'
         "</Response>"
     )
 
 
-def _mc_say_and_hangup(text: str, language: str = "hi-IN", lang: str = "hi") -> str:
+def _mc_say_and_hangup(text: str, language: str = "hi-IN", lang: str = "hi", base: str = "") -> str:
     return (
         '<?xml version="1.0" encoding="UTF-8"?>'
         "<Response>"
-        f'{_play_or_say(text, lang, language)}'
+        f'{_play_or_say(text, lang, language, base)}'
         "<Hangup/>"
         "</Response>"
     )
@@ -198,7 +203,7 @@ async def _handle_missed_call(payload: dict, db: AsyncSession, background_tasks:
     await db.commit()
     await db.refresh(log)
 
-    background_tasks.add_task(trigger_outbound_call, log, db)
+    background_tasks.add_task(trigger_outbound_call, log.id)
     logger.info("Missed call logged (id=%s) from %s — callback queued", log.id, log.caller_number)
 
 
@@ -249,28 +254,40 @@ async def unified_missed_call_webhook(
         '<?xml version="1.0" encoding="UTF-8"?>'
         '<Response><Reject reason="busy"/></Response>'
     )
+    async def _get_or_create_log(call_sid: str) -> tuple[MissedCallLog, bool]:
+        if call_sid:
+            existing_res = await db.execute(select(MissedCallLog).where(MissedCallLog.call_sid == call_sid))
+            existing = existing_res.scalar_one_or_none()
+            if existing:
+                return existing, False
+        default_tid: uuid.UUID | None = None
+        if settings.TWILIO_DEFAULT_TENANT_ID:
+            try:
+                default_tid = uuid.UUID(settings.TWILIO_DEFAULT_TENANT_ID)
+            except ValueError:
+                pass
+        new_log = MissedCallLog(
+            tenant_id=default_tid,
+            caller_number=event.caller_number,
+            called_number=event.called_number,
+            provider=event.provider,
+            call_sid=call_sid,
+            raw_webhook_payload=event.raw,
+            status=MissedCallStatus.RECEIVED,
+        )
+        db.add(new_log)
+        await db.commit()
+        await db.refresh(new_log)
+        return new_log, True
+
     if event.provider == "twilio" and event.call_status in _INCOMING_STATUSES:
         logger.info("Incoming call treated as missed call | sid=%s | caller=%s", event.call_sid, event.caller_number)
         try:
-            default_tenant_id: uuid.UUID | None = None
-            if settings.TWILIO_DEFAULT_TENANT_ID:
-                try:
-                    default_tenant_id = uuid.UUID(settings.TWILIO_DEFAULT_TENANT_ID)
-                except ValueError:
-                    pass
-            log = MissedCallLog(
-                tenant_id=default_tenant_id,
-                caller_number=event.caller_number,
-                called_number=event.called_number,
-                provider=event.provider,
-                call_sid=event.call_sid,
-                raw_webhook_payload=event.raw,
-                status=MissedCallStatus.RECEIVED,
-            )
-            db.add(log)
-            await db.commit()
-            await db.refresh(log)
-            background_tasks.add_task(trigger_outbound_call, log, db)
+            log, created = await _get_or_create_log(event.call_sid)
+            if created:
+                background_tasks.add_task(trigger_outbound_call, log.id, _request_base_url(request))
+            else:
+                logger.info("Duplicate webhook sid=%s — callback already queued, skipping", event.call_sid)
         except Exception as db_exc:
             logger.error("DB error logging incoming call (still rejecting): %s", db_exc)
         return Response(content=twiml_reject, media_type="application/xml")
@@ -279,28 +296,13 @@ async def unified_missed_call_webhook(
         logger.debug("Skipping non-missed call status=%s sid=%s", event.call_status, event.call_sid)
         return {"received": True, "action": "skipped", "reason": f"status '{event.call_status}' is not a missed call"}
 
-    default_tenant_id: uuid.UUID | None = None
-    if settings.TWILIO_DEFAULT_TENANT_ID:
-        try:
-            default_tenant_id = uuid.UUID(settings.TWILIO_DEFAULT_TENANT_ID)
-        except ValueError:
-            logger.warning("TWILIO_DEFAULT_TENANT_ID is not a valid UUID: %s", settings.TWILIO_DEFAULT_TENANT_ID)
-
-    log = MissedCallLog(
-        tenant_id=default_tenant_id,
-        caller_number=event.caller_number,
-        called_number=event.called_number,
-        provider=event.provider,
-        call_sid=event.call_sid,
-        raw_webhook_payload=event.raw,
-        status=MissedCallStatus.RECEIVED,
-    )
-    db.add(log)
-    await db.commit()
-    await db.refresh(log)
+    log, created = await _get_or_create_log(event.call_sid)
+    if not created:
+        logger.info("Duplicate missed-call webhook sid=%s — already logged, skipping", event.call_sid)
+        return {"received": True, "action": "skipped", "reason": "duplicate call_sid"}
 
     logger.info("Missed call persisted | id=%s | caller=%s | queuing callback", log.id, log.caller_number)
-    background_tasks.add_task(trigger_outbound_call, log, db)
+    background_tasks.add_task(trigger_outbound_call, log.id, _request_base_url(request))
 
     return {
         "received": True,
@@ -371,7 +373,8 @@ async def callback_amd(
     if "machine" in answered_by or "fax" in answered_by:
         log.status = MissedCallStatus.VOICEMAIL_LEFT
         await db.commit()
-        voicemail_url = f"{settings.API_BASE_URL}/api/v1/missed-call/callback-voicemail/{log_id}"
+        base = _request_base_url(request)
+        voicemail_url = f"{base}/api/v1/missed-call/callback-voicemail/{log_id}"
         call_sid = CallSid or log.callback_call_sid
         if call_sid and settings.TWILIO_ACCOUNT_SID and settings.TWILIO_AUTH_TOKEN:
             try:
@@ -472,7 +475,8 @@ async def callback_gather(
             media_type="application/xml",
         )
 
-    action_url = f"{settings.API_BASE_URL}/api/v1/missed-call/callback-gather/{log_id}"
+    base = _request_base_url(request)
+    action_url = f"{base}/api/v1/missed-call/callback-gather/{log_id}"
     transcript = log.conversation_transcript or []
     user_turns = [t for t in transcript if t.get("role") == "user"]
     turn_count = len(user_turns)
@@ -489,7 +493,7 @@ async def callback_gather(
         greeting = get_greeting(lang)
         logger.info("PHASE=GREET | log=%s | lang=%s | caller=%s", log_id, lang, log.caller_number)
         return Response(
-            content=_mc_say_and_gather(greeting, action_url, lang_code, timeout=10, lang=lang),
+            content=_mc_say_and_gather(greeting, action_url, lang_code, timeout=10, lang=lang, base=base),
             media_type="application/xml",
         )
 
@@ -505,7 +509,7 @@ async def callback_gather(
         log.conversation_transcript = transcript
         await db.commit()
         return Response(
-            content=_mc_say_and_gather(evening_text, action_url, lang_code, timeout=8, lang=lang),
+            content=_mc_say_and_gather(evening_text, action_url, lang_code, timeout=8, lang=lang, base=base),
             media_type="application/xml",
         )
 
@@ -520,7 +524,7 @@ async def callback_gather(
         await db.commit()
         logger.info("PHASE=DTMF | log=%s | digit=%s | intent=%s", log_id, digit, intent)
         return Response(
-            content=_mc_say_and_gather(response_text, action_url, lang_code, timeout=6, lang=lang),
+            content=_mc_say_and_gather(response_text, action_url, lang_code, timeout=6, lang=lang, base=base),
             media_type="application/xml",
         )
 
@@ -539,7 +543,7 @@ async def callback_gather(
         log.conversation_transcript = transcript
         await db.commit()
         return Response(
-            content=_mc_say_and_gather(response_text, action_url, lang_code, timeout=6, lang=lang),
+            content=_mc_say_and_gather(response_text, action_url, lang_code, timeout=6, lang=lang, base=base),
             media_type="application/xml",
         )
 
@@ -553,7 +557,7 @@ async def callback_gather(
     await db.commit()
     logger.info("PHASE=CLOSE | log=%s | total_turns=%d | intent=%s", log_id, turn_count + 1, log.intent)
     return Response(
-        content=_mc_say_and_hangup(closing, lang_code, lang),
+        content=_mc_say_and_hangup(closing, lang_code, lang, base=base),
         media_type="application/xml",
     )
 
