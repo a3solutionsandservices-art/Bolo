@@ -75,10 +75,16 @@ def _tts_url(text: str, lang: str, base: str) -> str:
     return f"{base}/api/v1/missed-call/tts?text={urlquote(text[:400])}&lang={lang}"
 
 
+_TWILIO_FEMALE_VOICES: dict[str, str] = {
+    "hi": "Polly.Aditi", "en": "Polly.Aditi",
+}
+
+
 def _play_or_say(text: str, lang: str, language: str, base: str = "") -> str:
     if settings.SARVAM_API_KEY and base:
         return f'<Play>{_tts_url(text, lang, base)}</Play>'
-    return f'<Say language="{language}">{text}</Say>'
+    voice = _TWILIO_FEMALE_VOICES.get(lang, "woman")
+    return f'<Say voice="{voice}" language="{language}">{text}</Say>'
 
 
 def _mc_say_and_gather(text: str, action_url: str, language: str = "hi-IN",
@@ -394,6 +400,7 @@ async def callback_amd(
 @router.post("/callback-voicemail/{log_id}")
 async def callback_voicemail(
     log_id: uuid.UUID,
+    request: Request,
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(select(MissedCallLog).where(MissedCallLog.id == log_id))
@@ -408,9 +415,10 @@ async def callback_voicemail(
         log.callback_completed_at = datetime.now(timezone.utc)
         await db.commit()
 
+    base = _request_base_url(request)
     logger.info("VOICEMAIL | log=%s | lang=%s | msg='%s...'", log_id, lang, message[:40])
     return Response(
-        content=_mc_say_and_hangup(message, lang_code, lang),
+        content=_mc_say_and_hangup(message, lang_code, lang, base=base),
         media_type="application/xml",
     )
 

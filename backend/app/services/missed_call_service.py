@@ -2,6 +2,7 @@ import asyncio
 import json
 import logging
 import random
+import uuid
 from datetime import datetime, timezone
 from typing import Any
 
@@ -16,14 +17,14 @@ logger = logging.getLogger(__name__)
 # ── Language data ─────────────────────────────────────────────────────────────
 
 _GREETINGS: dict[str, str] = {
-    "hi": "Namaste! Main Pallavi hoon. Aapka call miss ho gaya tha. Main aapki madad karna chahti hoon. Appointment book karne ke liye 1 dabayein, jaankari ke liye 2 dabayein, ya evening clinic ke liye 3 dabayein.",
-    "ta": "Vanakkam! Ungal call miss aiyirundathu. Nangal ungalukku udav virumbugirom. Enna vishayathil pesanum endru sollunga?",
-    "te": "Namaskaram! Meeru chesina call miss aindi. Meeru entha vishayamlo matladali anukuntunnaru?",
-    "bn": "Namaskar! Apnar call miss hoyeche. Amra apnake sahajya korte chai. Apni ki bishaye kotha bolte cheyechen?",
-    "kn": "Namaskara! Nimma call miss aayitu. Nimage sahaya maadalu navu siddharaagiddeve. Yaava vishayado heluttira?",
-    "mr": "Namaskar! Tumcha call miss zala hota. Aamhi tumchi madad karayala tayyar aahot. Tumhi konasaathi call kela hote?",
-    "gu": "Namaskar! Tamaaro call miss thayo hato. Ame tamaari madad karva maangie chhe. Shu vishayama vaat karavi hati?",
-    "en": "Hello! We missed your call and want to help. Could you please tell us why you were calling?",
+    "hi": "Namaste! Main Pallavi hoon. Aapka call miss ho gaya tha. Appointment book karne ke liye 1 dabayein, jaankari ke liye 2 dabayein, ya evening clinic ke liye 3 dabayein.",
+    "te": "Namaskaram! Nenu Pallavi ni. Meeru chesina call miss aindi. Appointment book cheyyadaniki 1 needandi, samacharam kosam 2 needandi, evening clinic kosam 3 needandi.",
+    "ta": "Vanakkam! Naan Pallavi. Ungal call miss aiyirundathu. Appointment book pannuvatharku 1 acchunga, thakavalukku 2 acchunga, evening clinic ku 3 acchunga.",
+    "bn": "Namaskar! Ami Pallavi. Apnar call miss hoyeche. Appointment booke 1 chapa, tathyar janya 2 chapa, evening clinic ke 3 chapa.",
+    "kn": "Namaskara! Nanu Pallavi. Nimma call miss aayitu. Appointment book maadabekaagidare 1 odayi, mahitikke 2 odayi, evening clinic ge 3 odayi.",
+    "mr": "Namaskar! Mi Pallavi ahe. Tumcha call miss zala. Appointment book karayala 1 daba, mahitisathi 2 daba, evening clinic sathi 3 daba.",
+    "gu": "Namaskar! Hoon Pallavi chhu. Tamaaro call miss thayo. Appointment book karva 1 dabavo, mahiti maate 2 dabavo, evening clinic maate 3 dabavo.",
+    "en": "Hello! I am Pallavi from your clinic. We missed your call. Press 1 to book an appointment, press 2 for information, or press 3 for the evening clinic.",
 }
 
 _INTENT_RESPONSES: dict[CallIntent, dict[str, str]] = {
@@ -193,10 +194,9 @@ _CALLBACK_DELAY_SECONDS_MIN = 3
 _CALLBACK_DELAY_SECONDS_MAX = 5
 
 
-async def trigger_outbound_call(log_id: "uuid.UUID", base_url: str = "") -> bool:
-    import uuid
-    from sqlalchemy import select as _sa_select
+async def trigger_outbound_call(log_id: uuid.UUID, base_url: str = "") -> bool:
     import httpx
+    from sqlalchemy import select as _sa_select
 
     async with AsyncSessionLocal() as db:
         result = await db.execute(_sa_select(MissedCallLog).where(MissedCallLog.id == log_id))
