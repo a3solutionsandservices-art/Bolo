@@ -75,7 +75,7 @@ class Settings(BaseSettings):
 
     SARVAM_STT_MODEL: str = "saaras:v2"
     SARVAM_STT_WITH_DIARIZATION: bool = False
-    SARVAM_TTS_MODEL: str = "bulbul:v1"
+    SARVAM_TTS_MODEL: str = "bulbul:v2"
 
     TWILIO_ACCOUNT_SID: str = ""
     TWILIO_AUTH_TOKEN: str = ""
