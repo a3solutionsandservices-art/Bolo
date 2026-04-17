@@ -185,7 +185,7 @@ def _detect_and_parse(form: dict) -> NormalizedWebhookEvent:
     raise HTTPException(status_code=422, detail="Unrecognised webhook payload — expected Twilio or Exotel format")
 
 
-async def _handle_missed_call(payload: dict, db: AsyncSession, background_tasks: BackgroundTasks) -> None:
+async def _handle_missed_call(payload: dict, db: AsyncSession, background_tasks: BackgroundTasks, base_url: str = "") -> None:
     if payload["status"] not in _MISSED_STATUSES:
         return
 
@@ -209,7 +209,7 @@ async def _handle_missed_call(payload: dict, db: AsyncSession, background_tasks:
     await db.commit()
     await db.refresh(log)
 
-    background_tasks.add_task(trigger_outbound_call, log.id)
+    background_tasks.add_task(trigger_outbound_call, log.id, base_url)
     logger.info("Missed call logged (id=%s) from %s — callback queued", log.id, log.caller_number)
 
 
@@ -435,7 +435,7 @@ async def twilio_missed_call_webhook(
     if not _verify_twilio_signature(str(request.url), form_dict, x_twilio_signature):
         raise HTTPException(status_code=403, detail="Invalid Twilio signature")
     payload = build_twilio_payload(form_dict)
-    await _handle_missed_call(payload, db, background_tasks)
+    await _handle_missed_call(payload, db, background_tasks, _request_base_url(request))
     return Response(status_code=204)
 
 
@@ -447,7 +447,7 @@ async def exotel_missed_call_webhook(
 ):
     form = await request.form()
     payload = build_exotel_payload(dict(form))
-    await _handle_missed_call(payload, db, background_tasks)
+    await _handle_missed_call(payload, db, background_tasks, _request_base_url(request))
     return Response(status_code=204)
 
 
