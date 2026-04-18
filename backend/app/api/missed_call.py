@@ -81,8 +81,6 @@ _TWILIO_FEMALE_VOICES: dict[str, str] = {
 
 
 def _play_or_say(text: str, lang: str, language: str, base: str = "") -> str:
-    if settings.SARVAM_API_KEY and base:
-        return f'<Play>{_tts_url(text, lang, base)}</Play>'
     voice = _TWILIO_FEMALE_VOICES.get(lang, "woman")
     return f'<Say voice="{voice}" language="{language}">{text}</Say>'
 
