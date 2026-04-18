@@ -287,7 +287,7 @@ async def trigger_outbound_call(log_id: uuid.UUID, base_url: str = "") -> bool:
                         "StatusCallbackMethod": "POST",
                         "Timeout": "30",
                         "TimeLimit": "90",
-                        "MachineDetection": "Enable",
+                        "MachineDetection": "DetectMessageEnd",
                         "AsyncAmdStatusCallback": amd_url,
                         "AsyncAmdStatusCallbackMethod": "POST",
                     },
