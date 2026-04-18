@@ -26,6 +26,7 @@ from app.services.missed_call_service import (
     detect_language_from_number,
     finalize_call,
     get_closing,
+    get_greeting,
     get_intent_response,
     get_service_menu,
     trigger_outbound_call,
