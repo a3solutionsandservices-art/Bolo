@@ -11,6 +11,9 @@ import {
 import PublicNav from "@/components/layout/PublicNav";
 import MissedCallSimulator from "@/components/MissedCallSimulator";
 import LeadCaptureForm from "@/components/LeadCaptureForm";
+import dynamic from "next/dynamic";
+
+const BrowserCallButton = dynamic(() => import("@/components/BrowserCallButton"), { ssr: false });
 
 const LANGUAGES = [
   "हिंदी", "தமிழ்", "తెలుగు", "বাংলা", "ਪੰਜਾਬੀ", "ಕನ್ನಡ", "മലയാളം", "ଓଡ଼ିଆ", "English",
@@ -175,7 +178,7 @@ export default function LandingPage() {
               <Play className="w-4 h-4" />
               See Live Demo
             </button>
-
+            <BrowserCallButton />
           </div>
         </div>
       </section>

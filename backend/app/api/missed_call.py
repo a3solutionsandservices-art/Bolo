@@ -1,6 +1,7 @@
 import base64
 import hashlib
 import hmac
+import time
 import uuid
 import logging
 from datetime import datetime, timezone
@@ -9,6 +10,7 @@ from urllib.parse import quote as urlquote
 
 import httpx
 from fastapi import APIRouter, BackgroundTasks, Depends, Form, Header, Query, Request, Response, HTTPException
+from jose import jwt as jose_jwt
 from pydantic import BaseModel, field_validator
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -636,6 +638,64 @@ async def callback_status(
         logger.info("CALLBACK-STATUS | log=%s | %s → NO_ANSWER", log_id, CallStatus)
 
     return Response(status_code=204)
+
+
+@router.get("/voice-token")
+async def voice_token():
+    if not all([settings.TWILIO_API_KEY_SID, settings.TWILIO_API_KEY_SECRET,
+                settings.TWILIO_ACCOUNT_SID, settings.TWILIO_TWIML_APP_SID]):
+        raise HTTPException(status_code=503, detail="Browser calling not configured")
+    now = int(time.time())
+    identity = f"browser-{now}"
+    payload = {
+        "jti": f"{settings.TWILIO_API_KEY_SID}-{now}",
+        "iss": settings.TWILIO_API_KEY_SID,
+        "sub": settings.TWILIO_ACCOUNT_SID,
+        "exp": now + 3600,
+        "grants": {
+            "identity": identity,
+            "voice": {
+                "incoming": {"allow": True},
+                "outgoing": {"application_sid": settings.TWILIO_TWIML_APP_SID},
+            },
+        },
+    }
+    token = jose_jwt.encode(payload, settings.TWILIO_API_KEY_SECRET, algorithm="HS256")
+    return {"token": token, "identity": identity}
+
+
+@router.post("/browser-call")
+async def browser_call(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    default_tid: uuid.UUID | None = None
+    if settings.TWILIO_DEFAULT_TENANT_ID:
+        try:
+            default_tid = uuid.UUID(settings.TWILIO_DEFAULT_TENANT_ID)
+        except ValueError:
+            pass
+    log = MissedCallLog(
+        tenant_id=default_tid,
+        caller_number="browser-demo",
+        called_number=settings.TWILIO_PHONE_NUMBER or "demo",
+        provider="browser",
+        status=MissedCallStatus.RECEIVED,
+        language_detected="te",
+    )
+    db.add(log)
+    await db.commit()
+    await db.refresh(log)
+    base = _request_base_url(request)
+    gather_url = f"{base}/api/v1/missed-call/callback-gather/{log.id}"
+    logger.info("BROWSER_CALL | log=%s", log.id)
+    return Response(
+        content=(
+            '<?xml version="1.0" encoding="UTF-8"?>'
+            f"<Response><Redirect>{gather_url}</Redirect></Response>"
+        ),
+        media_type="application/xml",
+    )
 
 
 @router.get("/logs")
