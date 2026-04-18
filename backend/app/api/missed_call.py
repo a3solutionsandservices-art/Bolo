@@ -457,12 +457,7 @@ async def exotel_missed_call_webhook(
 _MAX_TURNS = 2
 
 
-_DTMF_INTENT_MAP = {"1": CallIntent.BOOKING, "2": CallIntent.INQUIRY, "3": CallIntent.BOOKING}
-_DTMF_EVENING_RESPONSE = {
-    "hi": "Aapka token number 8 Dr. Reddy ki evening clinic ke liye reserve ho gaya hai. Shaam 7:15 baje tak clinic pahunchein. Approximate wait time 40 minute hai. Aapke number par SMS confirmation abhi bhej di gayi hai. Dhanyavaad aur apna khayal rakhein. Namaste!",
-    "te": "మీ టోకెన్ నంబర్ 8 డాక్టర్ రెడ్డి ఈవెనింగ్ క్లినిక్ కోసం రిజర్వ్ అయింది. సాయంత్రం 7:15 లోపు క్లినిక్‌కి రండి. వేచి ఉండే సమయం సుమారు 40 నిమిషాలు. మీ నంబర్‌కు SMS కన్ఫర్మేషన్ పంపించాము. ధన్యవాదాలు, జాగ్రత్తగా ఉండండి. నమస్కారం!",
-    "en": "Your token number 8 has been reserved for Dr. Reddy's evening clinic. Please arrive by 7:15 PM. Approximate wait time is 40 minutes. An SMS confirmation has been sent to your number. Thank you and take care. Goodbye!",
-}
+
 
 
 @router.post("/callback-gather/{log_id}")
@@ -511,10 +506,7 @@ async def callback_gather(
         )
 
     # ── PHASE 1: DTMF → respond and hangup immediately ───────────────────────
-    if digit == "3":
-        response_text = _DTMF_EVENING_RESPONSE.get(lang, _DTMF_EVENING_RESPONSE["en"])
-        intent = CallIntent.INQUIRY
-    elif digit == "1":
+    if digit == "1":
         response_text = get_intent_response(CallIntent.BOOKING, lang)
         intent = CallIntent.BOOKING
     elif digit == "2":
