@@ -561,7 +561,8 @@ async def callback_gather(
 
     # ── PHASE 2: CLOSE ───────────────────────────────────────────────────────
     transcript.append({"role": "user", "content": speech or digit, "turn": turn_count + 1})
-    closing = get_closing(lang)
+    is_evening = any(t.get("intent") == "evening_clinic" for t in transcript)
+    closing = get_closing(lang, intent=log.intent, evening=is_evening)
     transcript.append({"role": "assistant", "content": closing, "turn": turn_count + 1, "phase": "close"})
     log.conversation_transcript = transcript
     log.status = MissedCallStatus.CALLBACK_COMPLETED

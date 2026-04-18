@@ -29,54 +29,74 @@ _GREETINGS: dict[str, str] = {
 
 _INTENT_RESPONSES: dict[CallIntent, dict[str, str]] = {
     CallIntent.BOOKING: {
-        "hi": "Samajh gayi. Aap appointment book karna chahte hain. Main abhi aapki request note kar leti hoon. Hamari team aapko jald confirm karegi.",
-        "ta": "Purindukitten. Neenga oru appointment book pannanum nu ninaikireengala. Ungal request note pannugirom. Virupu patta naal athava neram irukka?",
-        "te": "Ardhamayindi. Meeru oka appointment book chesukovalani anukuntunnaru. Meeru request note chesukuntam. Istamaina tarikh edo undi?",
-        "bn": "Bujhechi. Apni ekta appointment ba booking korte chaan. Ami apnar request note korchi. Kono preferred date ba somoy ache ki?",
-        "kn": "Artha aayitu. Neevu appointment book maadabekaagide. Nimma request note maadutteve. Yaavudaadaru preferred date iddeyaa?",
-        "mr": "Samajlo. Tumhala appointment book karayachi ahe. Mi tumchi request note karto. Koi preferred date ahe ka?",
-        "en": "Understood. You'd like to make an appointment or booking. I've noted your request. Do you have a preferred date or time?",
+        "hi": "Zaroor! Aapka appointment kal subah 10 baje ke liye confirm ho gaya hai. Aapke number par SMS confirmation abhi bhej di gayi hai. Aapka appointment number A-7 hai. Kya aapko kuch aur jaanna hai?",
+        "ta": "Sari! Ungal appointment naalai kaalai patt manikku confirm aagividdu. Ungal numberukku SMS confirmation anuppappattu. Ungal appointment number A-7. Vera enna thakaval vendum?",
+        "te": "Zaroor! Meeru appointment repu tallu padi 10 gantallaki confirm ayyindi. Meeru number ki SMS confirmation ippudu pampinchamu. Meeru appointment number A-7. Meeru inkemi telusukovalani anukuntunnara?",
+        "bn": "Nischoi! Apnar appointment kaal sokal 10ta-y confirm hoyeche. Apnar number-e SMS confirmation pathano hoyeche. Apnar appointment number A-7. Apnar ar kichhu janna ache ki?",
+        "kn": "Zaroor! Nimma appointment naale beligge 10 gante ge confirm aagide. Nimma number ge SMS confirmation ippaga kalisida. Nimma appointment number A-7. Nimma bere yaavaado vishaya bEkaa?",
+        "mr": "Nakkicha! Tumcha appointment udya savaali 10 vajeta confirm zala ahe. Tumchya number var SMS confirmation aata pathavli ahe. Tumcha appointment number A-7 aahe. Tumhala aankahi kahi jaanun ghyaayche aahe ka?",
+        "en": "Done! Your appointment is confirmed for tomorrow at 10 AM. An SMS confirmation has been sent to your number. Your appointment number is A-7. Is there anything else you need?",
     },
     CallIntent.INQUIRY: {
-        "hi": "Bilkul. Main aapki query note kar leti hoon aur aapko jald jawaab milega. Koi specific sawaal hai?",
-        "ta": "Sari. Ungalukkku sila thakaval thevaipadum. Ungal query forward pannugirom. Enna kurippitta kelvigal ketka virumpugireenga?",
-        "te": "Sare. Meeru kొన్ని samacharam kavalistunnaru. Meeru query forward chestam. Meeru adagalanukunna specific question undo?",
-        "bn": "Thik ache. Apnar kichhu tathya dorkar chilo. Ami apnar query forward korchi. Kono specific proshno jignasa korte chan?",
-        "kn": "Sari. Nimage kೆಲವು mahiti bEkaagitta. Nimma query forward maadutteve. Yaavudaadaru specific prashne kELabekaagide?",
-        "mr": "Theek ahe. Tumhala kahi mahiti havī hoti. Mi tumchi query forward karto. Kahi specific prashna vicharayacha aahe ka?",
-        "en": "Of course. You had an inquiry. I've noted your question and will get back to you. Is there anything specific you'd like to know?",
+        "hi": "Bilkul! Hamari consultation fee 300 rupay hai. Clinic ka samay hai — subah 9 baje se dopahar 1 baje tak, aur shaam 6 baje se raat 9 baje tak. Somwar se shanivar tak khula rehta hai. Kya aap appointment book karna chahenge?",
+        "ta": "Sari! Engal consultation fee 300 rupai. Clinic neram — kaalai 9 mani muthal pagal 1 mani varai, maaalai 6 mani muthal iravu 9 mani varai. Tingal muthal shaniyar varai thirakka irukkom. Appointment book pannalama?",
+        "te": "Zaroor! Maa consultation fee 300 rupayalu. Clinic samayalu — tallu padi 9 gantala nundi madhyahnam 1 ganta varaku, sayantram 6 gantala nundi ratri 9 ganta varaku. Somavar nundi shanivaram varaku teruchinattu untundi. Appointment book chesukuntara?",
+        "bn": "Nischoi! Amader consultation fee 300 taka. Clinic-er somoy holo — sokal 9ta theke dupur 1ta, ar bikal 6ta theke raat 9ta porjonto. Sombar theke Shonibar khola thake. Appointment book korben?",
+        "kn": "Zaroor! Namma consultation fee 300 rupai. Clinic samaya — beligge 9 gante ninda madhyahna 1 gante varegu, saayankala 6 gante ninda raatri 9 gante varegu. Somavara ninda Shanivara varegu tiruguttade. Appointment book maadabekaaguttada?",
+        "mr": "Nakkicha! Amchi consultation fee 300 rupay aahe. Clinic vel aahe — savaali 9 te dopahari 1, ani sandhyakali 6 te raat 9 vajeparyant. Somvar te Shanivari chalu asato. Appointment book karaycha aahe ka?",
+        "en": "Of course! Our consultation fee is 300 rupees. Clinic hours are 9 AM to 1 PM and 6 PM to 9 PM, Monday to Saturday. Would you like to book an appointment?",
     },
     CallIntent.COMPLAINT: {
-        "hi": "Mujhe khed hai ki aapko takleef hui. Main aapki shikayat darj kar leti hoon aur ek expert aapko jald hi contact karega.",
-        "ta": "Ungalukkku sirimai aachu nu kettu varudham. Ungal pukarai pathivu seikirom, oru expert ungalai vilaivil thodarbu kolluvaar.",
-        "te": "Meeru oka samasya face chesaaru ani vinadam chala kastangaa undi. Meeru complaint register chestam, expert meeru tho tvaralo contact aavutaaru.",
-        "bn": "Apnar kosto hoyeche shune dukhit holam. Ami apnar অভিযোগ nথibaddho korchi, ekjon expert shīghroi apnar sathe joগাযোগ korbe.",
-        "en": "I'm sorry to hear you had an issue. I've registered your complaint and an expert will contact you shortly.",
+        "hi": "Mujhe khed hai ki aapko takleef hui. Main aapki baat note kar leti hoon. Hamara team manager aapko 2 ghante ke andar sampark karega. Aapka complaint number C-42 hai.",
+        "ta": "Ungalukkku sirimai aachu nu kettu varudham. Ungal vishayathai note pannugirom. Engal team manager 2 manikku ullae ungalai thodarbu kolluvaar. Ungal complaint number C-42.",
+        "te": "Meeru oka samasya face chesaaru ani vinadam chala kastangaa undi. Meeru vishayam note chesukuntam. Maa team manager 2 gantallo meeru ni contact chestaru. Meeru complaint number C-42.",
+        "bn": "Apnar kosto hoyeche shune dukhit holam. Ami apnar bishoy note korchi. Amar team manager 2 ghontar modhye apnar sathe joগাযোগ korbe. Apnar complaint number C-42.",
+        "en": "I'm sorry to hear that. I've noted your complaint and our team manager will contact you within 2 hours. Your complaint number is C-42.",
     },
     CallIntent.SUPPORT: {
-        "hi": "Hum aapki madad karne ke liye yahan hain. Aapki request support team ko bhej di gayi hai. Koi specific samasya hai jo aap batana chahte hain?",
-        "ta": "Ungalukkku help pannuvaom. Ungal request support team-kku anuppappattu. Enna kuritta parisalai solveenga?",
-        "te": "Meeru help cheyyadaniki ikkade unnamu. Meeru request support team ki pampadam ayyindi. Oka specific problem cheppalani anukuntunnara?",
-        "bn": "Ami apnake sahajya korte ekhane achi. Apnar request support team-e pathano hoyeche. Kono specific samasya bolte chan?",
-        "en": "We're here to help. Your request has been sent to our support team. Is there a specific issue you'd like to describe?",
+        "hi": "Hum aapki madad ke liye yahan hain. Aapki request support team ko bhej di gayi hai. Aapka support ticket number S-15 hai. Ek technician 30 minute mein aapko call karega.",
+        "ta": "Ungalukkku help pannuvaom. Ungal request support team-kku anuppappattu. Ungal support ticket number S-15. Oru technician 30 nimidam ullae ungalai call panniduvan.",
+        "te": "Meeru help cheyyadaniki ikkade unnamu. Meeru request support team ki pampadam ayyindi. Meeru support ticket number S-15. Oka technician 30 nimishallo meeru ni call chestadu.",
+        "bn": "Ami apnake sahajya korte ekhane achi. Apnar request support team-e pathano hoyeche. Apnar support ticket number S-15. Ekjon technician 30 minute-er modhye apnake call korbe.",
+        "en": "We're here to help. Your request has been sent to our support team. Your support ticket number is S-15. A technician will call you within 30 minutes.",
     },
     CallIntent.OTHER: {
-        "hi": "Theek hai. Main aapki baat note kar leti hoon. Hamari team aapko jald hi callback karegi.",
-        "ta": "Sari. Ungal vishayathai note pannugirom. Engal team ungalai vilaivil callback pannum.",
-        "te": "Sare. Meeru vishayam note chesukuntam. Maa team meeru ni tvaralo callback chestundi.",
-        "bn": "Thik ache. Ami apnar bishoy note korchi. Amar team shīghroi apnake callback korbe.",
-        "en": "Understood. I've noted your message. Our team will call you back shortly.",
+        "hi": "Theek hai. Main aapki baat note kar leti hoon. Hamari team aapko 2 ghante ke andar callback karegi.",
+        "ta": "Sari. Ungal vishayathai note pannugirom. Engal team 2 manikku ullae ungalai callback pannum.",
+        "te": "Sare. Meeru vishayam note chesukuntam. Maa team 2 gantallo meeru ni callback chestundi.",
+        "bn": "Thik ache. Ami apnar bishoy note korchi. Amar team 2 ghontar modhye apnake callback korbe.",
+        "en": "Understood. I've noted your message. Our team will call you back within 2 hours.",
     },
 }
 
-_CLOSING: dict[str, str] = {
-    "hi": "Bahut dhanyavaad aapka. Hamari team 24 ghante ke andar aapse sampark karegi. Apna khayal rakhein. Namaste!",
-    "ta": "Romba nandri. Engal team 24 manikku ullae ungalai thodarbu kollum. Kaapaattukolungal. Vanakkam!",
-    "te": "Chala dhanyavaadalu. Maa team 24 gantallo meeru ni contact chestundi. Jagratta ga undandi. Namaskaram!",
-    "bn": "Onek dhonnobad. Amar team 24 ghontar modhye apnar sathe joগাযোগ korbe. Bhalo thakben. Namaskar!",
-    "kn": "Tumba dhanyavaadagalu. Namma team 24 ganteyalli nimmannu sampark maaduttade. Jagrute vaagiri. Namaskara!",
-    "mr": "Khup dhanyavaad. Amchi team 24 tasaanmadhe tumhashi sampark kareel. Kaaļji ghya. Namaskar!",
-    "en": "Thank you so much. Our team will contact you within 24 hours. Take care. Goodbye!",
+_CLOSING: dict[str, dict[str, str]] = {
+    "booking": {
+        "hi": "Aapka appointment confirm ho gaya! Kal subah 10 baje clinic mein aane ki kripa karein. Appointment number A-7 yaad rakhein. Dhanyavaad aur apna khayal rakhein. Namaste!",
+        "te": "Meeru appointment confirm ayyindi! Repu tallu padi 10 gantallaki clinic ki ravadaniki request chestunnamu. Appointment number A-7 gurtu pettukogalaru. Dhanyavaadalu, jagratta ga undandi. Namaskaram!",
+        "ta": "Ungal appointment confirm aagividdu! Naalai kaalai 10 manikku clinic-ukku varungal. Appointment number A-7 ninaivil vaiththukollungal. Nandri, kaapaattukolungal. Vanakkam!",
+        "en": "Your appointment is confirmed! Please visit the clinic tomorrow at 10 AM. Remember your appointment number A-7. Thank you and take care. Goodbye!",
+    },
+    "inquiry": {
+        "hi": "Umeed hai aapko jaankari helpful lagi. Agar appointment book karni ho to kisi bhi samay call karein. Dhanyavaad aur apna khayal rakhein. Namaste!",
+        "te": "Samacharam upayogakaranga undi ani aasistunnamu. Appointment book cheyyadaniki elapudu ayna call cheyagalaru. Dhanyavaadalu, jagratta ga undandi. Namaskaram!",
+        "ta": "Ungalukkku thakaval payanulle erundathu enru nerukirom. Appointment book pannuvatharku evvellumm call pannungal. Nandri, kaapaattukolungal. Vanakkam!",
+        "en": "Hope the information was helpful. Call us anytime to book an appointment. Thank you and take care. Goodbye!",
+    },
+    "token": {
+        "hi": "Aapka token number 8 reserve ho gaya. Approximate wait time 40 minute hai. Shaam 6:30 baje clinic mein aane ki kripa karein. Dhanyavaad! Namaste!",
+        "te": "Meeru token number 8 reserve ayyindi. Approximate wait time 40 nimishalu. Sayantram 6:30 ki clinic ki ravadaniki request chestunnamu. Dhanyavaadalu! Namaskaram!",
+        "ta": "Ungal token number 8 reserve aagividdu. Approximate wait time 40 nimisham. Maaalai 6:30 manikku clinic-ukku varungal. Nandri! Vanakkam!",
+        "en": "Your token number 8 is reserved. Approximate wait time is 40 minutes. Please visit the clinic at 6:30 PM today. Thank you! Goodbye!",
+    },
+    "default": {
+        "hi": "Bahut dhanyavaad aapka. Hamari team 2 ghante ke andar aapse sampark karegi. Apna khayal rakhein. Namaste!",
+        "ta": "Romba nandri. Engal team 2 manikku ullae ungalai thodarbu kollum. Kaapaattukolungal. Vanakkam!",
+        "te": "Chala dhanyavaadalu. Maa team 2 gantallo meeru ni contact chestundi. Jagratta ga undandi. Namaskaram!",
+        "bn": "Onek dhonnobad. Amar team 2 ghontar modhye apnar sathe joগাযোগ korbe. Bhalo thakben. Namaskar!",
+        "kn": "Tumba dhanyavaadagalu. Namma team 2 ganteyalli nimmannu sampark maaduttade. Jagrute vaagiri. Namaskara!",
+        "mr": "Khup dhanyavaad. Amchi team 2 tasaanmadhe tumhashi sampark kareel. Kaaļji ghya. Namaskar!",
+        "en": "Thank you so much. Our team will contact you within 2 hours. Take care. Goodbye!",
+    },
 }
 
 # Phone prefix → likely language (India mobile number heuristics)
@@ -184,8 +204,16 @@ def get_intent_response(intent: CallIntent, lang: str) -> str:
     return lang_map.get(lang, lang_map.get("en", ""))
 
 
-def get_closing(lang: str) -> str:
-    return _CLOSING.get(lang, _CLOSING["hi"])
+def get_closing(lang: str, intent: "CallIntent | None" = None, evening: bool = False) -> str:
+    if evening:
+        bucket = _CLOSING["token"]
+    elif intent == CallIntent.BOOKING:
+        bucket = _CLOSING["booking"]
+    elif intent == CallIntent.INQUIRY:
+        bucket = _CLOSING["inquiry"]
+    else:
+        bucket = _CLOSING["default"]
+    return bucket.get(lang, bucket.get("hi", _CLOSING["default"]["hi"]))
 
 
 # ── Outbound call trigger ──────────────────────────────────────────────────────
