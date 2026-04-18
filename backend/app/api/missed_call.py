@@ -1,6 +1,7 @@
 import base64
 import hashlib
 import hmac
+import re
 import time
 import uuid
 import logging
@@ -726,6 +727,56 @@ async def list_missed_call_logs(
             for r in rows
         ],
     }
+
+
+@router.post("/whatsapp-notify")
+async def whatsapp_notify(request: Request):
+    """Send a demo WhatsApp message — proxies Twilio so frontend doesn't need creds."""
+    if not settings.TWILIO_ACCOUNT_SID or not settings.TWILIO_AUTH_TOKEN:
+        raise HTTPException(status_code=503, detail="Twilio not configured")
+
+    body = await request.json()
+    phone: str = body.get("phone", "")
+    intent: str = body.get("intent", "inquiry")
+
+    clean = "".join(c for c in phone if c.isdigit())
+    normalized = clean if clean.startswith("91") else "91" + clean
+    if not re.match(r"^91\d{10}$", normalized):
+        raise HTTPException(status_code=400, detail="Invalid Indian mobile number")
+
+    messages = {
+        "booking": (
+            "Hi! Your appointment with Dr. Mehta is confirmed.\n\n"
+            "Tomorrow, 10:00 AM\nCity Clinic, OPD\n\n"
+            "Reply CANCEL if you need to reschedule.\n\n- City Clinic"
+        ),
+        "evening": (
+            "Hi! Your token has been reserved at City Clinic.\n\n"
+            "Token #7 - Dr. Reddy\nArrive by 7:15 PM tonight\nCity Clinic, Kukatpally\n\n"
+            "Reply CANCEL to release your token.\n\n- City Clinic"
+        ),
+        "inquiry": (
+            "Hi! Here is the fee summary from City Clinic.\n\n"
+            "General OPD: Rs.300\nSpecialist: Rs.500\n\n"
+            "To book an appointment reply BOOK or call us.\n\n- City Clinic"
+        ),
+    }
+    msg_body = messages.get(intent, messages["inquiry"])
+    to = f"whatsapp:+{normalized}"
+    frm = "whatsapp:+14155238886"
+
+    async with httpx.AsyncClient(timeout=12) as client:
+        resp = await client.post(
+            f"https://api.twilio.com/2010-04-01/Accounts/{settings.TWILIO_ACCOUNT_SID}/Messages.json",
+            auth=(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN),
+            data={"From": frm, "To": to, "Body": msg_body},
+        )
+
+    if not resp.is_success:
+        data = resp.json()
+        raise HTTPException(status_code=502, detail=data.get("message", "Twilio error"))
+
+    return {"ok": True, "sid": resp.json().get("sid")}
 
 
 @router.get("/logs/{log_id}")

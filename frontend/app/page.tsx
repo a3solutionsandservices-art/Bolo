@@ -37,7 +37,8 @@ function WhatsAppTryWidget() {
     if (clean.length < 10) return;
     setStatus("sending");
     try {
-      const res = await fetch("/api/whatsapp-demo", {
+      const backendBase = process.env.NEXT_PUBLIC_API_BASE_URL || "https://backend-production-129a.up.railway.app";
+      const res = await fetch(`${backendBase}/api/v1/missed-call/whatsapp-notify`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ phone: clean, intent: "booking" }),
@@ -83,7 +84,7 @@ function WhatsAppTryWidget() {
       {status === "error" && (
         <p className="text-red-400 text-xs mt-2">Something went wrong. Try again.</p>
       )}
-      <p className="text-white/20 text-[11px] mt-3">India numbers only · No spam · One message</p>
+      <p className="text-white/20 text-[11px] mt-3">India numbers only · First send <span className="text-white/35 font-mono">join &lt;keyword&gt;</span> to +14155238886 on WhatsApp</p>
     </div>
   );
 }
