@@ -16,6 +16,25 @@ logger = logging.getLogger(__name__)
 
 # ── Language data ─────────────────────────────────────────────────────────────
 
+_LANG_SELECT_GREETING: str = (
+    "Namaskaram! Nenu Pallavi ni, mee clinic nundi matladutunnanu. "
+    "Telugu lo matladinapudu 1 needandi. "
+    "Hindi ke liye 2 dabayein. "
+    "For English press 3."
+)
+
+_LANG_MAP_DTMF: dict[str, str] = {"1": "te", "2": "hi", "3": "en"}
+
+_SERVICE_MENU: dict[str, str] = {
+    "te": "Appointment book cheyyadaniki 1 needandi, clinic samacharam kosam 2 needandi, evening clinic kosam 3 needandi.",
+    "hi": "Appointment book karne ke liye 1 dabayein, jaankari ke liye 2 dabayein, evening clinic ke liye 3 dabayein.",
+    "en": "Press 1 to book an appointment, press 2 for clinic information, press 3 for the evening clinic.",
+    "ta": "Appointment book pannuvatharku 1 acchunga, thakavalukku 2 acchunga, evening clinic ku 3 acchunga.",
+    "bn": "Appointment booke 1 chapa, tathyar janya 2 chapa, evening clinic ke 3 chapa.",
+    "kn": "Appointment book maadabekaagidare 1 odayi, mahitikke 2 odayi, evening clinic ge 3 odayi.",
+    "mr": "Appointment book karayala 1 daba, mahitisathi 2 daba, evening clinic sathi 3 daba.",
+}
+
 _GREETINGS: dict[str, str] = {
     "hi": "Namaste! Main Pallavi hoon. Aapka call miss ho gaya tha. Appointment book karne ke liye 1 dabayein, jaankari ke liye 2 dabayein, ya evening clinic ke liye 3 dabayein.",
     "te": "Namaskaram! Nenu Pallavi ni. Meeru chesina call miss aindi. Appointment book cheyyadaniki 1 needandi, samacharam kosam 2 needandi, evening clinic kosam 3 needandi.",
@@ -193,6 +212,18 @@ def detect_language_from_number(phone: str) -> str:
         if digits.startswith(prefix.lstrip("0")):
             return lang
     return "hi"
+
+
+def get_lang_select_greeting() -> str:
+    return _LANG_SELECT_GREETING
+
+
+def get_service_menu(lang: str) -> str:
+    return _SERVICE_MENU.get(lang, _SERVICE_MENU["en"])
+
+
+def get_lang_from_dtmf(digit: str) -> str | None:
+    return _LANG_MAP_DTMF.get(digit)
 
 
 def get_greeting(lang: str) -> str:
