@@ -75,30 +75,15 @@ def _request_base_url(request: Request) -> str:
 
 
 def _tts_url(text: str, lang: str, base: str) -> str:
-    return f"{base}/api/v1/missed-call/tts?text={urlquote(text[:400])}&amp;lang={lang}"
-
-
-_TWILIO_FEMALE_VOICES: dict[str, str] = {
-    "hi": "Google.hi-IN-Neural2-A",
-    "te": "Google.te-IN-Standard-A",
-    "ta": "Google.ta-IN-Standard-A",
-    "kn": "Polly.Aditi",
-    "bn": "Polly.Aditi",
-    "mr": "Polly.Aditi",
-    "en": "Google.en-IN-Neural2-A",
-}
-
-_TWILIO_LANG_OVERRIDE: dict[str, str] = {
-    "kn": "hi-IN",
-    "bn": "hi-IN",
-    "mr": "hi-IN",
-}
+    return f"{base}/api/v1/missed-call/tts?text={urlquote(text[:400])}&lang={lang}"
 
 
 def _play_or_say(text: str, lang: str, language: str, base: str = "") -> str:
-    voice = _TWILIO_FEMALE_VOICES.get(lang, "Polly.Aditi")
-    effective_lang = _TWILIO_LANG_OVERRIDE.get(lang, language)
-    return f'<Say voice="{voice}" language="{effective_lang}">{text}</Say>'
+    if base:
+        return f'<Play>{_tts_url(text, lang, base)}</Play>'
+    voice = {"hi": "Google.hi-IN-Neural2-A", "te": "Google.te-IN-Standard-A",
+             "en": "Google.en-IN-Neural2-A"}.get(lang, "Polly.Aditi")
+    return f'<Say voice="{voice}" language="{language}">{text}</Say>'
 
 
 def _mc_say_and_gather(text: str, action_url: str, language: str = "hi-IN",
@@ -128,7 +113,7 @@ logger = logging.getLogger(__name__)
 
 _VOICEMAIL_MESSAGES: dict[str, str] = {
     "hi": "Namaste! Main Pallavi hoon, aapke clinic ki taraf se bol rahi hoon. Aapka missed call humein mila. Hamari team aapko 24 ghante mein callback karegi. Dhanyavaad!",
-    "te": "Namaskaram! Nenu Pallavi ni, mee clinic nundi matladutunnanu. Meeru chesina missed call andindi. Maa team 24 gantallo meeru ni contact chestundi. Dhanyavaadalu!",
+    "te": "నమస్కారం! నేను పల్లవిని, మీ క్లినిక్ నుండి మాట్లాడుతున్నాను. మీరు చేసిన కాల్ మిస్ అయింది. మా టీమ్ 24 గంటలలో మీకు కాల్‌బ్యాక్ చేస్తుంది. ధన్యవాదాలు!",
     "ta": "Vanakkam! Naan Pallavi, ungal clinic-il irundhu pesugiren. Ungal missed call engalukku kidaitthathu. Engal team 24 manikku ullae ungalai thodarbu kollum. Nandri!",
     "bn": "Namaskar! Ami Pallavi, apnar clinic theke bolchi. Apnar missed call amra peyechi. Amar team 24 ghontar modhye apnake callback korbe. Dhonnobad!",
     "kn": "Namaskara! Nanu Pallavi, nimma clinic-inda matnaduttiruve. Nimma missed call nammage sikkitu. Namma team 24 ganteyalli nimmannu sampark maaduttade. Dhanyavaadagalu!",
@@ -350,9 +335,9 @@ async def tts_audio(text: str, lang: str = "hi"):
                     "inputs": [clean],
                     "target_language_code": lang_code,
                     "speaker": _SARVAM_SPEAKER,
-                    "model": settings.SARVAM_TTS_MODEL,
-                    "pitch": 0.1,
-                    "pace": 1.2,
+                    "model": "bulbul:v2",
+                    "pitch": 0.2,
+                    "pace": 1.65,
                     "loudness": 2.0,
                     "speech_sample_rate": 8000,
                     "enable_preprocessing": True,
@@ -471,7 +456,7 @@ _MAX_TURNS = 2
 _DTMF_INTENT_MAP = {"1": CallIntent.BOOKING, "2": CallIntent.INQUIRY, "3": CallIntent.BOOKING}
 _DTMF_EVENING_GREETING = {
     "hi": "Aap Dr. Reddy ki evening clinic ke baare mein poochh rahe hain. Woh aaj shaam 6:30 baje se available hain. Kya main aapke liye token reserve kar doon?",
-    "te": "Meeru Dr. Reddy evening clinic gurinchi adugutunnaru. Ayana naadu sayantram 6:30 ki available ga untaru. Meeru token reserve cheyamana?",
+    "te": "మీరు డాక్టర్ రెడ్డి ఈవెనింగ్ క్లినిక్ గురించి అడుగుతున్నారు. ఆయన ఈరోజు సాయంత్రం 6:30 కి అందుబాటులో ఉంటారు. మీకు టోకెన్ రిజర్వ్ చేయమనా?",
     "en": "You are asking about the evening clinic. Dr. Reddy is available from 6:30 PM today. Shall I reserve a token for you?",
 }
 
