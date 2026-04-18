@@ -79,11 +79,16 @@ def _tts_url(text: str, lang: str, base: str) -> str:
     return f"{base}/api/v1/missed-call/tts?text={urlquote(text[:400])}&lang={lang}"
 
 
+_TWILIO_FEMALE_VOICES: dict[str, str] = {
+    "hi": "Google.hi-IN-Neural2-A",
+    "te": "Google.te-IN-Standard-A",
+    "ta": "Google.ta-IN-Standard-A",
+    "en": "Google.en-IN-Neural2-A",
+}
+
+
 def _play_or_say(text: str, lang: str, language: str, base: str = "") -> str:
-    if base:
-        return f'<Play>{_tts_url(text, lang, base)}</Play>'
-    voice = {"hi": "Google.hi-IN-Neural2-A", "te": "Google.te-IN-Standard-A",
-             "en": "Google.en-IN-Neural2-A"}.get(lang, "Polly.Aditi")
+    voice = _TWILIO_FEMALE_VOICES.get(lang, "Polly.Aditi")
     return f'<Say voice="{voice}" language="{language}">{text}</Say>'
 
 
