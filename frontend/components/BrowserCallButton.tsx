@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback } from "react";
 import { Phone, PhoneOff, Loader2, Mic, MicOff } from "lucide-react";
 
-type CallStatus = "idle" | "requesting" | "connecting" | "active" | "ended" | "error";
+type CallStatus = "idle" | "requesting" | "connecting" | "active" | "ended" | "error" | "not_configured";
 
 const STATUS_LABELS: Record<CallStatus, string> = {
   idle: "Call Pallavi Live",
@@ -12,6 +12,7 @@ const STATUS_LABELS: Record<CallStatus, string> = {
   active: "End Call",
   ended: "Call ended",
   error: "Try again",
+  not_configured: "Try again",
 };
 
 export default function BrowserCallButton() {
@@ -29,7 +30,9 @@ export default function BrowserCallButton() {
 
     setStatus("requesting");
     try {
-      const res = await fetch("/api/v1/missed-call/voice-token");
+      const backendBase = process.env.NEXT_PUBLIC_API_BASE_URL || "https://backend-production-129a.up.railway.app";
+      const res = await fetch(`${backendBase}/api/v1/missed-call/voice-token`);
+      if (res.status === 503) throw new Error("not_configured");
       if (!res.ok) throw new Error("Token fetch failed");
       const { token } = await res.json();
 
@@ -56,9 +59,9 @@ export default function BrowserCallButton() {
         setStatus("idle");
         device.destroy();
       });
-    } catch {
-      setStatus("error");
-      setTimeout(() => setStatus("idle"), 3000);
+    } catch (err) {
+      setStatus((err as Error).message === "not_configured" ? "not_configured" : "error");
+      setTimeout(() => setStatus("idle"), 4000);
     }
   }, [status]);
 
@@ -72,12 +75,13 @@ export default function BrowserCallButton() {
 
   const isActive = status === "active";
   const isLoading = status === "requesting" || status === "connecting";
+  const isNotConfigured = status === "not_configured";
 
   return (
     <div className="flex flex-col items-center gap-3">
       <button
         onClick={startCall}
-        disabled={isLoading || status === "ended" || status === "error"}
+        disabled={isLoading || status === "ended" || status === "error" || isNotConfigured}
         className={[
           "group flex items-center gap-2.5 px-7 py-3.5 rounded-xl font-semibold text-[15px] transition-all duration-200 border",
           isActive
@@ -115,6 +119,9 @@ export default function BrowserCallButton() {
       )}
       {status === "error" && (
         <p className="text-red-400/70 text-xs">Could not connect. Check mic permissions.</p>
+      )}
+      {isNotConfigured && (
+        <p className="text-amber-400/70 text-xs">Browser calling not available — use your phone to test.</p>
       )}
     </div>
   );
