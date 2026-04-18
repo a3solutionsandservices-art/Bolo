@@ -18,9 +18,7 @@ logger = logging.getLogger(__name__)
 
 _LANG_SELECT_GREETING: str = (
     "Namaskaram! Nenu Pallavi ni, mee clinic nundi matladutunnanu. "
-    "Telugu lo matladinapudu 1 needandi. "
-    "Hindi ke liye 2 dabayein. "
-    "For English press 3."
+    "Telugu lo matladi anukunte 1 nokandi, Hindi 2, English 3."
 )
 
 _LANG_MAP_DTMF: dict[str, str] = {"1": "te", "2": "hi", "3": "en"}
