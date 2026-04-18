@@ -26,7 +26,7 @@ _LANG_SELECT_GREETING: str = (
 _LANG_MAP_DTMF: dict[str, str] = {"1": "te", "2": "hi", "3": "en"}
 
 _SERVICE_MENU: dict[str, str] = {
-    "te": "Appointment book cheyyadaniki 1 needandi, clinic samacharam kosam 2 needandi, evening clinic kosam 3 needandi.",
+    "te": "Appointment book cheyyadaniki 1 nokandi, clinic samacharam kosam 2 nokandi, evening clinic kosam 3 nokandi.",
     "hi": "Appointment book karne ke liye 1 dabayein, jaankari ke liye 2 dabayein, evening clinic ke liye 3 dabayein.",
     "en": "Press 1 to book an appointment, press 2 for clinic information, press 3 for the evening clinic.",
     "ta": "Appointment book pannuvatharku 1 acchunga, thakavalukku 2 acchunga, evening clinic ku 3 acchunga.",
@@ -37,7 +37,7 @@ _SERVICE_MENU: dict[str, str] = {
 
 _GREETINGS: dict[str, str] = {
     "hi": "Namaste! Main Pallavi hoon. Aapka call miss ho gaya tha. Appointment book karne ke liye 1 dabayein, jaankari ke liye 2 dabayein, ya evening clinic ke liye 3 dabayein.",
-    "te": "Namaskaram! Nenu Pallavi ni. Meeru chesina call miss aindi. Appointment book cheyyadaniki 1 needandi, samacharam kosam 2 needandi, evening clinic kosam 3 needandi.",
+    "te": "Namaskaram! Nenu Pallavi ni. Meeru chesina call miss aindi. Appointment book cheyyadaniki 1 nokandi, samacharam kosam 2 nokandi, evening clinic kosam 3 nokandi.",
     "ta": "Vanakkam! Naan Pallavi. Ungal call miss aiyirundathu. Appointment book pannuvatharku 1 acchunga, thakavalukku 2 acchunga, evening clinic ku 3 acchunga.",
     "bn": "Namaskar! Ami Pallavi. Apnar call miss hoyeche. Appointment booke 1 chapa, tathyar janya 2 chapa, evening clinic ke 3 chapa.",
     "kn": "Namaskara! Nanu Pallavi. Nimma call miss aayitu. Appointment book maadabekaagidare 1 odayi, mahitikke 2 odayi, evening clinic ge 3 odayi.",
