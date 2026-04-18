@@ -53,9 +53,9 @@ _INTENT_RESPONSES: dict[CallIntent, dict[str, str]] = {
         "en": "Your appointment is confirmed for tomorrow at 10 AM. Appointment number A-7. An SMS confirmation has been sent to your number. Please arrive on time. Thank you and take care. Goodbye!",
     },
     CallIntent.INQUIRY: {
-        "hi": "Hamari consultation fee 300 rupay hai. Clinic ka samay hai — subah 9 baje se dopahar 1 baje tak, aur shaam 6 baje se raat 9 baje tak. Somwar se Shanivar tak khula rehta hai. Appointment book karne ke liye dobara call karein. Dhanyavaad! Namaste!",
-        "te": "మా కన్సల్టేషన్ ఫీ 300 రూపాయలు. క్లినిక్ సమయాలు — పొద్దున 9 నుండి మధ్యాహ్నం 1 వరకు, సాయంత్రం 6 నుండి రాత్రి 9 వరకు. సోమవారం నుండి శనివారం వరకు తెరుచుకుంటుంది. అపాయింట్‌మెంట్ బుక్ చేయడానికి మళ్ళీ కాల్ చేయండి. ధన్యవాదాలు! నమస్కారం!",
-        "en": "Our consultation fee is 300 rupees. Clinic hours are 9 AM to 1 PM and 6 PM to 9 PM, Monday to Saturday. Call us again to book an appointment. Thank you! Goodbye!",
+        "hi": "Hamari consultation fee 300 rupay hai. Clinic ka samay hai — subah 9 baje se dopahar 1 baje tak, aur shaam 6 baje se raat 9 baje tak. Somwar se Shanivar tak khula rehta hai.",
+        "te": "మా కన్సల్టేషన్ ఫీ 300 రూపాయలు. క్లినిక్ సమయాలు — పొద్దున 9 నుండి మధ్యాహ్నం 1 వరకు, సాయంత్రం 6 నుండి రాత్రి 9 వరకు. సోమవారం నుండి శనివారం వరకు తెరుచుకుంటుంది.",
+        "en": "Our consultation fee is 300 rupees. Clinic hours are 9 AM to 1 PM and 6 PM to 9 PM, Monday to Saturday.",
     },
     CallIntent.COMPLAINT: {
         "hi": "Mujhe khed hai ki aapko takleef hui. Main aapki baat note kar leti hoon. Hamara team manager aapko 2 ghante ke andar sampark karega. Aapka complaint number C-42 hai.",

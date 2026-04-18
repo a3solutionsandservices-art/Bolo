@@ -460,6 +460,10 @@ _MAX_TURNS = 2
 
 
 
+_INQUIRY_FOLLOWUP_ASK: str = "అపాయింట్‌మెంట్ బుక్ చేసుకోవాలా? అవును అంటే 1 నొక్కండి."
+_INQUIRY_FOLLOWUP_DECLINE: str = "సరే, ధన్యవాదాలు! మళ్ళీ కాల్ చేయండి. నమస్కారం!"
+
+
 @router.post("/callback-gather/{log_id}")
 async def callback_gather(
     log_id: uuid.UUID,
@@ -467,6 +471,7 @@ async def callback_gather(
     SpeechResult: str = Form(default=""),
     Digits: str = Form(default=""),
     Confidence: str = Form(default="0.0"),
+    phase: str = Query(default=""),
     x_twilio_signature: str = Header(default=""),
     db: AsyncSession = Depends(get_db),
 ):
@@ -489,8 +494,35 @@ async def callback_gather(
     lang = "te"
     lang_code = "te-IN"
 
-    user_turns = [t for t in transcript if t.get("role") == "user"]
-    turn_count = len(user_turns)
+    # ── PHASE inquiry_followup: did they want to book after hearing info? ─────
+    if phase == "inquiry_followup":
+        if digit == "1" or (speech and any(w in speech.lower() for w in ["అవును", "yes", "ha", "haa", "book", "bokk"])):
+            booking_text = get_intent_response(CallIntent.BOOKING, lang)
+            transcript.append({"role": "user", "content": digit or speech, "phase": "inquiry_followup"})
+            transcript.append({"role": "assistant", "content": booking_text, "intent": str(CallIntent.BOOKING)})
+            log.intent = CallIntent.BOOKING
+            log.intent_confidence = 1.0
+            log.conversation_transcript = transcript
+            log.status = MissedCallStatus.CALLBACK_COMPLETED
+            log.callback_completed_at = datetime.now(timezone.utc)
+            await db.commit()
+            logger.info("PHASE=INQUIRY_FOLLOWUP→BOOKING | log=%s", log_id)
+            return Response(
+                content=_mc_say_and_hangup(booking_text, lang_code, lang, base=base),
+                media_type="application/xml",
+            )
+        else:
+            transcript.append({"role": "user", "content": digit or speech or "no_response", "phase": "inquiry_followup"})
+            transcript.append({"role": "assistant", "content": _INQUIRY_FOLLOWUP_DECLINE})
+            log.conversation_transcript = transcript
+            log.status = MissedCallStatus.CALLBACK_COMPLETED
+            log.callback_completed_at = datetime.now(timezone.utc)
+            await db.commit()
+            logger.info("PHASE=INQUIRY_FOLLOWUP→DECLINE | log=%s", log_id)
+            return Response(
+                content=_mc_say_and_hangup(_INQUIRY_FOLLOWUP_DECLINE, lang_code, lang, base=base),
+                media_type="application/xml",
+            )
 
     # ── PHASE 0: GREETING + MENU ─────────────────────────────────────────────
     if not digit and not speech:
@@ -505,16 +537,53 @@ async def callback_gather(
             media_type="application/xml",
         )
 
-    # ── PHASE 1: DTMF → respond and hangup immediately ───────────────────────
+    # ── PHASE 1: DTMF ─────────────────────────────────────────────────────────
     if digit == "1":
         response_text = get_intent_response(CallIntent.BOOKING, lang)
         intent = CallIntent.BOOKING
+        transcript.append({"role": "user", "content": digit, "dtmf": digit})
+        transcript.append({"role": "assistant", "content": response_text, "intent": str(intent)})
+        log.intent = intent
+        log.intent_confidence = 1.0
+        log.conversation_transcript = transcript
+        log.status = MissedCallStatus.CALLBACK_COMPLETED
+        log.callback_completed_at = datetime.now(timezone.utc)
+        await db.commit()
+        logger.info("PHASE=BOOKING+HANGUP | log=%s", log_id)
+        return Response(
+            content=_mc_say_and_hangup(response_text, lang_code, lang, base=base),
+            media_type="application/xml",
+        )
     elif digit == "2":
-        response_text = get_intent_response(CallIntent.INQUIRY, lang)
-        intent = CallIntent.INQUIRY
+        info_text = get_intent_response(CallIntent.INQUIRY, lang)
+        combined_text = info_text + " " + _INQUIRY_FOLLOWUP_ASK
+        followup_url = f"{action_url}?phase=inquiry_followup"
+        transcript.append({"role": "user", "content": digit, "dtmf": digit})
+        transcript.append({"role": "assistant", "content": combined_text, "phase": "inquiry_ask"})
+        log.intent = CallIntent.INQUIRY
+        log.conversation_transcript = transcript
+        await db.commit()
+        logger.info("PHASE=INQUIRY+ASK | log=%s", log_id)
+        return Response(
+            content=_mc_say_and_gather(combined_text, followup_url, lang_code, timeout=10, lang=lang, base=base),
+            media_type="application/xml",
+        )
     elif speech:
         intent, _ = _classify_intent(speech)
         response_text = get_intent_response(intent, lang)
+        transcript.append({"role": "user", "content": speech})
+        transcript.append({"role": "assistant", "content": response_text, "intent": str(intent)})
+        log.intent = intent
+        log.intent_confidence = 1.0
+        log.conversation_transcript = transcript
+        log.status = MissedCallStatus.CALLBACK_COMPLETED
+        log.callback_completed_at = datetime.now(timezone.utc)
+        await db.commit()
+        logger.info("PHASE=SPEECH+HANGUP | log=%s | intent=%s", log_id, intent)
+        return Response(
+            content=_mc_say_and_hangup(response_text, lang_code, lang, base=base),
+            media_type="application/xml",
+        )
     else:
         response_text = get_greeting("te")
         transcript.append({"role": "assistant", "content": response_text, "phase": "replay"})
@@ -524,20 +593,6 @@ async def callback_gather(
             content=_mc_say_and_gather(response_text, action_url, lang_code, timeout=12, lang=lang, base=base),
             media_type="application/xml",
         )
-
-    transcript.append({"role": "user", "content": digit or speech, "dtmf": digit})
-    transcript.append({"role": "assistant", "content": response_text, "intent": str(intent)})
-    log.intent = intent
-    log.intent_confidence = 1.0
-    log.conversation_transcript = transcript
-    log.status = MissedCallStatus.CALLBACK_COMPLETED
-    log.callback_completed_at = datetime.now(timezone.utc)
-    await db.commit()
-    logger.info("PHASE=RESPOND+HANGUP | log=%s | digit=%s | intent=%s", log_id, digit, intent)
-    return Response(
-        content=_mc_say_and_hangup(response_text, lang_code, lang, base=base),
-        media_type="application/xml",
-    )
 
 
 @router.post("/callback-status/{log_id}")
