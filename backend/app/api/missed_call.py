@@ -26,10 +26,8 @@ from app.services.missed_call_service import (
     build_twilio_payload,
     detect_language_from_number,
     finalize_call,
-    get_closing,
     get_greeting,
     get_intent_response,
-    get_service_menu,
     trigger_outbound_call,
     _classify_intent,
 )
@@ -460,10 +458,10 @@ _MAX_TURNS = 2
 
 
 _DTMF_INTENT_MAP = {"1": CallIntent.BOOKING, "2": CallIntent.INQUIRY, "3": CallIntent.BOOKING}
-_DTMF_EVENING_GREETING = {
-    "hi": "Aap Dr. Reddy ki evening clinic ke baare mein poochh rahe hain. Woh aaj shaam 6:30 baje se available hain. Kya main aapke liye token reserve kar doon?",
-    "te": "మీరు డాక్టర్ రెడ్డి ఈవెనింగ్ క్లినిక్ గురించి అడుగుతున్నారు. ఆయన ఈరోజు సాయంత్రం 6:30 కి అందుబాటులో ఉంటారు. మీకు టోకెన్ రిజర్వ్ చేయమనా?",
-    "en": "You are asking about the evening clinic. Dr. Reddy is available from 6:30 PM today. Shall I reserve a token for you?",
+_DTMF_EVENING_RESPONSE = {
+    "hi": "Aapka token number 8 Dr. Reddy ki evening clinic ke liye reserve ho gaya hai. Shaam 7:15 baje tak clinic pahunchein. Approximate wait time 40 minute hai. Aapke number par SMS confirmation abhi bhej di gayi hai. Dhanyavaad aur apna khayal rakhein. Namaste!",
+    "te": "మీ టోకెన్ నంబర్ 8 డాక్టర్ రెడ్డి ఈవెనింగ్ క్లినిక్ కోసం రిజర్వ్ అయింది. సాయంత్రం 7:15 లోపు క్లినిక్‌కి రండి. వేచి ఉండే సమయం సుమారు 40 నిమిషాలు. మీ నంబర్‌కు SMS కన్ఫర్మేషన్ పంపించాము. ధన్యవాదాలు, జాగ్రత్తగా ఉండండి. నమస్కారం!",
+    "en": "Your token number 8 has been reserved for Dr. Reddy's evening clinic. Please arrive by 7:15 PM. Approximate wait time is 40 minutes. An SMS confirmation has been sent to your number. Thank you and take care. Goodbye!",
 }
 
 
@@ -499,8 +497,8 @@ async def callback_gather(
     user_turns = [t for t in transcript if t.get("role") == "user"]
     turn_count = len(user_turns)
 
-    # ── PHASE 0: TELUGU GREETING + SERVICE MENU (first contact) ─────────────
-    if turn_count == 0 and not digit and not speech:
+    # ── PHASE 0: GREETING + MENU ─────────────────────────────────────────────
+    if not digit and not speech:
         greeting = get_greeting("te")
         transcript.append({"role": "assistant", "content": greeting, "phase": "greeting"})
         log.language_detected = "te"
@@ -508,76 +506,44 @@ async def callback_gather(
         await db.commit()
         logger.info("PHASE=GREETING | log=%s | caller=%s", log_id, log.caller_number)
         return Response(
-            content=_mc_say_and_gather(greeting, action_url, lang_code, timeout=10, lang=lang, base=base),
+            content=_mc_say_and_gather(greeting, action_url, lang_code, timeout=12, lang=lang, base=base),
             media_type="application/xml",
         )
 
-    # ── PHASE 1a: SERVICE MENU DTMF ──────────────────────────────────────────
-    if digit:
-        if digit == "3":
-            evening_text = _DTMF_EVENING_GREETING.get(lang, _DTMF_EVENING_GREETING["en"])
-            transcript.append({"role": "user", "content": "evening_clinic", "turn": 1, "dtmf": "3"})
-            transcript.append({"role": "assistant", "content": evening_text, "turn": 1, "intent": "evening_clinic"})
-            log.intent = CallIntent.INQUIRY
-            log.intent_confidence = 1.0
-            log.conversation_transcript = transcript
-            await db.commit()
-            return Response(
-                content=_mc_say_and_gather(evening_text, action_url, lang_code, timeout=8, lang=lang, base=base),
-                media_type="application/xml",
-            )
-        if digit in ("1", "2"):
-            intent = _DTMF_INTENT_MAP[digit]
-            response_text = get_intent_response(intent, lang)
-            transcript.append({"role": "user", "content": f"dtmf_{digit}", "turn": 1, "dtmf": digit})
-            transcript.append({"role": "assistant", "content": response_text, "turn": 1, "intent": str(intent)})
-            log.intent = intent
-            log.intent_confidence = 1.0
-            log.conversation_transcript = transcript
-            await db.commit()
-            logger.info("PHASE=SERVICE_DTMF | log=%s | digit=%s | intent=%s | lang=%s", log_id, digit, intent, lang)
-            return Response(
-                content=_mc_say_and_gather(response_text, action_url, lang_code, timeout=6, lang=lang, base=base),
-                media_type="application/xml",
-            )
-
-    # ── PHASE 1b: SPEECH INTENT ──────────────────────────────────────────────
-    if speech and turn_count <= 1:
-        intent, confidence = _classify_intent(speech)
-        logger.info("PHASE=SPEECH_INTENT | log=%s | speech='%s' | intent=%s (%.0f%%)",
-                    log_id, speech[:60], intent, confidence * 100)
-        log.intent = intent
-        log.intent_confidence = confidence
-        transcript.append({"role": "user", "content": speech, "turn": 1})
+    # ── PHASE 1: DTMF → respond and hangup immediately ───────────────────────
+    if digit == "3":
+        response_text = _DTMF_EVENING_RESPONSE.get(lang, _DTMF_EVENING_RESPONSE["en"])
+        intent = CallIntent.INQUIRY
+    elif digit == "1":
+        response_text = get_intent_response(CallIntent.BOOKING, lang)
+        intent = CallIntent.BOOKING
+    elif digit == "2":
+        response_text = get_intent_response(CallIntent.INQUIRY, lang)
+        intent = CallIntent.INQUIRY
+    elif speech:
+        intent, _ = _classify_intent(speech)
         response_text = get_intent_response(intent, lang)
-        transcript.append({"role": "assistant", "content": response_text, "turn": 1, "intent": str(intent)})
+    else:
+        response_text = get_greeting("te")
+        transcript.append({"role": "assistant", "content": response_text, "phase": "replay"})
         log.conversation_transcript = transcript
         await db.commit()
         return Response(
-            content=_mc_say_and_gather(response_text, action_url, lang_code, timeout=6, lang=lang, base=base),
+            content=_mc_say_and_gather(response_text, action_url, lang_code, timeout=12, lang=lang, base=base),
             media_type="application/xml",
         )
 
-    # ── TIMEOUT: replay greeting ──────────────────────────────────────────────
-    if not digit and not speech and turn_count <= 1:
-        greeting = get_greeting(lang)
-        return Response(
-            content=_mc_say_and_gather(greeting, action_url, lang_code, timeout=10, lang=lang, base=base),
-            media_type="application/xml",
-        )
-
-    # ── PHASE 2: CLOSE ────────────────────────────────────────────────────────
-    transcript.append({"role": "user", "content": speech or digit or "timeout", "turn": turn_count + 1})
-    is_evening = any(t.get("intent") == "evening_clinic" for t in transcript)
-    closing = get_closing(lang, intent=log.intent, evening=is_evening)
-    transcript.append({"role": "assistant", "content": closing, "turn": turn_count + 1, "phase": "close"})
+    transcript.append({"role": "user", "content": digit or speech, "dtmf": digit})
+    transcript.append({"role": "assistant", "content": response_text, "intent": str(intent)})
+    log.intent = intent
+    log.intent_confidence = 1.0
     log.conversation_transcript = transcript
     log.status = MissedCallStatus.CALLBACK_COMPLETED
     log.callback_completed_at = datetime.now(timezone.utc)
     await db.commit()
-    logger.info("PHASE=CLOSE | log=%s | intent=%s | lang=%s", log_id, log.intent, lang)
+    logger.info("PHASE=RESPOND+HANGUP | log=%s | digit=%s | intent=%s", log_id, digit, intent)
     return Response(
-        content=_mc_say_and_hangup(closing, lang_code, lang, base=base),
+        content=_mc_say_and_hangup(response_text, lang_code, lang, base=base),
         media_type="application/xml",
     )
 
