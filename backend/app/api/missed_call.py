@@ -76,7 +76,13 @@ def _tts_url(text: str, lang: str, base: str) -> str:
 
 
 _TWILIO_FEMALE_VOICES: dict[str, str] = {
-    "hi": "Polly.Aditi", "en": "Polly.Aditi",
+    "hi": "Google.hi-IN-Neural2-A",
+    "te": "Google.te-IN-Standard-A",
+    "ta": "Google.ta-IN-Standard-A",
+    "kn": "Google.kn-IN-Standard-A",
+    "bn": "Google.bn-IN-Standard-A",
+    "mr": "Google.mr-IN-Standard-A",
+    "en": "Google.en-IN-Neural2-A",
 }
 
 
