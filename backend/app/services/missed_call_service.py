@@ -35,7 +35,7 @@ _SERVICE_MENU: dict[str, str] = {
 
 _GREETINGS: dict[str, str] = {
     "hi": "Namaste! Main Pallavi hoon. Aapka call miss ho gaya tha. Appointment book karne ke liye 1 dabayein, jaankari ke liye 2 dabayein, ya evening clinic ke liye 3 dabayein.",
-    "te": "నమస్కారం! నేను పల్లవిని. మీరు చేసిన కాల్ మిస్ అయింది. అపాయింట్‌మెంట్ బుక్ చేయడానికి 1 నొక్కండి, సమాచారం కోసం 2 నొక్కండి, ఈవెనింగ్ క్లినిక్ కోసం 3 నొక్కండి.",
+    "te": "నమస్కారం! నేను పల్లవిని. మీరు చేసిన కాల్ మిస్ అయింది. అపాయింట్‌మెంట్ బుక్ చేయడానికి 1 నొక్కండి, క్లినిక్ సమాచారం కోసం 2 నొక్కండి.",
     "ta": "Vanakkam! Naan Pallavi. Ungal call miss aiyirundathu. Appointment book pannuvatharku 1 acchunga, thakavalukku 2 acchunga, evening clinic ku 3 acchunga.",
     "bn": "Namaskar! Ami Pallavi. Apnar call miss hoyeche. Appointment booke 1 chapa, tathyar janya 2 chapa, evening clinic ke 3 chapa.",
     "kn": "Namaskara! Nanu Pallavi. Nimma call miss aayitu. Appointment book maadabekaagidare 1 odayi, mahitikke 2 odayi, evening clinic ge 3 odayi.",
