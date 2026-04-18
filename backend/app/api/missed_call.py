@@ -460,6 +460,8 @@ _MAX_TURNS = 2
 
 
 
+_BOOKING_OFFER: str = "రేపు పొద్దున 10 గంటలకు స్లాట్ అందుబాటులో ఉంది. కన్ఫర్మ్ చేయడానికి 1 నొక్కండి."
+_BOOKING_DECLINE: str = "సరే, ధన్యవాదాలు! మళ్ళీ కాల్ చేయండి. నమస్కారం!"
 _INQUIRY_FOLLOWUP_ASK: str = "అపాయింట్‌మెంట్ బుక్ చేసుకోవాలా? అవును అంటే 1 నొక్కండి."
 _INQUIRY_FOLLOWUP_DECLINE: str = "సరే, ధన్యవాదాలు! మళ్ళీ కాల్ చేయండి. నమస్కారం!"
 
@@ -493,6 +495,36 @@ async def callback_gather(
     speech = SpeechResult.strip()
     lang = "te"
     lang_code = "te-IN"
+
+    # ── PHASE booking_confirm: user offered slot, waiting for consent ─────────
+    if phase == "booking_confirm":
+        if digit == "1" or (speech and any(w in speech.lower() for w in ["అవును", "yes", "ha", "haa", "confirm", "ok"])):
+            booking_text = get_intent_response(CallIntent.BOOKING, lang)
+            transcript.append({"role": "user", "content": digit or speech, "phase": "booking_confirm"})
+            transcript.append({"role": "assistant", "content": booking_text, "intent": str(CallIntent.BOOKING)})
+            log.intent = CallIntent.BOOKING
+            log.intent_confidence = 1.0
+            log.conversation_transcript = transcript
+            log.status = MissedCallStatus.CALLBACK_COMPLETED
+            log.callback_completed_at = datetime.now(timezone.utc)
+            await db.commit()
+            logger.info("PHASE=BOOKING_CONFIRM→CONFIRMED | log=%s", log_id)
+            return Response(
+                content=_mc_say_and_hangup(booking_text, lang_code, lang, base=base),
+                media_type="application/xml",
+            )
+        else:
+            transcript.append({"role": "user", "content": digit or speech or "no_response", "phase": "booking_confirm"})
+            transcript.append({"role": "assistant", "content": _BOOKING_DECLINE})
+            log.conversation_transcript = transcript
+            log.status = MissedCallStatus.CALLBACK_COMPLETED
+            log.callback_completed_at = datetime.now(timezone.utc)
+            await db.commit()
+            logger.info("PHASE=BOOKING_CONFIRM→DECLINED | log=%s", log_id)
+            return Response(
+                content=_mc_say_and_hangup(_BOOKING_DECLINE, lang_code, lang, base=base),
+                media_type="application/xml",
+            )
 
     # ── PHASE inquiry_followup: did they want to book after hearing info? ─────
     if phase == "inquiry_followup":
@@ -539,19 +571,14 @@ async def callback_gather(
 
     # ── PHASE 1: DTMF ─────────────────────────────────────────────────────────
     if digit == "1":
-        response_text = get_intent_response(CallIntent.BOOKING, lang)
-        intent = CallIntent.BOOKING
+        confirm_url = f"{action_url}?phase=booking_confirm"
         transcript.append({"role": "user", "content": digit, "dtmf": digit})
-        transcript.append({"role": "assistant", "content": response_text, "intent": str(intent)})
-        log.intent = intent
-        log.intent_confidence = 1.0
+        transcript.append({"role": "assistant", "content": _BOOKING_OFFER, "phase": "booking_offer"})
         log.conversation_transcript = transcript
-        log.status = MissedCallStatus.CALLBACK_COMPLETED
-        log.callback_completed_at = datetime.now(timezone.utc)
         await db.commit()
-        logger.info("PHASE=BOOKING+HANGUP | log=%s", log_id)
+        logger.info("PHASE=BOOKING_OFFER | log=%s", log_id)
         return Response(
-            content=_mc_say_and_hangup(response_text, lang_code, lang, base=base),
+            content=_mc_say_and_gather(_BOOKING_OFFER, confirm_url, lang_code, timeout=10, lang=lang, base=base),
             media_type="application/xml",
         )
     elif digit == "2":
