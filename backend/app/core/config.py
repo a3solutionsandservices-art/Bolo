@@ -82,6 +82,9 @@ class Settings(BaseSettings):
     TWILIO_PHONE_NUMBER: str = ""
     TWILIO_WEBHOOK_SECRET: str = ""
     TWILIO_DEFAULT_TENANT_ID: str = ""
+    TWILIO_API_KEY_SID: str = ""
+    TWILIO_API_KEY_SECRET: str = ""
+    TWILIO_TWIML_APP_SID: str = ""
 
     MISSED_CALL_RESULTS_DIR: str = "/app/media/missed_calls"
     GOOGLE_SHEETS_ID: str = ""
