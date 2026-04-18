@@ -46,22 +46,14 @@ _GREETINGS: dict[str, str] = {
 
 _INTENT_RESPONSES: dict[CallIntent, dict[str, str]] = {
     CallIntent.BOOKING: {
-        "hi": "Zaroor! Aapka appointment kal subah 10 baje ke liye confirm ho gaya hai. Aapke number par SMS confirmation abhi bhej di gayi hai. Aapka appointment number A-7 hai. Kya aapko kuch aur jaanna hai?",
-        "ta": "Sari! Ungal appointment naalai kaalai patt manikku confirm aagividdu. Ungal numberukku SMS confirmation anuppappattu. Ungal appointment number A-7. Vera enna thakaval vendum?",
-        "te": "అవశ్యం! మీ అపాయింట్‌మెంట్ రేపు పొద్దున 10 గంటలకు కన్ఫర్మ్ అయింది. మీ నంబర్‌కు SMS పంపించాము. మీ అపాయింట్‌మెంట్ నంబర్ A-7. మీకు ఇంకేమైనా కావాలా?",
-        "bn": "Nischoi! Apnar appointment kaal sokal 10ta-y confirm hoyeche. Apnar number-e SMS confirmation pathano hoyeche. Apnar appointment number A-7. Apnar ar kichhu janna ache ki?",
-        "kn": "Zaroor! Nimma appointment naale beligge 10 gante ge confirm aagide. Nimma number ge SMS confirmation ippaga kalisida. Nimma appointment number A-7. Nimma bere yaavaado vishaya bEkaa?",
-        "mr": "Nakkicha! Tumcha appointment udya savaali 10 vajeta confirm zala ahe. Tumchya number var SMS confirmation aata pathavli ahe. Tumcha appointment number A-7 aahe. Tumhala aankahi kahi jaanun ghyaayche aahe ka?",
-        "en": "Done! Your appointment is confirmed for tomorrow at 10 AM. An SMS confirmation has been sent to your number. Your appointment number is A-7. Is there anything else you need?",
+        "hi": "Aapka appointment kal subah 10 baje ke liye confirm ho gaya hai. Appointment number A-7 hai. Aapke number par SMS confirmation abhi bhej di gayi hai. Clinic mein samay par aane ki kripa karein. Dhanyavaad aur apna khayal rakhein. Namaste!",
+        "te": "మీ అపాయింట్‌మెంట్ రేపు పొద్దున 10 గంటలకు కన్ఫర్మ్ అయింది. అపాయింట్‌మెంట్ నంబర్ A-7. మీ నంబర్‌కు SMS కన్ఫర్మేషన్ పంపించాము. సమయానికి క్లినిక్‌కి రండి. ధన్యవాదాలు, జాగ్రత్తగా ఉండండి. నమస్కారం!",
+        "en": "Your appointment is confirmed for tomorrow at 10 AM. Appointment number A-7. An SMS confirmation has been sent to your number. Please arrive on time. Thank you and take care. Goodbye!",
     },
     CallIntent.INQUIRY: {
-        "hi": "Bilkul! Hamari consultation fee 300 rupay hai. Clinic ka samay hai — subah 9 baje se dopahar 1 baje tak, aur shaam 6 baje se raat 9 baje tak. Somwar se shanivar tak khula rehta hai. Kya aap appointment book karna chahenge?",
-        "ta": "Sari! Engal consultation fee 300 rupai. Clinic neram — kaalai 9 mani muthal pagal 1 mani varai, maaalai 6 mani muthal iravu 9 mani varai. Tingal muthal shaniyar varai thirakka irukkom. Appointment book pannalama?",
-        "te": "అవశ్యం! మా కన్సల్టేషన్ ఫీ 300 రూపాయలు. క్లినిక్ సమయాలు — పొద్దున 9 నుండి మధ్యాహ్నం 1 వరకు, సాయంత్రం 6 నుండి రాత్రి 9 వరకు. సోమవారం నుండి శనివారం వరకు తెరుచుకుంటుంది. అపాయింట్‌మెంట్ బుక్ చేసుకుంటారా?",
-        "bn": "Nischoi! Amader consultation fee 300 taka. Clinic-er somoy holo — sokal 9ta theke dupur 1ta, ar bikal 6ta theke raat 9ta porjonto. Sombar theke Shonibar khola thake. Appointment book korben?",
-        "kn": "Zaroor! Namma consultation fee 300 rupai. Clinic samaya — beligge 9 gante ninda madhyahna 1 gante varegu, saayankala 6 gante ninda raatri 9 gante varegu. Somavara ninda Shanivara varegu tiruguttade. Appointment book maadabekaaguttada?",
-        "mr": "Nakkicha! Amchi consultation fee 300 rupay aahe. Clinic vel aahe — savaali 9 te dopahari 1, ani sandhyakali 6 te raat 9 vajeparyant. Somvar te Shanivari chalu asato. Appointment book karaycha aahe ka?",
-        "en": "Of course! Our consultation fee is 300 rupees. Clinic hours are 9 AM to 1 PM and 6 PM to 9 PM, Monday to Saturday. Would you like to book an appointment?",
+        "hi": "Hamari consultation fee 300 rupay hai. Clinic ka samay hai — subah 9 baje se dopahar 1 baje tak, aur shaam 6 baje se raat 9 baje tak. Somwar se Shanivar tak khula rehta hai. Appointment book karne ke liye dobara call karein. Dhanyavaad! Namaste!",
+        "te": "మా కన్సల్టేషన్ ఫీ 300 రూపాయలు. క్లినిక్ సమయాలు — పొద్దున 9 నుండి మధ్యాహ్నం 1 వరకు, సాయంత్రం 6 నుండి రాత్రి 9 వరకు. సోమవారం నుండి శనివారం వరకు తెరుచుకుంటుంది. అపాయింట్‌మెంట్ బుక్ చేయడానికి మళ్ళీ కాల్ చేయండి. ధన్యవాదాలు! నమస్కారం!",
+        "en": "Our consultation fee is 300 rupees. Clinic hours are 9 AM to 1 PM and 6 PM to 9 PM, Monday to Saturday. Call us again to book an appointment. Thank you! Goodbye!",
     },
     CallIntent.COMPLAINT: {
         "hi": "Mujhe khed hai ki aapko takleef hui. Main aapki baat note kar leti hoon. Hamara team manager aapko 2 ghante ke andar sampark karega. Aapka complaint number C-42 hai.",
