@@ -18,9 +18,7 @@ logger = logging.getLogger(__name__)
 
 _LANG_SELECT_GREETING: str = (
     "Namaskaram! Nenu Pallavi ni, mee clinic nundi matladutunnanu. "
-    "Telugu lo matladi anukunte 1 nokandi. "
-    "Hindi ke liye 2 dabayein. "
-    "For English press 3."
+    "Telugu kosam okati nokandi, Hindi kosam rendu nokandi, English kosam moodu nokandi."
 )
 
 _LANG_MAP_DTMF: dict[str, str] = {"1": "te", "2": "hi", "3": "en"}
@@ -205,13 +203,7 @@ async def _extract_intent_via_llm(transcript: str, language: str = "hi") -> tupl
 # ── Language helpers ───────────────────────────────────────────────────────────
 
 def detect_language_from_number(phone: str) -> str:
-    digits = "".join(c for c in phone if c.isdigit())
-    if digits.startswith("91"):
-        digits = digits[2:]
-    for prefix, lang in _STATE_PREFIX_LANG.items():
-        if digits.startswith(prefix.lstrip("0")):
-            return lang
-    return "hi"
+    return "te"
 
 
 def get_lang_select_greeting() -> str:
