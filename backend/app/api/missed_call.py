@@ -26,10 +26,7 @@ from app.services.missed_call_service import (
     detect_language_from_number,
     finalize_call,
     get_closing,
-    get_greeting,
     get_intent_response,
-    get_lang_from_dtmf,
-    get_lang_select_greeting,
     get_service_menu,
     trigger_outbound_call,
     _classify_intent,
@@ -84,16 +81,23 @@ _TWILIO_FEMALE_VOICES: dict[str, str] = {
     "hi": "Google.hi-IN-Neural2-A",
     "te": "Google.te-IN-Standard-A",
     "ta": "Google.ta-IN-Standard-A",
-    "kn": "Google.kn-IN-Standard-A",
-    "bn": "Google.bn-IN-Standard-A",
-    "mr": "Google.mr-IN-Standard-A",
+    "kn": "Polly.Aditi",
+    "bn": "Polly.Aditi",
+    "mr": "Polly.Aditi",
     "en": "Google.en-IN-Neural2-A",
+}
+
+_TWILIO_LANG_OVERRIDE: dict[str, str] = {
+    "kn": "hi-IN",
+    "bn": "hi-IN",
+    "mr": "hi-IN",
 }
 
 
 def _play_or_say(text: str, lang: str, language: str, base: str = "") -> str:
-    voice = _TWILIO_FEMALE_VOICES.get(lang, "woman")
-    return f'<Say voice="{voice}" language="{language}">{text}</Say>'
+    voice = _TWILIO_FEMALE_VOICES.get(lang, "Polly.Aditi")
+    effective_lang = _TWILIO_LANG_OVERRIDE.get(lang, language)
+    return f'<Say voice="{voice}" language="{effective_lang}">{text}</Say>'
 
 
 def _mc_say_and_gather(text: str, action_url: str, language: str = "hi-IN",
@@ -415,9 +419,9 @@ async def callback_voicemail(
     result = await db.execute(select(MissedCallLog).where(MissedCallLog.id == log_id))
     log = result.scalar_one_or_none()
 
-    lang = log.language_detected if log else "hi"
-    lang_code = TWILIO_LANG_MAP.get(lang, "hi-IN")
-    message = _VOICEMAIL_MESSAGES.get(lang, _VOICEMAIL_MESSAGES["hi"])
+    lang = log.language_detected if log else "te"
+    lang_code = TWILIO_LANG_MAP.get(lang, "te-IN")
+    message = _VOICEMAIL_MESSAGES.get(lang, _VOICEMAIL_MESSAGES["te"])
 
     if log:
         log.status = MissedCallStatus.VOICEMAIL_LEFT
@@ -497,43 +501,27 @@ async def callback_gather(
     transcript = log.conversation_transcript or []
     digit = Digits.strip()
     speech = SpeechResult.strip()
-    lang = log.language_detected
-    lang_code = TWILIO_LANG_MAP.get(lang, "te-IN")
+    lang = "te"
+    lang_code = "te-IN"
 
-    lang_selected = any(t.get("phase") == "lang_selected" for t in transcript)
     user_turns = [t for t in transcript if t.get("role") == "user"]
     turn_count = len(user_turns)
 
-    # ── PHASE 0: LANGUAGE SELECTION ───────────────────────────────────────────
-    if not lang_selected and not digit and not speech:
-        logger.info("PHASE=LANG_SELECT | log=%s | caller=%s", log_id, log.caller_number)
-        return Response(
-            content=_mc_say_and_gather(
-                get_lang_select_greeting(), action_url,
-                language="te-IN", timeout=10, lang="te", base=base,
-            ),
-            media_type="application/xml",
-        )
-
-    # ── PHASE 0b: LANGUAGE CHOSEN ─────────────────────────────────────────────
-    if not lang_selected and digit in ("1", "2", "3"):
-        chosen_lang = get_lang_from_dtmf(digit) or "te"
-        log.language_detected = chosen_lang
-        lang = chosen_lang
-        lang_code = TWILIO_LANG_MAP.get(lang, "te-IN")
-        menu_text = get_service_menu(lang)
-        transcript.append({"phase": "lang_selected", "lang": lang, "dtmf": digit})
-        transcript.append({"role": "assistant", "content": menu_text, "phase": "service_menu"})
+    # ── PHASE 0: TELUGU GREETING + SERVICE MENU (first contact) ─────────────
+    if turn_count == 0 and not digit and not speech:
+        greeting = get_greeting("te")
+        transcript.append({"role": "assistant", "content": greeting, "phase": "greeting"})
+        log.language_detected = "te"
         log.conversation_transcript = transcript
         await db.commit()
-        logger.info("PHASE=LANG_CHOSEN | log=%s | lang=%s", log_id, lang)
+        logger.info("PHASE=GREETING | log=%s | caller=%s", log_id, log.caller_number)
         return Response(
-            content=_mc_say_and_gather(menu_text, action_url, lang_code, timeout=10, lang=lang, base=base),
+            content=_mc_say_and_gather(greeting, action_url, lang_code, timeout=10, lang=lang, base=base),
             media_type="application/xml",
         )
 
     # ── PHASE 1a: SERVICE MENU DTMF ──────────────────────────────────────────
-    if lang_selected and digit:
+    if digit:
         if digit == "3":
             evening_text = _DTMF_EVENING_GREETING.get(lang, _DTMF_EVENING_GREETING["en"])
             transcript.append({"role": "user", "content": "evening_clinic", "turn": 1, "dtmf": "3"})
@@ -562,7 +550,7 @@ async def callback_gather(
             )
 
     # ── PHASE 1b: SPEECH INTENT ──────────────────────────────────────────────
-    if lang_selected and speech and turn_count == 0:
+    if speech and turn_count <= 1:
         intent, confidence = _classify_intent(speech)
         logger.info("PHASE=SPEECH_INTENT | log=%s | speech='%s' | intent=%s (%.0f%%)",
                     log_id, speech[:60], intent, confidence * 100)
@@ -575,6 +563,14 @@ async def callback_gather(
         await db.commit()
         return Response(
             content=_mc_say_and_gather(response_text, action_url, lang_code, timeout=6, lang=lang, base=base),
+            media_type="application/xml",
+        )
+
+    # ── TIMEOUT: replay greeting ──────────────────────────────────────────────
+    if not digit and not speech and turn_count <= 1:
+        greeting = get_greeting(lang)
+        return Response(
+            content=_mc_say_and_gather(greeting, action_url, lang_code, timeout=10, lang=lang, base=base),
             media_type="application/xml",
         )
 
