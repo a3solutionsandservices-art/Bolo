@@ -72,7 +72,7 @@ def _request_base_url(request: Request) -> str:
 
 
 def _tts_url(text: str, lang: str, base: str) -> str:
-    return f"{base}/api/v1/missed-call/tts?text={urlquote(text[:400])}&lang={lang}"
+    return f"{base}/api/v1/missed-call/tts?text={urlquote(text[:400])}&amp;lang={lang}"
 
 
 _TWILIO_FEMALE_VOICES: dict[str, str] = {
